@@ -1,0 +1,12 @@
+[
+{
+	"directory": "/home/eli/repos/Cutils",
+	"file": "build.c",
+	"arguments": ["cc", "-DSB_IMPL", "build.c", "-o", "/./sb"]
+},
+{
+	"directory": "/home/eli/repos/Cutils",
+	"file": "sb.h",
+	"arguments": ["cc", "-DSB_IMPL", "build.c", "-o", "/./sb"]
+}
+]
