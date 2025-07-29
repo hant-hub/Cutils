@@ -1,12 +1,34 @@
 [
 {
-	"directory": "/home/eli/repos/Cutils",
+	"directory": "/home/Elijah/repos/Cutils",
 	"file": "build.c",
 	"arguments": ["cc", "-DSB_IMPL", "build.c", "-o", "/./sb"]
 },
 {
-	"directory": "/home/eli/repos/Cutils",
+	"directory": "/home/Elijah/repos/Cutils",
 	"file": "sb.h",
 	"arguments": ["cc", "-DSB_IMPL", "build.c", "-o", "/./sb"]
-}
+},
+{
+	"directory": "/home/Elijah/repos/Cutils",
+	"file": "src/cutils.c",
+	"arguments": ["cc", "-Iinclude/", "-g", "src/cutils.c", "test/string.c", "-o", "build//string"]
+},
+{
+	"directory": "/home/Elijah/repos/Cutils",
+	"file": "test/string.c",
+	"arguments": ["cc", "-Iinclude/", "-g", "src/cutils.c", "test/string.c", "-o", "build//string"]
+},
+,
+{
+	"directory": "/home/Elijah/repos/Cutils",
+	"file": "src/cutils.c",
+	"arguments": ["cc", "-Iinclude/", "-g", "src/cutils.c", "test/print.c", "-o", "build//print"]
+},
+{
+	"directory": "/home/Elijah/repos/Cutils",
+	"file": "test/print.c",
+	"arguments": ["cc", "-Iinclude/", "-g", "src/cutils.c", "test/print.c", "-o", "build//print"]
+},
+
 ]

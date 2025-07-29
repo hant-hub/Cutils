@@ -4,6 +4,9 @@
 #include <stdint.h>
 
 #define PAGE_SIZE (1<<12)
+#define ARRAY_SIZE(x) \
+    (sizeof(x) / sizeof(x[0]))
+
 
 
 
@@ -22,6 +25,10 @@ typedef int16_t i16;
 typedef int32_t i32;
 typedef int64_t i64;
 
+typedef uint8_t  bool8;
+typedef uint16_t bool16;
+typedef uint32_t bool32;
+typedef uint64_t bool64;
 
 
 /*
@@ -31,25 +38,25 @@ typedef int64_t i64;
 #define NULL ((void*)0)
 
 #define alloc_func_def(name) \
-    void* (*name)(void* ctx, void* ptr, u64 old, u64 new)
+    void* (name)(void* ctx, void* ptr, u64 old, u64 new)
 
-typedef alloc_func_def(alloc_func);
+typedef alloc_func_def(*alloc_func);
 
 typedef struct Allocator {
     alloc_func a; 
     void* ctx;
 } Allocator;
 
-#define alloc(mem, size) \
+#define Alloc(mem, size) \
     mem.a(mem.ctx, NULL, 0, size)
 
-#define free(mem, ptr, size) \
+#define Free(mem, ptr, size) \
     mem.a(mem.ctx, ptr, size, 0)
 
-#define realloc(mem, ptr, old, new) \
+#define Realloc(mem, ptr, old, new) \
     mem.a(mem.ctx, ptr, old, new)
 
-
+extern const Allocator GlobalAllocator;
 
 
 /*
@@ -66,9 +73,16 @@ typedef struct LString {
     i8* data;
 } LString;
 
-u32 Sstrcmp();
-SString Sstrdup();
-SString Sstrtok();
+bool8 Sstrcmp(SString a, SString b);
+SString Sstrdup(Allocator a, SString str);
+
+//NOTE(ELI): Only a single delimiter at the moment,
+//didn't think that using multiple deliminters would be
+//that important
+SString Sstrtok(SString str, const char delim);
+
+#define sstring(x) \
+    (SString){sizeof(x) - 1, (i8*)x}
 
 
 /*
@@ -101,7 +115,7 @@ u64 filesave(const SString filename, SString* handle);
     Custom Format
 */
 
-u32 sformat();
+u32 sformat(SString dst, const char* format, ...);
 u32 fformat();
 
 
@@ -113,5 +127,13 @@ u32 printlog();
 u32 printwarn();
 u32 printerr();
 
+
+/*
+    Assertions
+*/
+#include <assert.h>
+
+#define todo() \
+    assert(0)
 
 #endif

@@ -65,6 +65,9 @@ void sb_exit(int status);
 
 char* sb_get_cwd();
 
+char* sb_dir_iter(const char* directory);
+
+
 //Memory allocation
 void* sb_alloc(uint64_t size);
 void* sb_realloc(void* p, uint64_t size);
@@ -81,6 +84,7 @@ typedef struct sb_sized_string {
 uint32_t sb_strlen(const char* s);
 uint32_t sb_strcmp(const char* s1, const char* s2);
 char* sb_basename(char* f);
+char* sb_stripext(char* f);
 
 //Sized
 void sb_strcpy(char* dst, const sb_sized_string s);
@@ -159,6 +163,10 @@ void sb_dry_run();
 
 #define sb_EXEC() \
     for (int i = sb_start_exec(); i == 0; (sb_stop_exec(), i++))
+
+//Iterates over files in directory, skips subdirectories
+#define sb_FOREACHFILE(dir, file) \
+    for (char* file = sb_dir_iter(dir); file; file = sb_dir_iter(NULL))
 
 #define sb_add_include_path(x) \
     _sb_add_include_path((sb_sized_string){ \
@@ -321,6 +329,27 @@ char* sb_get_cwd() {
     return cwd;
 }
 
+char* sb_dir_iter(const char* directory) {
+    static DIR* d = NULL;
+    static struct dirent* dent;
+    static char outbuf[PATH_MAX + 1] = {0};
+    static char* file = 0;
+    
+    if (directory) {
+        if (d) closedir(d);
+        d = opendir(directory);
+        memset(outbuf, 0, sizeof(outbuf));
+        file = stpcpy(outbuf, directory);
+    }
+
+    do {
+        dent = readdir(d);
+    }while (dent && dent->d_type == DT_DIR); 
+
+    if (!dent) return NULL;
+    strcpy(file, dent->d_name);
+    return outbuf;
+}
 
 void sb_exit(int status) {
    exit(status);
@@ -420,6 +449,13 @@ char* sb_basename(char* f) {
     while (stripped >= f && stripped[0] != '/') stripped--;
     stripped++;
     return stripped;
+}
+
+char* sb_stripext(char* f) {
+    char* cursor = f;
+    while (cursor[0] != '.') cursor++;
+    cursor[0] = 0;
+    return f;
 }
 
 void* sb_alloc(uint64_t size) {
