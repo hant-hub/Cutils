@@ -17,6 +17,7 @@ int main(int argc, char *argv[]) {
                 sb_add_include_path("include/");
 
                 sb_add_flag("g");
+                sb_link_library("m");
 
                 char buf[PATH_MAX + 1] = {0};
                 strncpy(buf, test, PATH_MAX);

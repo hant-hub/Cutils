@@ -30,6 +30,9 @@ typedef uint16_t bool16;
 typedef uint32_t bool32;
 typedef uint64_t bool64;
 
+typedef float   f32;
+typedef double  f64;
+
 
 /*
     Custom Memory Allocators
@@ -135,5 +138,46 @@ u32 printerr();
 
 #define todo() \
     assert(0)
+
+
+/*
+    Math
+*/
+
+typedef struct v2u {
+    u32 x;
+    u32 y;
+} v2u;
+
+typedef struct v2i {
+    i32 x;
+    i32 y;
+} v2i;
+
+typedef struct v2l {
+    i64 x;
+    i64 y;
+} v2l;
+
+typedef struct v2f {
+    f32 x;
+    f32 y;
+} v2f;
+
+typedef struct v2d {
+    f64 x;
+    f64 y;
+} v2d;
+
+v2u v2uAdd(v2u a, v2u b);
+v2i v2iAdd(v2i a, v2i b);
+v2f v2fAdd(v2f a, v2f b);
+v2d v2dAdd(v2d a, v2d b);
+
+v2u v2uMul(v2u a, v2u b);
+v2i v2iMul(v2i a, v2i b);
+v2f v2fMul(v2f a, v2f b);
+v2d v2dMul(v2d a, v2d b);
+
 
 #endif

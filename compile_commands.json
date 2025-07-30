@@ -12,23 +12,23 @@
 {
 	"directory": "/home/Elijah/repos/Cutils",
 	"file": "src/cutils.c",
-	"arguments": ["cc", "-Iinclude/", "-g", "src/cutils.c", "test/string.c", "-o", "build//string"]
+	"arguments": ["cc", "-Iinclude/", "-g", "-lm", "src/cutils.c", "test/string.c", "-o", "build//string"]
 },
 {
 	"directory": "/home/Elijah/repos/Cutils",
 	"file": "test/string.c",
-	"arguments": ["cc", "-Iinclude/", "-g", "src/cutils.c", "test/string.c", "-o", "build//string"]
+	"arguments": ["cc", "-Iinclude/", "-g", "-lm", "src/cutils.c", "test/string.c", "-o", "build//string"]
 },
 ,
 {
 	"directory": "/home/Elijah/repos/Cutils",
 	"file": "src/cutils.c",
-	"arguments": ["cc", "-Iinclude/", "-g", "src/cutils.c", "test/print.c", "-o", "build//print"]
+	"arguments": ["cc", "-Iinclude/", "-g", "-lm", "src/cutils.c", "test/print.c", "-o", "build//print"]
 },
 {
 	"directory": "/home/Elijah/repos/Cutils",
 	"file": "test/print.c",
-	"arguments": ["cc", "-Iinclude/", "-g", "src/cutils.c", "test/print.c", "-o", "build//print"]
+	"arguments": ["cc", "-Iinclude/", "-g", "-lm", "src/cutils.c", "test/print.c", "-o", "build//print"]
 },
 
 ]

@@ -1,4 +1,5 @@
 #include <cutils.h>
+#include <math.h>
 #include <stdio.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -104,7 +105,9 @@ static void strput(char c, void* ctx) {
         info->data.data[info->idx++] = c;
 }
 
-static const u64 power_table[] = {
+//10^{i + 1}
+static const u64 power10plus[] = {
+    1UL,
     10UL,
     10UL * 10UL,
     10UL * 10UL * 10UL,
@@ -127,6 +130,146 @@ static const u64 power_table[] = {
     10UL * 10UL * 10UL * 10UL * 10UL * 10UL * 10UL * 10UL * 10UL * 10UL * 10UL * 10UL * 10UL * 10UL * 10UL * 10UL * 10UL * 10UL * 10UL * 10UL,
 };
 
+#define ERROL_EPS 0.0000001
+
+static v2d hpnormalize(v2d x) {
+    f64 val = x.x;
+    x.x += x.y;
+    x.y += val - x.x;
+
+
+    return x;
+}
+
+static v2d hpmul10(v2d x) {
+    f64 off, val = x.x;
+
+    x.x *= 10.0;
+    x.y *= 10.0;
+
+    off = x.x;
+    off -= val * 8.0;
+    off -= val * 2.0;
+
+    x.y -= off;
+    return hpnormalize(x);
+}
+
+static v2d hpdiv10(v2d x) {
+    f64 val = x.x;
+
+    x.x /= 10.0;
+    x.y /= 10.0;
+
+    val -= x.x * 8.0;
+    val -= x.x * 2.0;
+
+    x.y += val / 10.0;
+
+    return hpnormalize(x);
+}
+
+static f64 fpnext(f64 x) {
+    union { f64 f; u64 i; } bits; 
+    bits.f = x;
+
+    bits.i++;
+    return bits.f;
+}
+
+static f64 fpprev(f64 x) {
+    union { f64 f; u64 i; } bits; 
+    bits.f = x;
+
+    bits.i--;
+    return bits.f;
+}
+
+
+//Based on the implementation of the Errol0
+//algorithm provided by the original paper.
+static void format_float(formatInfo info, f64 num) {
+    if (num < 0) {
+        info.f('-', info.ctx);
+        num *= -1;
+    }
+
+
+    f64 ten = 1.0;
+    i32 exp = 1;
+    v2d mid, inhi, inlo;
+
+
+    mid.x = num;
+    mid.y = 0.0;
+
+    while(((mid.x > 10.0) || ((mid.x == 10.0) && (mid.y >= 0.0))) && (exp < 308))
+        exp++, mid = hpdiv10(mid), ten /= 10.0;
+
+    while(((mid.x < 1.0) || ((mid.x == 1.0) && (mid.y < 0.0))) && (exp > -307))
+        exp--, mid = hpmul10(mid), ten *= 10.0;
+
+    inhi.x = mid.x;
+    inhi.y = mid.y + (fpnext(num) - num) * ten / (2.0 + ERROL_EPS);
+
+    inlo.x = mid.x;
+    inlo.y = mid.y + (fpprev(num) - num) * ten / (2.0 + ERROL_EPS);
+
+    inhi = hpnormalize(inhi);
+    inlo = hpnormalize(inlo);
+
+    while(inhi.x > 10.0 || (inhi.x == 10.0 && (inhi.y >= 0.0)))
+		exp++, inhi = hpdiv10(inhi), inlo = hpdiv10(inlo);
+
+	while(inhi.x < 1.0 || (inhi.x == 1.0 && (inhi.y < 0.0)))
+		exp--, inhi = hpmul10(inhi), inlo = hpmul10(inlo);
+
+    if (exp <= 0) {
+        info.f('0', info.ctx);
+        i32 shift = exp;
+        if (shift < 0)
+            info.f('.', info.ctx);
+
+        while (shift < 0) {
+            shift++;
+            info.f('0', info.ctx);
+        }
+    }
+
+    while(inhi.x != 0.0 || inhi.y != 0.0) {
+        exp--;
+        if (exp == -1) {
+            info.f('.', info.ctx);
+            continue;
+        }
+
+		u8 ldig, hdig = 0;
+
+		hdig = (u8)(inhi.x);
+		if((inhi.x == hdig) && (inhi.y < 0))
+			hdig -= 1;
+
+		ldig = (u8)(inlo.x);
+		if((inlo.x == ldig) && (inlo.y < 0))
+			ldig -= 1;
+
+		if(ldig != hdig)
+			break;
+
+        //printf("digit: %d %d\n", hdig, ldig);
+        info.f(hdig + '0', info.ctx);
+
+		inhi.x -= hdig;
+		inhi = hpmul10(inhi);
+
+		inlo.x -= ldig;
+		inlo = hpmul10(inlo);
+	}
+
+    f64 mdig = (inhi.x + inlo.x) / 2.0 + 0.5;
+    info.f((u8)mdig + '0', info.ctx);
+}
+
 static ptrdiff_t format_arg(formatInfo info, va_list args, const char* format) {
     ptrdiff_t out = 0;
     switch(format[0]) {
@@ -141,19 +284,24 @@ static ptrdiff_t format_arg(formatInfo info, va_list args, const char* format) {
 
             //calc number of digits
             u32 digits = 0;
-            for (u32 i = 0; i < ARRAY_SIZE(power_table); i++) {
-                if ((num/power_table[i]) == 0UL) break;
+            for (u32 i = 0; i < ARRAY_SIZE(power10plus); i++) {
+                if ((num/power10plus[i]) == 0UL) break;
                 digits++;
             }
 
             //print digits
             for (i32 i = digits - 1; i >= 0; i--) {
-                u32 digit = num/power_table[i];
-                num -= digit * power_table[i];
+                u32 digit = num/power10plus[i];
+                num -= digit * power10plus[i];
                 info.f(digit + '0', info.ctx);
             }
-            info.f(num + '0', info.ctx);
 
+            out++;
+        } break;
+        case 'f':
+        {
+            f64 s = va_arg(args, f64);
+            format_float(info, s);
             out++;
         } break;
         case 's':
@@ -216,5 +364,40 @@ u32 sformat(SString dst, const char* format, ...) {
 
     va_end(args);
     return info.idx;
+}
+
+
+
+
+
+/*
+    Math
+*/
+
+
+v2u v2uAdd(v2u a, v2u b) {
+    return (v2u){a.x + b.x, a.y + b.y};
+}
+v2i v2iAdd(v2i a, v2i b) {
+    return (v2i){a.x + b.x, a.y + b.y};
+}
+v2f v2fAdd(v2f a, v2f b){
+    return (v2f){a.x + b.x, a.y + b.y};
+}
+v2d v2dAdd(v2d a, v2d b){
+    return (v2d){a.x + b.x, a.y + b.y};
+}
+
+v2u v2uMul(v2u a, v2u b) {
+    return (v2u){a.x * b.x, a.y * b.y};
+}
+v2i v2iMul(v2i a, v2i b){
+    return (v2i){a.x * b.x, a.y * b.y};
+}
+v2f v2fMul(v2f a, v2f b){
+    return (v2f){a.x * b.x, a.y * b.y};
+}
+v2d v2dMul(v2d a, v2d b){
+    return (v2d){a.x * b.x, a.y * b.y};
 }
 
