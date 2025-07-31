@@ -12,6 +12,17 @@
 {
 	"directory": "/home/Elijah/repos/Cutils",
 	"file": "src/cutils.c",
+	"arguments": ["cc", "-Iinclude/", "-g", "-lm", "src/cutils.c", "test/file.c", "-o", "build//file"]
+},
+{
+	"directory": "/home/Elijah/repos/Cutils",
+	"file": "test/file.c",
+	"arguments": ["cc", "-Iinclude/", "-g", "-lm", "src/cutils.c", "test/file.c", "-o", "build//file"]
+},
+,
+{
+	"directory": "/home/Elijah/repos/Cutils",
+	"file": "src/cutils.c",
 	"arguments": ["cc", "-Iinclude/", "-g", "-lm", "src/cutils.c", "test/string.c", "-o", "build//string"]
 },
 {

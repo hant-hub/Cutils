@@ -1,15 +1,60 @@
-#include <linux/limits.h>
 #define SB_IMPL
 #include "sb.h"
+#include <linux/limits.h>
 
 int main(int argc, char *argv[]) {
-    sb_BUILD(argc, argv) { 
+    sb_BUILD(argc, argv) {
         sb_chdir_exe();
         sb_mkdir("build/");
         sb_target_dir("build/");
-        //tests
+
+        // formatting
+        sb_FOREACHFILE("./", test) {
+            if (sb_cmpext(test, ".c") && sb_cmpext(test, ".h"))
+                continue;
+
+            sb_CMD() {
+                sb_cmd_main("clang-format");
+                sb_cmd_opt("i");
+                sb_cmd_arg(test);
+            }
+        }
         sb_FOREACHFILE("test/", test) {
-            if (sb_cmpext(test, ".c") == 0) continue;
+            if (sb_cmpext(test, ".c") && sb_cmpext(test, ".h"))
+                continue;
+
+            sb_CMD() {
+                sb_cmd_main("clang-format");
+                sb_cmd_opt("i");
+                sb_cmd_arg(test);
+            }
+        }
+        sb_FOREACHFILE("include/", test) {
+            if (sb_cmpext(test, ".c") && sb_cmpext(test, ".h"))
+                continue;
+
+            sb_CMD() {
+                sb_cmd_main("clang-format");
+                sb_cmd_opt("i");
+                sb_cmd_arg(test);
+            }
+        }
+        sb_FOREACHFILE("./", test) {
+            if (sb_cmpext(test, ".c") && sb_cmpext(test, ".h"))
+                continue;
+
+            sb_CMD() {
+                sb_cmd_main("clang-format");
+                sb_cmd_opt("i");
+                sb_cmd_arg(test);
+            }
+        }
+        sb_fence();
+
+        // tests
+        sb_FOREACHFILE("test/", test) {
+            if (sb_cmpext(test, ".c"))
+                continue;
             sb_EXEC() {
                 sb_add_file("src/cutils.c");
                 sb_add_file(test);
@@ -29,10 +74,10 @@ int main(int argc, char *argv[]) {
         }
         sb_fence();
         sb_FOREACHFILE("build/", test) {
-            if (sb_cmpext(test, ".c") == 0) continue;
-            sb_CMD() {
-                sb_cmd_main(test);
-            }
+            if (sb_cmpext(test, ".c") == 0)
+                continue;
+            sb_fence();
+            sb_CMD() { sb_cmd_main(test); }
         }
     }
 }
