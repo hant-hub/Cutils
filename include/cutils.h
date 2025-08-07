@@ -52,6 +52,27 @@ typedef struct Allocator {
 
 extern const Allocator GlobalAllocator;
 
+// stack allocator general
+
+typedef struct StackAllocator {
+    u64 cap;
+    u64 size;
+    char data[];
+} *StackAllocator;
+
+Allocator StackAllocatorCreate(Allocator a, u64 size);
+void StackAllocatorFree(Allocator a, Allocator s);
+
+void StackAllocatorReset(Allocator a);
+
+// stack allocator specific
+
+StackAllocator StackCreate(Allocator a, u64 size);
+void StackDestroy(Allocator a, StackAllocator s);
+
+void *StackAlloc(StackAllocator s, u64 size);
+void StackReset(StackAllocator s);
+
 /*
     Sized Strings
 */
@@ -112,8 +133,13 @@ u64 fileread(SString dst, file src);
 u64 filewrite(file *dst, SString src);
 void fileflush(file *dst);
 
-u64 fileload(SString *handle, const SString filename);
-u64 filesave(const SString filename, SString *handle);
+u64 fileload(SString handle, const SString filename);
+u64 filesave(const SString filename, SString handle);
+
+void filedelete(SString filename);
+
+void setdir(SString dir);
+void setdirExe();
 
 /*
     Custom Format

@@ -1,4 +1,5 @@
 #include <cutils.h>
+#include <linux/limits.h>
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -28,6 +29,83 @@ static alloc_func_def(globalAllocator) {
 const Allocator GlobalAllocator = {
     .a = globalAllocator,
 };
+
+
+static alloc_func_def(stackAllocator) {
+    StackAllocator stack = ctx;
+
+    if (!new) {
+        //pass
+        return NULL;
+    }
+
+    if (!ptr && !old) {
+        // alloc
+        if (stack->size + new > stack->cap) {
+            return NULL; //failure
+        }
+        void* out = &stack->data[stack->size];
+        stack->size += new;
+        return out;
+    }
+
+    if (stack->size + new > stack->cap) {
+        return ptr; //failure
+    }
+    void* out = &stack->data[stack->size];
+    stack->size += new;
+    memcpy(out, ptr, old);
+
+    // realloc
+    return out;
+}
+
+Allocator StackAllocatorCreate(Allocator a, u64 size) {
+
+    StackAllocator s = Alloc(a, sizeof(struct StackAllocator) + size);
+    memset(s, 0, sizeof(struct StackAllocator) + size);
+    s->cap = size;
+
+    return (Allocator){
+        .a = stackAllocator,
+        .ctx = s,
+    };
+}
+
+StackAllocator StackCreate(Allocator a, u64 size) {
+    StackAllocator s = Alloc(a, sizeof(struct StackAllocator) + size);
+    memset(s, 0, sizeof(struct StackAllocator) + size);
+    s->cap = size;
+
+    return s;    
+}
+
+void StackDestroy(Allocator a, StackAllocator s) {
+    Free(a, s, s->cap + sizeof(struct StackAllocator)); 
+}
+
+void StackAllocatorFree(Allocator a, Allocator s) {
+    StackAllocator stack = s.ctx;
+    Free(a, stack, stack->cap + sizeof(struct StackAllocator));
+}
+
+void StackAllocatorReset(Allocator a) {
+    StackAllocator s = a.ctx;
+    s->size = 0;
+}
+
+void* StackAlloc(StackAllocator s, u64 size) {
+    if (s->size + size > s->cap) return NULL;
+    void* out = &s->data[s->size];
+    s->size += size;
+
+    return out;
+}
+
+void StackReset(StackAllocator s) {
+    s->size = 0;
+}
+
 
 /*
     String Implementations
@@ -110,7 +188,7 @@ file fileopen(const SString filename, file_permissions p) {
         // error here
         // TODO(ELI): Once logging is working,
         // make log error and return invalid file
-        debugerr("Filed to Open file: %n", filename);
+        debugerr("Failed to Open file: %s %d", filename, fd);
 
         return (file){.handle = -1};
     }
@@ -212,8 +290,47 @@ void fileflush(file *file) {
     }
 }
 
-u64 fileload(SString *handle, const SString filename);
-u64 filesave(const SString filename, SString *handle);
+u64 fileload(SString handle, const SString filename) {
+    file f = fileopen(filename, FILE_READ);
+    if (f.handle == -1) return 0;
+    u64 size = fileread(handle, f);
+    fileclose(f);
+    return size;
+}
+
+u64 filesave(const SString filename, SString handle) {
+    file f = fileopen(filename, FILE_WRITE | FILE_TRUNC | FILE_CREAT);
+    if (f.handle == -1) return 0;
+    u64 size = filewrite(&f, handle);
+    fileclose(f);
+    return size;
+}
+
+void filedelete(SString filename) {
+    char buf[PATH_MAX + 1] = {0};;
+    sformat((SString){.len = PATH_MAX, .data = (i8*)buf}, "%s", filename);
+    remove(buf);
+}
+
+void setdir(SString dir) {
+    char buf[PATH_MAX + 1] = {0};;
+    sformat((SString){.len = PATH_MAX, .data = (i8*)buf}, "%s", dir);
+    chdir(buf);
+}
+
+void setdirExe() {
+    char tmp[PATH_MAX] = {0};
+    if (readlink("/proc/self/exe", tmp, PATH_MAX) < 0) {
+        debugerr("Error: Failed to find Build Binary");
+        exit(-1);
+    }
+    char *cursor = tmp;
+    while (cursor[0]) cursor++;
+    while (cursor[0] != '/') cursor--;
+    cursor[0] = 0;
+
+    chdir(tmp);
+}
 
 /*
     Custom Format

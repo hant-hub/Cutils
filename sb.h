@@ -337,9 +337,7 @@ char *sb_dir_iter(const char *directory) {
         file = stpcpy(outbuf, directory);
     }
 
-    do {
-        dent = readdir(d);
-    } while (dent && dent->d_type == DT_DIR);
+    do { dent = readdir(d); } while (dent && dent->d_type == DT_DIR);
 
     if (!dent)
         return NULL;
@@ -422,18 +420,15 @@ uint32_t sb_strcmp(const char *s1, const char *s2) { return strcmp(s1, s2); }
 
 char *sb_basename(char *f) {
     char *stripped = f;
-    while (stripped[0])
-        stripped++;
-    while (stripped >= f && stripped[0] != '/')
-        stripped--;
+    while (stripped[0]) stripped++;
+    while (stripped >= f && stripped[0] != '/') stripped--;
     stripped++;
     return stripped;
 }
 
 char *sb_stripext(char *f) {
     char *cursor = f;
-    while (cursor[0] != '.')
-        cursor++;
+    while (cursor[0] != '.') cursor++;
     cursor[0] = 0;
     return f;
 }
@@ -464,12 +459,10 @@ int sb_cmptime(const char *binary, const char *source) {
 
 static uint32_t sb_cmpext(const char *file, const char *ext) {
     const char *end = file;
-    while (end[0])
-        end++;
+    while (end[0]) end++;
     end--;
 
-    while (end > file && end[0] != '.')
-        end--;
+    while (end > file && end[0] != '.') end--;
     if (end <= file)
         return -1; // no extension
 
@@ -614,8 +607,7 @@ void sb_build_end() {
             args[j] = cur;
             sb_printf("%s ", cur);
             // consume
-            while (cur[0])
-                cur++;
+            while (cur[0]) cur++;
             cur++;
         }
         sb_printf("\n");
@@ -969,20 +961,16 @@ static int sb_autodeps(char *binname, char *srcname) {
     char *data = sb_mapfile(f, &size);
 
     char *cursor = data;
-    while (cursor[0] != ':')
-        cursor++;
+    while (cursor[0] != ':') cursor++;
     cursor++;
     while (cursor[0] == ' ') {
-        while (cursor[0] != '\n')
-            cursor++;
+        while (cursor[0] != '\n') cursor++;
         cursor++;
     }
 
     while (cursor - data < size) {
         char *start = cursor;
-        while (cursor - data < size && cursor[0] != '\n') {
-            cursor++;
-        }
+        while (cursor - data < size && cursor[0] != '\n') { cursor++; }
         char src[PATH_MAX] = {0};
         snprintf(src, PATH_MAX, "%.*s", (int)((cursor - 1) - start), start);
         build |= sb_cmptime(binname, src);

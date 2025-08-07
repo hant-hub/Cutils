@@ -1,5 +1,6 @@
 #include <cutils.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 int main() {
     SString test = sstring("bar");
@@ -34,4 +35,6 @@ int main() {
 
     tok = Sstrtok((SString){0}, ' ');
     assert(!tok.data && !tok.len);
+
+    debuglog("String Test Passed");
 }

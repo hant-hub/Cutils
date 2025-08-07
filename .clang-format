@@ -4,3 +4,6 @@ IndentWidth: 4
 BreakBeforeBraces: Custom
 BraceWrapping:
     AfterClass: false
+
+AllowShortLoopsOnASingleLine: true
+AllowShortBlocksOnASingleLine: true
