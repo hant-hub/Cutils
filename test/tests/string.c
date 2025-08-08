@@ -1,3 +1,4 @@
+#define CU_IMPL
 #include <cutils.h>
 #include <stdio.h>
 #include <stdlib.h>

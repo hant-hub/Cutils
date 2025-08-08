@@ -1,11 +1,10 @@
+#define CU_IMPL
 #include <alloca.h>
 #include <cutils.h>
 #include <stdio.h>
 
 int main() {
-    
     setdirExe();
-    
     file t = fileopen(sstring("/proc/self/status"), FILE_READ);
     file out = {
         .handle = 1,
