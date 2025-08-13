@@ -208,8 +208,11 @@ u32 printerr(const char *format, ...);
 #include <assert.h>
 
 #define todo() assert(0)
-
 #define panic() assert(0)
+#define arrAssert(arr1, arr2, size)                                            \
+    do {                                                                       \
+        for (u64 i = 0; i < size; i++) { assert(arr1[i] == arr2[i]); }         \
+    } while (0)
 
 /*
     Math
@@ -250,6 +253,7 @@ v2i v2iMul(v2i a, v2i b);
 v2f v2fMul(v2f a, v2f b);
 v2d v2dMul(v2d a, v2d b);
 
+#define CU_IMPL
 #ifdef CU_IMPL
 
 #include <linux/limits.h>
