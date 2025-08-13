@@ -253,6 +253,8 @@ v2i v2iMul(v2i a, v2i b);
 v2f v2fMul(v2f a, v2f b);
 v2d v2dMul(v2d a, v2d b);
 
+u64 FNVHash64(u8 *data, u64 size);
+u32 FNVHash32(u8 *data, u32 size);
 
 #ifdef CU_IMPL
 
@@ -981,6 +983,24 @@ v2u v2uMul(v2u a, v2u b) { return (v2u){a.x * b.x, a.y * b.y}; }
 v2i v2iMul(v2i a, v2i b) { return (v2i){a.x * b.x, a.y * b.y}; }
 v2f v2fMul(v2f a, v2f b) { return (v2f){a.x * b.x, a.y * b.y}; }
 v2d v2dMul(v2d a, v2d b) { return (v2d){a.x * b.x, a.y * b.y}; }
+
+u64 FNVHash64(u8 *data, u64 size) {
+    u64 hash = 14695981039346656037UL;
+    for (u64 i = 0; i < size; i++) {
+        hash ^= data[i];
+        hash *= 1099511628211UL;
+    }
+    return hash;
+}
+
+u32 FNVHash32(u8 *data, u32 size) {
+    u32 hash = 2166136261UL;
+    for (u32 i = 0; i < size; i++) {
+        hash ^= data[i];
+        hash *= 16777619UL;
+    }
+    return 0;
+}
 
 #endif
 #endif
