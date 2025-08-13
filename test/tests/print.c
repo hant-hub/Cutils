@@ -25,4 +25,6 @@ int main() {
     debuglog("test");
     debugwarn("test");
     debugerr("test");
+
+    debuglog("%d", 0);
 }

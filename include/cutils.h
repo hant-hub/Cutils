@@ -775,6 +775,12 @@ static ptrdiff_t format_arg(formatInfo info, va_list args, const char *format) {
         }
         u64 num = s;
 
+        if (num == 0) {
+            info.f('0', info.ctx);
+            out++;
+            break;
+        }
+
         // calc number of digits
         u32 digits = 0;
         for (u32 i = 0; i < ARRAY_SIZE(power10plus); i++) {
