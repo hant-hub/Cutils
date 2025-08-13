@@ -253,7 +253,6 @@ v2i v2iMul(v2i a, v2i b);
 v2f v2fMul(v2f a, v2f b);
 v2d v2dMul(v2d a, v2d b);
 
-#define CU_IMPL
 #ifdef CU_IMPL
 
 #include <linux/limits.h>

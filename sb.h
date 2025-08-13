@@ -1090,6 +1090,7 @@ void sb_stop_exec() {
 
     if (curr_exe.export_commands) {
         // write out compile_commands file
+        uint8_t file_exists = !!compile_cmds;
         if (!compile_cmds) {
             compile_cmds = sb_open("compile_commands.json", sbf_WRITE,
                                    sbf_CREATE | sbf_TRUNC);
@@ -1101,7 +1102,9 @@ void sb_stop_exec() {
         // source entries
         for (uint32_t i = 0; i < curr_exe.fsize; i++) {
             write_command_entry(&curr_exe.text[curr_exe.files[i]]);
-            sb_fprintf(compile_cmds, ",\n");
+            if (i + 1 < curr_exe.fsize || curr_exe.hsize) {
+                sb_fprintf(compile_cmds, ",\n");
+            }
         }
 
         // header entries

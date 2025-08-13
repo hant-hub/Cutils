@@ -58,12 +58,13 @@ int main(int argc, char *argv[]) {
             if (sb_cmpext(test, ".c"))
                 continue;
             sb_EXEC() {
-                sb_add_file("src/cutils.c");
                 sb_add_file(test);
+                sb_add_header("include/cutils.h");
 
                 sb_add_include_path("include/");
 
                 sb_add_flag("g");
+                sb_add_flag("DCU_IMPL");
                 sb_link_library("m");
 
                 char buf[PATH_MAX + 1] = {0};
@@ -80,12 +81,13 @@ int main(int argc, char *argv[]) {
         }
 
         sb_EXEC() {
-            sb_add_file("src/cutils.c");
             sb_add_file("test/runner.c");
+            sb_add_header("include/cutils.h");
 
             sb_add_include_path("include/");
 
             sb_add_flag("g");
+            sb_add_flag("DCU_IMPL");
             sb_link_library("m");
 
             sb_set_out("runner");
