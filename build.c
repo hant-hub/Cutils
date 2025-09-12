@@ -10,48 +10,50 @@ int main(int argc, char *argv[]) {
         sb_mkdir("build/tests");
         sb_target_dir("build/");
 
-        // formatting
-        sb_FOREACHFILE("./", test) {
-            if (sb_cmpext(test, ".c") && sb_cmpext(test, ".h"))
-                continue;
+        if (sb_check_arg("format")) {
+            // formatting
+            sb_FOREACHFILE("./", test) {
+                if (sb_cmpext(test, ".c") && sb_cmpext(test, ".h"))
+                    continue;
 
-            sb_CMD() {
-                sb_cmd_main("clang-format");
-                sb_cmd_opt("i");
-                sb_cmd_arg(test);
+                sb_CMD() {
+                    sb_cmd_main("clang-format");
+                    sb_cmd_opt("i");
+                    sb_cmd_arg(test);
+                }
             }
-        }
-        sb_FOREACHFILE("test/", test) {
-            if (sb_cmpext(test, ".c") && sb_cmpext(test, ".h"))
-                continue;
+            sb_FOREACHFILE("test/", test) {
+                if (sb_cmpext(test, ".c") && sb_cmpext(test, ".h"))
+                    continue;
 
-            sb_CMD() {
-                sb_cmd_main("clang-format");
-                sb_cmd_opt("i");
-                sb_cmd_arg(test);
+                sb_CMD() {
+                    sb_cmd_main("clang-format");
+                    sb_cmd_opt("i");
+                    sb_cmd_arg(test);
+                }
             }
-        }
-        sb_FOREACHFILE("include/", test) {
-            if (sb_cmpext(test, ".c") && sb_cmpext(test, ".h"))
-                continue;
+            sb_FOREACHFILE("include/", test) {
+                if (sb_cmpext(test, ".c") && sb_cmpext(test, ".h"))
+                    continue;
 
-            sb_CMD() {
-                sb_cmd_main("clang-format");
-                sb_cmd_opt("i");
-                sb_cmd_arg(test);
+                sb_CMD() {
+                    sb_cmd_main("clang-format");
+                    sb_cmd_opt("i");
+                    sb_cmd_arg(test);
+                }
             }
-        }
-        sb_FOREACHFILE("./", test) {
-            if (sb_cmpext(test, ".c") && sb_cmpext(test, ".h"))
-                continue;
+            sb_FOREACHFILE("./", test) {
+                if (sb_cmpext(test, ".c") && sb_cmpext(test, ".h"))
+                    continue;
 
-            sb_CMD() {
-                sb_cmd_main("clang-format");
-                sb_cmd_opt("i");
-                sb_cmd_arg(test);
+                sb_CMD() {
+                    sb_cmd_main("clang-format");
+                    sb_cmd_opt("i");
+                    sb_cmd_arg(test);
+                }
             }
+            sb_fence();
         }
-        sb_fence();
 
         // tests
         sb_FOREACHFILE("test/tests/", test) {
