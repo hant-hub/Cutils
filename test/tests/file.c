@@ -1,4 +1,3 @@
-#define CU_IMPL
 #include <alloca.h>
 #include <cutils.h>
 #include <stdio.h>

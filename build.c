@@ -87,7 +87,6 @@ int main(int argc, char *argv[]) {
             sb_add_include_path("include/");
 
             sb_add_flag("g");
-            sb_add_flag("DCU_IMPL");
             sb_link_library("m");
 
             sb_set_out("runner");

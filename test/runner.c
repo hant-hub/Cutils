@@ -28,6 +28,9 @@ void runtest(const char *name, int verbose) {
         dup2(fd, STDERR_FILENO);
     }
 
+    // Using valgrind instead of ASAN because ASAN fails to detect certain
+    // leaks when just allocating memory but not necessarily touching all of
+    // it
     execlp("valgrind", "valgrind", "--leak-check=full", "--error-exitcode=69",
            "--", name, NULL);
 
