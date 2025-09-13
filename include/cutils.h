@@ -997,7 +997,7 @@ u32 FNVHash32(u8 *data, u32 size) {
         hash ^= data[i];
         hash *= 16777619UL;
     }
-    return 0;
+    return hash;
 }
 
 #endif
