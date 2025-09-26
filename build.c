@@ -102,7 +102,11 @@ int main(int argc, char *argv[]) {
         sb_target_dir("build/");
         sb_CMD() { sb_cmd_main("clear"); }
         sb_fence();
-        sb_CMD() { sb_cmd_main("build/runner"); }
+        sb_CMD() { 
+            sb_cmd_main("build/runner"); 
+            if (sb_check_arg("v"))
+                sb_cmd_arg("v");
+        }
         sb_build_end();
     }
 }

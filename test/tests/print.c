@@ -14,8 +14,8 @@ int main() {
         &(file){
             .handle = 1,
         },
-        "fformat: hit \"%s\" \"%n\" \"%d\", \"%f\"\n", sstring("bam"), "slam",
-        1005432100, 0.02124);
+        "fformat: hit \"%s\" \"%n\" \"%d\", \"%f\" \"%c\" \"%x\" \"%u\"\n", sstring("bam"), "slam",
+        1005432100, 0.02124, 'a', &buf, -1);
 
     printlog("test: log\n");
     printwarn("test: warn\n");

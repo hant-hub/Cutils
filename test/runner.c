@@ -31,7 +31,7 @@ void runtest(const char *name, int verbose) {
     // Using valgrind instead of ASAN because ASAN fails to detect certain
     // leaks when just allocating memory but not necessarily touching all of
     // it
-    execlp("valgrind", "valgrind", "--leak-check=full", "--error-exitcode=69",
+    execlp("valgrind", "valgrind", "--quiet", "--leak-check=full", "--error-exitcode=69",
            "--", name, NULL);
 
     printf("failed to find file\n");
