@@ -6,6 +6,10 @@
 #define PAGE_SIZE (1 << 12)
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
 
+#define KB(x) (x << 10)
+#define MB(x) (KB(x) << 10)
+#define GB(x) (MB(x) << 10)
+
 /*
     Helpful typedefs
 */
