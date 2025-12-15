@@ -10,6 +10,10 @@
 #define MB(x) (KB(x) << 10)
 #define GB(x) (MB(x) << 10)
 
+#define MIN(x, y) (x < y ? x : y)
+#define MAX(x, y) (x > y ? x : y)
+#define CLAMP(min, max, t) (MAX(MIN(max, t), min))
+
 /*
     Helpful typedefs
 */
