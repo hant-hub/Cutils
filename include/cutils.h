@@ -719,6 +719,13 @@ static void format_float(formatInfo info, f64 num) {
         num *= -1;
     }
 
+    if (num == 0) {
+        info.f('0', info.ctx);
+        info.f('.', info.ctx);
+        info.f('0', info.ctx);
+        return;
+    }
+
     f64 ten = 1.0;
     i32 exp = 1;
     v2d mid, inhi, inlo;

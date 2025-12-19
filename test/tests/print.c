@@ -21,6 +21,8 @@ int main() {
     printwarn("test: warn\n");
     printerr("test: err\n");
 
+    printlog("test: %f\n", 0.0);
+
     debuglog("test");
     debugwarn("test");
     debugerr("test");
