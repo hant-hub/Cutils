@@ -61,7 +61,9 @@ typedef struct Allocator {
 
 #define Realloc(mem, ptr, old, new) mem.a(mem.ctx, ptr, old, new)
 
+#ifndef CU_IMPL
 extern const Allocator GlobalAllocator;
+#endif
 
 // stack allocator general
 
