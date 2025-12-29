@@ -109,6 +109,19 @@ SString Sstrtok(SString str, const char delim);
 #define sstring(x)                                                             \
     (SString) { sizeof(x) - 1, (i8 *)x }
 
+//helpers
+#define isAlpha(c) \
+    (((c | 32) - 'a') < 26u)
+
+#define isNum(c) \
+    ((c - '0') <= 9u)
+
+#define isAlNum(c) \
+    (isAlpha(c) || isNum(c))
+
+#define isSpace(c) \
+    (c == ' ' || (c >= '\t' && c <= '\r'))
+
 /*
     FILE Handling
 */
