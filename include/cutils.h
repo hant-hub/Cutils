@@ -65,25 +65,51 @@ typedef struct Allocator {
 extern const Allocator GlobalAllocator;
 #endif
 
-// stack allocator general
+//dynamic arena
+typedef struct ArenaAllocator {
+    struct ArenaAllocator* prev;
+    Allocator a;
+    u64 offset; // used when growing dynamically
+    u64 cap;
+    u64 size;
+    char data[];
+} *ArenaAllocator;
 
+ArenaAllocator ArenaCreate(Allocator a, u64 size, bool8 dynamic);
+
+u64 ArenaGetPos(ArenaAllocator a);
+void ArenaSetPos(ArenaAllocator* a, u64 pos);
+
+void* ArenaAlloc(ArenaAllocator* a, u64 size);
+void* ArenaAllocZero(ArenaAllocator* a, u64 size);
+
+void ArenaPop(ArenaAllocator* a, u64 size);
+void ArenaClear(ArenaAllocator* a);
+
+void ArenaDestroy(ArenaAllocator s);
+
+//Scratch Arena
+typedef struct ScratchArena {
+    ArenaAllocator arena;
+    u64 base;
+} ScratchArena;
+
+ScratchArena ScratchArenaGet();
+ScratchArena ScratchArenaBegin(ArenaAllocator a);
+void ScratchArenaEnd(ScratchArena s);
+
+//fixed size arena
 typedef struct StackAllocator {
     u64 cap;
     u64 size;
     char data[];
 } *StackAllocator;
 
-Allocator StackAllocatorCreate(Allocator a, u64 size);
-void StackAllocatorFree(Allocator a, Allocator s);
-
-void StackAllocatorReset(Allocator a);
-
-// stack allocator specific
-
 StackAllocator StackCreate(Allocator a, u64 size);
 void StackDestroy(Allocator a, StackAllocator s);
 
 void *StackAlloc(StackAllocator s, u64 size);
+void StackSet(StackAllocator s, u64 pos);
 void StackReset(StackAllocator s);
 
 /*
@@ -330,47 +356,7 @@ const Allocator GlobalAllocator = {
     .a = globalAllocator,
 };
 
-static alloc_func_def(stackAllocator) {
-    StackAllocator stack = ctx;
-
-    if (!new) {
-        // pass
-        return NULL;
-    }
-
-    if (!ptr && !old) {
-        // alloc
-        if (stack->size + new > stack->cap) {
-            return NULL; // failure
-        }
-        void *out = &stack->data[stack->size];
-        stack->size += new;
-        return out;
-    }
-
-    if (stack->size + new > stack->cap) {
-        return ptr; // failure
-    }
-    void *out = &stack->data[stack->size];
-    stack->size += new;
-    memcpy(out, ptr, old);
-
-    // realloc
-    return out;
-}
-
-Allocator StackAllocatorCreate(Allocator a, u64 size) {
-
-    StackAllocator s = Alloc(a, sizeof(struct StackAllocator) + size);
-    memset(s, 0, sizeof(struct StackAllocator) + size);
-    s->cap = size;
-
-    return (Allocator){
-        .a = stackAllocator,
-        .ctx = s,
-    };
-}
-
+// Stack Allocator
 StackAllocator StackCreate(Allocator a, u64 size) {
     StackAllocator s = Alloc(a, sizeof(struct StackAllocator) + size);
     memset(s, 0, sizeof(struct StackAllocator) + size);
@@ -383,16 +369,6 @@ void StackDestroy(Allocator a, StackAllocator s) {
     Free(a, s, s->cap + sizeof(struct StackAllocator));
 }
 
-void StackAllocatorFree(Allocator a, Allocator s) {
-    StackAllocator stack = s.ctx;
-    Free(a, stack, stack->cap + sizeof(struct StackAllocator));
-}
-
-void StackAllocatorReset(Allocator a) {
-    StackAllocator s = a.ctx;
-    s->size = 0;
-}
-
 void *StackAlloc(StackAllocator s, u64 size) {
     if (s->size + size > s->cap)
         return NULL;
@@ -402,7 +378,127 @@ void *StackAlloc(StackAllocator s, u64 size) {
     return out;
 }
 
+void StackSet(StackAllocator s, u64 pos) {
+    if (pos > s->cap) return;
+    s->size = pos;
+}
+
 void StackReset(StackAllocator s) { s->size = 0; }
+
+
+//Dynamic Arena Allocator
+ArenaAllocator ArenaCreate(Allocator a, u64 size, bool8 dynamic) {
+    ArenaAllocator arena = Alloc(a, size + sizeof(struct ArenaAllocator));
+    
+    //use prev pointer to store whether to dynamically grow
+    *arena = (struct ArenaAllocator){
+        .a = a,
+        .prev = dynamic != TRUE ? ((void*)(-1)) : NULL,
+        .cap = size,
+        .offset = 0,
+        .size = 0,
+    };
+
+    return arena;
+}
+
+u64 ArenaGetPos(ArenaAllocator a) {
+    return a->offset + a->size;
+}
+
+
+void* ArenaAlloc(ArenaAllocator* arena, u64 size) {
+    ArenaAllocator a = *arena;
+    if (size + a->size > (a->cap)) {
+        if (a->prev == ((void*)(-1)))
+            return NULL;
+
+        //grow
+        u64 newsize = a->cap;
+        while (newsize <= size) newsize *= 2;
+        ArenaAllocator new = ArenaCreate(a->a, newsize, TRUE);
+        new->prev = a;
+        new->offset = a->cap + a->offset;
+        a = new;
+        *arena = a;
+    }
+
+    void* p = &a->data[a->size];
+    a->size += size;
+    return p;
+}
+
+void* ArenaAllocZero(ArenaAllocator* a, u64 size) {
+    void* p = ArenaAlloc(a, size);
+    if (p) memset(p, 0, size);
+    return p;
+}
+
+void ArenaPop(ArenaAllocator* arena, u64 size) {
+    ArenaAllocator a = *arena;
+    while (a->offset && size > a->cap) {
+        ArenaAllocator next = a->prev;
+        size -= a->cap;
+        Free(a->a, a, a->cap + sizeof(struct ArenaAllocator)); 
+        a = next;
+    }
+    *arena = a;
+
+    if (size > a->size) {
+        a->size = 0;
+    } else {
+        a->size -= size;
+    }
+}
+
+void ArenaSetPos(ArenaAllocator* a, u64 pos) {
+    u64 diff =  ((*a)->offset + (*a)->size) - pos;
+    ArenaPop(a, diff);
+}
+
+void ArenaClear(ArenaAllocator* a) {
+    u64 size = (*a)->cap;
+    Allocator mem = (*a)->a;
+    bool8 dynamic = (*a)->prev == (void*)-1;
+    ArenaDestroy(*a);
+    *a = ArenaCreate(mem, size, dynamic);
+}
+
+void ArenaDestroy(ArenaAllocator s) {
+    ArenaAllocator curr = s;
+    ArenaAllocator next = NULL;
+    do {
+        next = curr->prev;
+        Free(curr->a, curr, curr->cap + sizeof(struct ArenaAllocator));
+        curr = next;
+    } while (next && next != (void*)(-1));
+}
+
+ScratchArena ScratchArenaBegin(ArenaAllocator a) {
+    return (ScratchArena) {
+        .arena = a,
+        .base = ArenaGetPos(a)
+    };
+}
+
+void ScratchArenaEnd(ScratchArena s) {
+    ArenaSetPos(&s.arena, s.base);
+}
+
+//Should never live longer than a single
+//function call.
+ScratchArena ScratchArenaGet(ArenaAllocator persist) {
+    static __thread ArenaAllocator a = 0;
+    static __thread ArenaAllocator b = 0;
+    if (!a) a = ArenaCreate(GlobalAllocator, MB(10), TRUE);
+    if (!b) b = ArenaCreate(GlobalAllocator, KB(2), TRUE);
+    
+    if (persist == a) {
+        return ScratchArenaBegin(b);
+    }
+    return ScratchArenaBegin(a);
+}
+
 
 /*
     String Implementations
