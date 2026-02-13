@@ -1,7 +1,7 @@
 #include <cutils.h>
 
 int main() {
-    ArenaAllocator a = ArenaCreate(GlobalAllocator, 10 * sizeof(int), TRUE);
+    ArenaAllocator a = ArenaCreate(GlobalAllocator, 40 * sizeof(int));
 
     int* ints1 = ArenaAlloc(&a, 10 * sizeof(int));
     for (u32 i = 0; i < 10; i++) {
@@ -49,6 +49,17 @@ int main() {
     for (u32 i = 0; i < 10; i++) {
         assert(chars[i] == i);
     }
+
+    ArenaExtendLast(&sc.arena, 10);
+
+    for (u32 i = 10; i < 20; i++) {
+        chars[i] = i;
+    }
+
+    for (u32 i = 0; i < 20; i++) {
+        assert(chars[i] == i);
+    }
+
 
     ScratchArenaEnd(sc);
 }

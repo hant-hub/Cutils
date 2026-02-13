@@ -1,6 +1,8 @@
 
 ## TODO List:
-- [ ] Reserve approach to Scratch allocators
+- [ ] String Builder
+    - [ ] Scratch Builder
+- [X] Reserve approach to Scratch allocators
     - [ ] mmap
     - [ ] perf testing
     - [ ] string building
