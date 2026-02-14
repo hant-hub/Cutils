@@ -65,7 +65,7 @@ typedef struct Allocator {
 extern const Allocator GlobalAllocator;
 #endif
 
-//dynamic arena
+// dynamic arena
 typedef struct ArenaAllocator {
     Allocator a;
     u64 cap;
@@ -76,18 +76,18 @@ typedef struct ArenaAllocator {
 ArenaAllocator ArenaCreate(Allocator a, u64 size);
 
 u64 ArenaGetPos(ArenaAllocator a);
-void ArenaSetPos(ArenaAllocator* a, u64 pos);
+void ArenaSetPos(ArenaAllocator *a, u64 pos);
 
-void* ArenaAlloc(ArenaAllocator* a, u64 size);
-void ArenaExtendLast(ArenaAllocator* a, u64 size);
-void* ArenaAllocZero(ArenaAllocator* a, u64 size);
+void *ArenaAlloc(ArenaAllocator *a, u64 size);
+void ArenaExtendLast(ArenaAllocator *a, u64 size);
+void *ArenaAllocZero(ArenaAllocator *a, u64 size);
 
-void ArenaPop(ArenaAllocator* a, u64 size);
-void ArenaClear(ArenaAllocator* a);
+void ArenaPop(ArenaAllocator *a, u64 size);
+void ArenaClear(ArenaAllocator *a);
 
 void ArenaDestroy(ArenaAllocator s);
 
-//Scratch Arena
+// Scratch Arena
 typedef struct ScratchArena {
     ArenaAllocator arena;
     u64 base;
@@ -97,7 +97,7 @@ ScratchArena ScratchArenaGet(ArenaAllocator persist);
 ScratchArena ScratchArenaBegin(ArenaAllocator a);
 void ScratchArenaEnd(ScratchArena s);
 
-//fixed size arena
+// fixed size arena
 typedef struct StackAllocator {
     u64 cap;
     u64 size;
@@ -136,18 +136,17 @@ SString Sstrtok(SString str, const char delim);
 #define sstring(x)                                                             \
     (SString) { sizeof(x) - 1, (i8 *)x }
 
-//helpers
-#define isAlpha(c) \
-    (((c | 32) - 'a') < 26u)
+#define sstringify(data, len)                                                  \
+    (SString) { len, data }
 
-#define isNum(c) \
-    ((c - '0') <= 9u)
+// helpers
+#define isAlpha(c) (((c | 32) - 'a') < 26u)
 
-#define isAlNum(c) \
-    (isAlpha(c) || isNum(c))
+#define isNum(c) ((c - '0') <= 9u)
 
-#define isSpace(c) \
-    (c == ' ' || (c >= '\t' && c <= '\r'))
+#define isAlNum(c) (isAlpha(c) || isNum(c))
+
+#define isSpace(c) (c == ' ' || (c >= '\t' && c <= '\r'))
 
 /*
     FILE Handling
@@ -198,7 +197,7 @@ void setdirExe();
 
 /*
 Format Table:
-    
+
     %u -> int (unsigned)
 
     %d -> int (decimal)
@@ -220,7 +219,7 @@ u32 sformat(SString dst, const char *format, ...);
 
 /*
 Format Table:
-    
+
     %u -> int (unsigned)
 
     %d -> int (decimal)
@@ -378,18 +377,18 @@ void *StackAlloc(StackAllocator s, u64 size) {
 }
 
 void StackSet(StackAllocator s, u64 pos) {
-    if (pos > s->cap) return;
+    if (pos > s->cap)
+        return;
     s->size = pos;
 }
 
 void StackReset(StackAllocator s) { s->size = 0; }
 
-
-//Dynamic Arena Allocator
+// Dynamic Arena Allocator
 ArenaAllocator ArenaCreate(Allocator a, u64 size) {
     ArenaAllocator arena = Alloc(a, size + sizeof(struct ArenaAllocator));
-    
-    //use prev pointer to store whether to dynamically grow
+
+    // use prev pointer to store whether to dynamically grow
     *arena = (struct ArenaAllocator){
         .a = a,
         .cap = size,
@@ -399,23 +398,20 @@ ArenaAllocator ArenaCreate(Allocator a, u64 size) {
     return arena;
 }
 
-u64 ArenaGetPos(ArenaAllocator a) {
-    return a->size;
-}
+u64 ArenaGetPos(ArenaAllocator a) { return a->size; }
 
-
-void* ArenaAlloc(ArenaAllocator* arena, u64 size) {
+void *ArenaAlloc(ArenaAllocator *arena, u64 size) {
     ArenaAllocator a = *arena;
     if (size + a->size > (a->cap)) {
         return NULL;
     }
 
-    void* p = &a->data[a->size];
+    void *p = &a->data[a->size];
     a->size += size;
     return p;
 }
 
-void ArenaExtendLast(ArenaAllocator* arena, u64 size) {
+void ArenaExtendLast(ArenaAllocator *arena, u64 size) {
     ArenaAllocator a = *arena;
     if (size + a->size > (a->cap)) {
         return;
@@ -423,13 +419,14 @@ void ArenaExtendLast(ArenaAllocator* arena, u64 size) {
     a->size += size;
 }
 
-void* ArenaAllocZero(ArenaAllocator* a, u64 size) {
-    void* p = ArenaAlloc(a, size);
-    if (p) memset(p, 0, size);
+void *ArenaAllocZero(ArenaAllocator *a, u64 size) {
+    void *p = ArenaAlloc(a, size);
+    if (p)
+        memset(p, 0, size);
     return p;
 }
 
-void ArenaPop(ArenaAllocator* arena, u64 size) {
+void ArenaPop(ArenaAllocator *arena, u64 size) {
     ArenaAllocator a = *arena;
     if (size > a->size) {
         a->size = 0;
@@ -438,12 +435,12 @@ void ArenaPop(ArenaAllocator* arena, u64 size) {
     }
 }
 
-void ArenaSetPos(ArenaAllocator* a, u64 pos) {
-    u64 diff =  (*a)->size - pos;
+void ArenaSetPos(ArenaAllocator *a, u64 pos) {
+    u64 diff = (*a)->size - pos;
     ArenaPop(a, diff);
 }
 
-void ArenaClear(ArenaAllocator* a) {
+void ArenaClear(ArenaAllocator *a) {
     u64 size = (*a)->cap;
     Allocator mem = (*a)->a;
     (*a)->size = 0;
@@ -454,30 +451,26 @@ void ArenaDestroy(ArenaAllocator s) {
 }
 
 ScratchArena ScratchArenaBegin(ArenaAllocator a) {
-    return (ScratchArena) {
-        .arena = a,
-        .base = ArenaGetPos(a)
-    };
+    return (ScratchArena){.arena = a, .base = ArenaGetPos(a)};
 }
 
-void ScratchArenaEnd(ScratchArena s) {
-    ArenaSetPos(&s.arena, s.base);
-}
+void ScratchArenaEnd(ScratchArena s) { ArenaSetPos(&s.arena, s.base); }
 
-//Should never live longer than a single
-//function call.
+// Should never live longer than a single
+// function call.
 ScratchArena ScratchArenaGet(ArenaAllocator persist) {
     static __thread ArenaAllocator a = 0;
     static __thread ArenaAllocator b = 0;
-    if (!a) a = ArenaCreate(GlobalAllocator, MB(4L));
-    if (!b) b = ArenaCreate(GlobalAllocator, MB(4L));
-    
+    if (!a)
+        a = ArenaCreate(GlobalAllocator, MB(4L));
+    if (!b)
+        b = ArenaCreate(GlobalAllocator, MB(4L));
+
     if (persist == a) {
         return ScratchArenaBegin(b);
     }
     return ScratchArenaBegin(a);
 }
-
 
 /*
     String Implementations
