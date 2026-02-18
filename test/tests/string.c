@@ -1,6 +1,4 @@
-#include <cutils.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <core/cutils.h>
 
 int main() {
     SString test = sstring("bar");
