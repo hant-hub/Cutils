@@ -46,7 +46,7 @@ u32 printheader(char *name, int verbose) {
         return 0;
     }
 
-    return printf("- %s...", name);
+    return printf("\t- %s...", name);
 }
 
 void printstatus(u32 shift, int verbose) {
@@ -79,6 +79,31 @@ void printstatus(u32 shift, int verbose) {
     printf("\033[38;2;0;255;0m Passed\033[0m\n");
 }
 
+void runGroup(char* path, char* name, int verbose) {
+    DIR *d = opendir(path);
+    struct dirent *dir = NULL;
+
+    int len = strlen(name);
+    len += 4;
+
+    printf("\t\t+%.*s+\n", len, "---------------------------");
+    printf("\t\t|  %s  |\n", name);
+    printf("\t\t+%.*s+\n", len, "---------------------------");
+
+    do {
+        dir = readdir(d);
+        if (dir && dir->d_type != DT_DIR) {
+            char buf[PATH_MAX + 1] = {0};
+
+            u32 shift = printheader(dir->d_name, verbose);
+
+            snprintf(buf, PATH_MAX, "%s/%s", path, dir->d_name);
+            runtest(buf, verbose);
+            printstatus(shift, verbose);
+        }
+    } while (dir);
+}
+
 int main(int argc, char *argv[]) {
 
     char tmp[PATH_MAX] = {0};
@@ -102,19 +127,18 @@ int main(int argc, char *argv[]) {
     }
 
     printf("   +=================+\n"
-           "   |  Utility Tests  |\n"
+           "   |    Test Suite   |\n"
            "   +=================+\n");
 
     do {
         dir = readdir(d);
-        if (dir && dir->d_type != DT_DIR) {
+        if (dir && dir->d_type == DT_DIR) {
+            if (strcmp(dir->d_name, ".") == 0) continue;            
+            if (strcmp(dir->d_name, "..") == 0) continue;            
+
             char buf[PATH_MAX + 1] = {0};
-
-            u32 shift = printheader(dir->d_name, verbose);
-
             snprintf(buf, PATH_MAX, "./tests/%s", dir->d_name);
-            runtest(buf, verbose);
-            printstatus(shift, verbose);
+            runGroup(buf, dir->d_name, verbose);
         }
     } while (dir);
 }

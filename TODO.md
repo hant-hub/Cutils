@@ -16,14 +16,11 @@
 
 ### Centralization
 - [ ] Improve Cutils Tooling
-    - [ ] Grouped Test Runner
+    - [X] Grouped Test Runner
     - [ ] Better Test Runner
-- [ ] Investigate Merging SimpleDS into Cutils
+- [X] Investigate Merging SimpleDS into Cutils
     - [X] ds.h include
-    - [ ] Tests
-- [ ] Merge SimpleBuild into Cutils
-    - [ ] Include file
-    - [ ] Tests
+    - [X] Tests
 - [ ] Investigate Merging StringBase into Cutils
     - [ ] Fix StrBase
     - [ ] Add into header?

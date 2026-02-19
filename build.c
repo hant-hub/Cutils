@@ -56,29 +56,41 @@ int main(int argc, char *argv[]) {
         }
 
         // tests
-        sb_FOREACHFILE("test/tests/", test) {
-            if (sb_cmpext(test, ".c"))
-                continue;
-            sb_EXEC() {
-                sb_add_file(test);
-                sb_add_header("include/cutils.h");
+        char* grouplist[] = {
+            "tests/core",
+            "tests/simpleds",
+        };
+        for (int gid = 0; gid < (sizeof(grouplist)/sizeof(grouplist[0])); gid++) {
+            char buf[PATH_MAX + 1] = {0};
+            snprintf(buf, PATH_MAX, "build/%s", grouplist[gid]);
+            sb_mkdir(buf);
+            snprintf(buf, PATH_MAX, "test/%s/", grouplist[gid]);
 
-                sb_add_include_path("include/");
+            sb_FOREACHFILE(buf, test) {
+                if (sb_cmpext(test, ".c"))
+                    continue;
+                sb_EXEC() {
+                    sb_add_file(test);
+                    sb_add_header("include/cutils.h");
 
-                sb_add_flag("g");
-                sb_add_flag("DCU_IMPL");
-                sb_link_library("m");
+                    sb_add_include_path("include/");
 
-                char buf[PATH_MAX + 1] = {0};
-                char final[PATH_MAX + 1] = {0};
-                strncpy(buf, test, PATH_MAX);
+                    sb_add_flag("g");
+                    sb_add_flag("DCU_IMPL");
+                    sb_link_library("m");
 
-                char *name = sb_stripext(sb_basename(buf));
-                snprintf(final, PATH_MAX, "tests/%s", name);
+                    char buf[PATH_MAX + 1] = {0};
+                    char final[PATH_MAX + 1] = {0};
+                    strncpy(buf, test, PATH_MAX);
 
-                sb_set_out(final);
+                    char *name = sb_stripext(sb_basename(buf));
+                    snprintf(final, PATH_MAX, "%s/%s", grouplist[gid], name);
+                    printf("test: %d %s\n", gid, final);
 
-                sb_export_command();
+                    sb_set_out(final);
+
+                    sb_export_command();
+                }
             }
         }
 
