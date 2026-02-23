@@ -59,6 +59,7 @@ int main(int argc, char *argv[]) {
         char* grouplist[] = {
             "tests/core",
             "tests/simpleds",
+            "tests/strbase",
         };
         for (int gid = 0; gid < (sizeof(grouplist)/sizeof(grouplist[0])); gid++) {
             char buf[PATH_MAX + 1] = {0};
