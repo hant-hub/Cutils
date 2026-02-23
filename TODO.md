@@ -8,7 +8,7 @@
         - [ ] Arena usage
 
 ### Cutils String Handling
-- [ ] Merge StrBase
+- [X] Merge StrBase
 - [ ] Scratch Allocator Based funcs
 - [ ] More print options
     - [ ] debuglog -> no line nums
@@ -21,9 +21,9 @@
 - [X] Investigate Merging SimpleDS into Cutils
     - [X] ds.h include
     - [X] Tests
-- [ ] Investigate Merging StringBase into Cutils
-    - [ ] Fix StrBase
-    - [ ] Add into header?
+- [X] Investigate Merging StringBase into Cutils
+    - [X] Fix StrBase
+    - [X] Add into header?
 
 ### Re-Architecting
 - [ ] Consider Switching to Static Library
