@@ -48,8 +48,9 @@
                                                                                \
         if (array.size < newsize) {                                            \
             char *d = (char *)&array.data[array.size];                         \
-            u32 len = (newsize - array.size) * sizeof(array.data[0]);          \
-            for (u32 i = 0; i < len; i++) d[i] = 0;                            \
+            for (u32 i = 0;                                                    \
+                 i < (newsize - array.size) * sizeof(array.data[0]); i++)      \
+                d[i] = 0;                                                      \
         }                                                                      \
         array.size = newsize;                                                  \
     } while (0);
@@ -73,7 +74,7 @@
 
 #define dynDel(array, idx)                                                     \
     do {                                                                       \
-        for (u32 i = idx; i < array.size - 1; i++) {                            \
+        for (u32 i = idx; i < array.size - 1; i++) {                           \
             array.data[i] = array.data[i + 1];                                 \
         }                                                                      \
         dynResize(array, array.size - 1);                                      \
