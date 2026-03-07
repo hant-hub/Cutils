@@ -1,0 +1,2 @@
+CompileFlags:
+  Add: [-DSTRBASE_IMPL]
