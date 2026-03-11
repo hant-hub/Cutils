@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <string.h>
 
 char *sb_stripext(char *f) {
     char *cursor = f;
@@ -124,6 +125,13 @@ int main(int argc, char *argv[]) {
     int verbose = 0;
     if (argc > 1) {
         verbose = 1;
+    }
+
+    if (argc > 2) {
+        chdir("tests");
+        runtest(argv[2], verbose);
+        printstatus(0, verbose);
+        return 0;
     }
 
     printf("   +=================+\n"

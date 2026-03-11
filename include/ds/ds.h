@@ -1,5 +1,6 @@
 #ifndef DS_H
 #include <core/cutils.h>
+#include <string.h>
 
 /*
     Inline Dynamic Arrays

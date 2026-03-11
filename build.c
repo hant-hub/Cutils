@@ -1,9 +1,18 @@
-#include <stdio.h>
 #define SB_IMPL
 #include "sb.h"
-#include <linux/limits.h>
+
+#define OPTS \
+    X(t, string)
+
+#include "sa.h"
 
 int main(int argc, char *argv[]) {
+    SA options = Parse(argc, argv);
+    if (options.err) exit(-1);
+    SAvals opts = options.vals;
+
+    printf("Opts: T = %s\n", opts.t.val);
+
     sb_BUILD(argc, argv) {
         sb_chdir_exe();
         sb_mkdir("build/");
@@ -55,11 +64,29 @@ int main(int argc, char *argv[]) {
             sb_fence();
         }
 
+        //build Static Impl
+        sb_EXEC() {
+            sb_add_flag("c");
+            sb_add_include_path("include/");
+            sb_add_file("src/cutils.c");
+
+            sb_set_out("cutils.o");
+        }
+        sb_fence();
+        sb_CMD() {
+            sb_cmd_main("ar");
+            sb_cmd_arg("rcs");
+            sb_cmd_arg("build/cutils.a");
+            sb_cmd_arg("build/cutils.o");
+        }
+        sb_fence();
+
         // tests
         char* grouplist[] = {
             "tests/core",
             "tests/simpleds",
             "tests/strbase",
+            "tests/ga",
         };
         for (int gid = 0; gid < (sizeof(grouplist)/sizeof(grouplist[0])); gid++) {
             char buf[PATH_MAX + 1] = {0};
@@ -72,6 +99,7 @@ int main(int argc, char *argv[]) {
                     continue;
                 sb_EXEC() {
                     sb_add_file(test);
+                    sb_add_file("build/cutils.a");
                     sb_add_header("include/cutils.h");
 
                     sb_add_include_path("include/");
@@ -100,6 +128,7 @@ int main(int argc, char *argv[]) {
             sb_add_header("include/cutils.h");
 
             sb_add_include_path("include/");
+            sb_add_file("build/cutils.a");
 
             sb_add_flag("g");
             sb_link_library("m");
@@ -117,8 +146,14 @@ int main(int argc, char *argv[]) {
         sb_fence();
         sb_CMD() { 
             sb_cmd_main("build/runner"); 
-            if (sb_check_arg("v"))
+
+            if (sb_check_arg("v") || opts.t.set) {
                 sb_cmd_arg("v");
+            }
+
+            if (opts.t.set) {
+                sb_cmd_arg(opts.t.val);
+            }
         }
         sb_build_end();
     }

@@ -1,14 +1,45 @@
 ## TODO List:
 
+
+
+### Cutils Math Module
+- [ ] Types
+    - [ ] Objects
+        - [ ] Point
+        - [ ] Line
+        - [ ] Plane
+        - [ ] Direction
+    - [ ] Actions
+        - [ ] rotors (rotation)
+        - [ ] translators (translation)
+        - [ ] motors (translation + rotation)
+        - [ ] Plane (reflection)
+- [ ] Functions
+    - [ ] Geometric
+        - [ ] Addition
+        - [ ] Subtraction
+        - [ ] Uniform Scaling
+        - [ ] Geometric Product
+        - [ ] Exterior Product
+        - [ ] Regressive Product
+        - [ ] Symmetric Inner Product
+        - [ ] Project
+    - [ ] Scalar
+        - [ ] log
+        - [ ] project
+        - [ ] exp
+- [ ] Non GA types
+    - [ ] Matricies
+    - [ ] Vectors
+
+
+
 ### Cutils Array Slices
 - [X] Array Slice
 
 ### Scratch Allocators
 - [X] Reserve approach to Scratch allocators
     - [X] mmap
-    - [ ] perf testing
-    - [ ] string building
-        - [ ] Arena usage
 
 ### Cutils File Improvements
 - [X] Iter Directory
@@ -21,16 +52,18 @@
             - [X] Path Depth
 
 ### SimpleDS
+- [ ] Rewrite To Void*
+    - [ ] rework api
+        - [ ] stb style
+        - [ ] struct with v pointer
+        - [ ] macros for get and void*
+    - [ ] dyn Array
 - [ ] Sparse Set
 - [ ] Bin Tree
 - [ ] Trie?
 
 ### Cutils String Handling
 - [X] Merge StrBase
-- [ ] Scratch Allocator Based funcs
-- [ ] More print options
-    - [ ] debuglog -> no line nums
-    - [ ] strarray format -> array of formats
 
 ### Centralization
 - [X] Improve Cutils Tooling
@@ -48,7 +81,7 @@
     - [ ] Better Error handling
 
 ### Re-Architecting
-- [ ] Consider Switching to Static Library
-    - [ ] Make lightweight version for scripting?
-    - [ ] Split into scripts and utilities
-    - [ ] merge simple engine rendering code?
+- [X] Switch to Static Library
+    - [X] cutils
+    - [X] SimpleDS
+    - [X] StringBase
