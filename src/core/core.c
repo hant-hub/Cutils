@@ -540,15 +540,24 @@ static f64 fpprev(f64 x) {
     return bits.f;
 }
 
+#include <float.h>
+
 // Based on the implementation of the Errol0
 // algorithm provided by the original paper.
 static void format_float(formatInfo info, f64 num) {
     if (num < 0) {
         info.f('-', info.ctx);
-        num *= -1;
+        num *= -1.0;
     }
 
-    if (num == 0) {
+    if (num >= FLT_MAX) {
+        info.f('i', info.ctx);
+        info.f('n', info.ctx);
+        info.f('f', info.ctx);
+        return;
+    }
+
+    if (num == 0.0) {
         info.f('0', info.ctx);
         info.f('.', info.ctx);
         info.f('0', info.ctx);

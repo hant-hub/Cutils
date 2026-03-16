@@ -14,6 +14,8 @@
 #define MAX(x, y) (x > y ? x : y)
 #define CLAMP(min, max, t) (MAX(MIN(max, t), min))
 
+#define CUTILS_INLINE __inline __attribute__((always_inline))
+
 /*
     Helpful typedefs
 */

@@ -70,6 +70,9 @@ int main(int argc, char *argv[]) {
             sb_add_include_path("include/");
             sb_add_file("src/cutils.c");
 
+            sb_add_flag("g");
+            sb_link_library("m");
+
             sb_set_out("cutils.o");
         }
         sb_fence();
@@ -81,12 +84,20 @@ int main(int argc, char *argv[]) {
         }
         sb_fence();
 
+        sb_CMD() {
+            sb_cmd_main("cp");
+            sb_cmd_opt("r");
+            sb_cmd_arg("resources");
+            sb_cmd_arg("build/resources");
+        }
+        sb_fence();
         // tests
         char* grouplist[] = {
             "tests/core",
             "tests/simpleds",
             "tests/strbase",
             "tests/ga",
+            "tests/cgen",
         };
         for (int gid = 0; gid < (sizeof(grouplist)/sizeof(grouplist[0])); gid++) {
             char buf[PATH_MAX + 1] = {0};

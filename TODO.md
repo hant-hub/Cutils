@@ -3,34 +3,14 @@
 
 
 ### Cutils Math Module
-- [ ] Types
-    - [ ] Objects
-        - [ ] Point
-        - [ ] Line
-        - [ ] Plane
-        - [ ] Direction
-    - [ ] Actions
-        - [ ] rotors (rotation)
-        - [ ] translators (translation)
-        - [ ] motors (translation + rotation)
-        - [ ] Plane (reflection)
-- [ ] Functions
-    - [ ] Geometric
-        - [ ] Addition
-        - [ ] Subtraction
-        - [ ] Uniform Scaling
-        - [ ] Geometric Product
-        - [ ] Exterior Product
-        - [ ] Regressive Product
-        - [ ] Symmetric Inner Product
-        - [ ] Project
-    - [ ] Scalar
-        - [ ] log
-        - [ ] project
-        - [ ] exp
-- [ ] Non GA types
-    - [ ] Matricies
-    - [ ] Vectors
+- [ ] finish current functions
+- [ ] Sandwich product
+    - [ ] point
+    - [ ] line
+    - [ ] plane
+- [ ] rotors
+- [ ] translators
+- [ ] motors
 
 
 
