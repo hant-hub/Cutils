@@ -14,6 +14,10 @@
 #define MAX(x, y) (x > y ? x : y)
 #define CLAMP(min, max, t) (MAX(MIN(max, t), min))
 
+#define MSB16(i) (15 - __builtin_clz((unsigned int)i)) 
+#define MSB32(i) (31 - __builtin_clz(i)) 
+#define MSB64(i) (63 - __builtin_clzll(i)) 
+
 #define CUTILS_INLINE __inline __attribute__((always_inline))
 
 /*

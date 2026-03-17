@@ -1,3 +1,5 @@
+#define test
+
 typedef struct Example {
     int a;
     int b;

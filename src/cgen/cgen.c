@@ -2,10 +2,14 @@
 
 DefDynArrayImpl(TokenBuffer, Token);
 
+DefHashMapImpl(NamedTypeMap, StrID, u32);
+DefHashMapImpl(OuterTypeMap, TypeID, u32);
+DefHashMapImpl(ProcMap, StrID, proc);
+
 typedef enum TokenizerState {
     TOKENIZER_NONE,
     TOKENIZER_COMMENT_C,
-    TOKENIZER_COMMENT_CPP,
+    TOKENIZER_SKIP_LINE, //cpp comment + preprocessor directives
     TOKENIZER_ID,
 } TokenizerState;
 
@@ -57,9 +61,16 @@ TokenBuffer Tokenize(SString data, StrBase* b, Allocator a) {
                 //goto Cpp comment handler
                 if (chars[curr] == '/' && chars[curr + 1] == '/') {
                     curr += 2;
-                    state = TOKENIZER_COMMENT_CPP;
+                    state = TOKENIZER_SKIP_LINE;
                     break;
                 }
+            }
+
+            //skip preprocessor directives
+            if (chars[curr] == '#') {
+                curr++;
+                state = TOKENIZER_SKIP_LINE;
+                break;
             }
 
             //handle symbol
@@ -90,12 +101,28 @@ TokenBuffer Tokenize(SString data, StrBase* b, Allocator a) {
             state = TOKENIZER_NONE;
         } break;
 
-        case TOKENIZER_COMMENT_C: {
-            todo();
+        case TOKENIZER_SKIP_LINE: {
+            if (chars[curr] == '\n') {
+                curr++;
+                state = TOKENIZER_NONE;
+                break;
+            }
+            
+            curr++;
         } break;
 
-        case TOKENIZER_COMMENT_CPP: {
-            todo();
+        case TOKENIZER_COMMENT_C: {
+
+            //at least 2 chars left
+            if (curr + 1 < data.len) {
+                if (chars[curr] == '*' && chars[curr] == '/') {
+                    curr += 2;
+                    state = TOKENIZER_NONE;
+                    break;
+                }
+            }
+            
+            curr++;
         } break;
 
         default: {
@@ -151,4 +178,38 @@ SString TokenName(Token t, StrBase* b, ArenaAllocator* persist) {
     }
 
     return out;
+}
+
+#include <setjmp.h>
+
+typedef enum ErrorCode {
+    ERROR_UNKNOWN,
+    ERROR_UNEXPECTED_TOKEN,
+    ERROR_UNEXPECTED_EOF,
+} ErrorCode;
+
+typedef struct ParsingState {
+    TokenBuffer* t;
+    u32 curr;
+
+    struct {
+        ErrorCode code;
+        jmp_buf crash_handler;
+
+        Token tok;
+        TokenType expected;
+        u32 parserLine;
+    } err;
+} ParsingState;
+
+void HandleError() {
+    todo();
+}
+
+TypeID GetOuterID(u32 inner, TypeFlags flag) {
+    todo();
+}
+
+u32 ParseType(TypeInfo* info, ParsingState* p) {
+    todo();
 }

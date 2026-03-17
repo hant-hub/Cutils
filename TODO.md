@@ -32,6 +32,8 @@
             - [X] Path Depth
 
 ### SimpleDS
+- [ ] Hashmap struct equality
+    - [ ] eq var
 - [ ] Rewrite To Void*
     - [ ] rework api
         - [ ] stb style
@@ -56,9 +58,17 @@
     - [X] Fix StrBase
     - [X] Add into header?
 - [ ] Merge CGen + Improve CGen code Quality
-    - [ ] Direct Merge
-    - [ ] Better universal Helpers
-    - [ ] Better Error handling
+    - [ ] Rewrite!
+    - [ ] Parse Type
+        - [ ] Base Type
+        - [ ] Pointers
+        - [ ] Consts
+        - [ ] Struct
+        - [ ] Union
+    - [ ] Parse Map
+    - [ ] Multiline Directives
+    - [ ] Error Handler
+
 
 ### Re-Architecting
 - [X] Switch to Static Library

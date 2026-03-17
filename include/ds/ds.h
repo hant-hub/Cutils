@@ -213,8 +213,8 @@
                 if (oldkeys[i].m == -1)                                        \
                     continue;                                                  \
                                                                                \
-                typeof(map->keys[0].k) tempk = oldkeys[i].k;                   \
-                typeof(map->vals[0]) tempv = oldvals[i];                       \
+                key tempk = oldkeys[i].k;                   \
+                val tempv = oldvals[i];                       \
                 u32 hash = FNVHash32((u8 *)&tempk, sizeof(tempk));             \
                                                                                \
                 u32 idx = hash % map->cap;                                     \
@@ -228,8 +228,8 @@
                         break;                                                 \
                     }                                                          \
                     if (map->keys[idx].m < dist) {                             \
-                        typeof(map->keys[0].k) tmpkey = map->keys[idx].k;      \
-                        typeof(map->vals[0]) tmpval = map->vals[idx];          \
+                        key tmpkey = map->keys[idx].k;      \
+                        val tmpval = map->vals[idx];          \
                         u32 tmpdist = map->keys[idx].m;                        \
                                                                                \
                         map->keys[idx].k = tempk;                              \
@@ -254,8 +254,8 @@
             Free(map->a, oldvals, oldcap * sizeof(map->vals[0]));              \
         }                                                                      \
                                                                                \
-        typeof(map->keys[0].k) tempk = ky;                                     \
-        typeof(map->vals[0]) tempv = vl;                                       \
+        key tempk = ky;                                     \
+        val tempv = vl;                                       \
         u32 hash = FNVHash32((u8 *)&tempk, sizeof(tempk));                     \
                                                                                \
         u32 idx = hash % map->cap;                                             \
@@ -270,8 +270,8 @@
                 break;                                                         \
             }                                                                  \
             if (map->keys[idx].m < dist) {                                     \
-                typeof(map->keys[0].k) tmpkey = map->keys[idx].k;              \
-                typeof(map->vals[0]) tmpval = map->vals[idx];                  \
+                key tmpkey = map->keys[idx].k;              \
+                val tmpval = map->vals[idx];                  \
                 u32 tmpdist = map->keys[idx].m;                                \
                                                                                \
                 map->keys[idx].k = tempk;                                      \
@@ -294,7 +294,7 @@
     val *name##Get(name *map, key ky) {                                        \
         if (!map->cap)                                                         \
             return NULL;                                                       \
-        typeof(map->keys[0].k) tempk = ky;                                     \
+        key tempk = ky;                                     \
         u32 hash = FNVHash32((u8 *)&tempk, sizeof(tempk));                     \
                                                                                \
         u32 idx = hash % map->cap;                                             \
@@ -319,7 +319,7 @@
     }                                                                          \
     void name##Del(name *map, key ky) {                                        \
                                                                                \
-        typeof(map->keys[0].k) tempk = ky;                                     \
+        key tempk = ky;                                     \
                                                                                \
         u32 hash = FNVHash32((u8 *)&tempk, sizeof(tempk));                     \
         u32 idx = hash % map->cap;                                             \
@@ -371,8 +371,8 @@
             if (oldkeys[i].m == -1)                                            \
                 continue;                                                      \
                                                                                \
-            typeof(map->keys[0].k) tempk = oldkeys[i].k;                       \
-            typeof(map->vals[0]) tempv = oldvals[i];                           \
+            key tempk = oldkeys[i].k;                       \
+            val tempv = oldvals[i];                           \
             u32 hash = FNVHash32((u8 *)&tempk, sizeof(tempk));                 \
                                                                                \
             u32 idx = hash % map->cap;                                         \
@@ -386,8 +386,8 @@
                     break;                                                     \
                 }                                                              \
                 if (map->keys[idx].m < dist) {                                 \
-                    typeof(map->keys[0].k) tmpkey = map->keys[idx].k;          \
-                    typeof(map->vals[0]) tmpval = map->vals[idx];              \
+                    key tmpkey = map->keys[idx].k;          \
+                    val tmpval = map->vals[idx];              \
                     u32 tmpdist = map->keys[idx].m;                            \
                                                                                \
                     map->keys[idx].k = tempk;                                  \
