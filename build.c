@@ -88,7 +88,7 @@ int main(int argc, char *argv[]) {
             sb_cmd_main("cp");
             sb_cmd_opt("r");
             sb_cmd_arg("resources");
-            sb_cmd_arg("build/resources");
+            sb_cmd_arg("build/");
         }
         sb_fence();
         // tests

@@ -1,3 +1,5 @@
+int* b; // pointer
+
 struct {
     int b;
     int (*c)();
@@ -14,7 +16,6 @@ int (** l)(int);
 int (** g)();
 const int*const* i; // pointer
 const int** e; // pointer
-int* b; // pointer
 int const h;
 int (**d)(); //func pointer
 const int c; //const

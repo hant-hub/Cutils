@@ -24,22 +24,16 @@ SString TokenName(Token t, StrBase *b, ArenaAllocator *persist);
 
 typedef enum TypeFlags : u16 {
     //base types
-    TYPE_VOID = 1 << 0,
-
-    TYPE_CHAR = 1 << 1,
-    TYPE_INT = 1 << 2,
-    TYPE_FLOAT = 1 << 3,
-    TYPE_LONG = 1 << 4,
-    TYPE_DOUBLE = 1 << 5,
+    TYPE_BASE = 1 << 0,
 
     //derived types
-    TYPE_CONST = 1 << 6,
-    TYPE_POINTER = 1 << 7,
-    TYPE_ALIAS = 1 << 8,
-    TYPE_STRUCT = 1 << 9,
-    TYPE_UNION = 1 << 10,
-    TYPE_ENUM = 1 << 11,
-    TYPE_FUNC = 1 << 12,
+    TYPE_CONST = 1 << 1,
+    TYPE_POINTER = 1 << 2,
+    TYPE_ALIAS = 1 << 3,
+    TYPE_STRUCT = 1 << 4,
+    TYPE_UNION = 1 << 5,
+    TYPE_ENUM = 1 << 6,
+    TYPE_FUNC = 1 << 7,
 } TypeFlags;
 
 typedef struct Type {
@@ -64,13 +58,18 @@ typedef struct Member {
 typedef u32 TypeID;
 
 /*
-    INFO(ELI): The Named Type Map is used to go
-    from a string to a type, and the outer type map
-    is used to go from a type we already have to see
-    if there are any types that derive from it.
+    INFO(ELI): 
+    Derived Types do not store a name since the name
+    is implicit. They are deduplicated via the Outer Map.
 
-    We have key collisions regarding the nil type, but
-    we can 
+    The Named Type map is used for all types which derive
+    void, namely base types, structs, unions, and aliases.
+    (although the anonymous versions will not appear in the
+    named map)
+
+    The reason is that the Named map is only used to lookup
+    when the name is already parsed into a token, this avoids
+    having to do lots of string formatting.
 */
 
 DefHashMapDecl(NamedTypeMap, StrID, u32);
@@ -83,8 +82,31 @@ typedef struct TypeInfo {
     dynArray(Member) members;
 } TypeInfo;
 
-
 TypeID GetOuterID(u32 inner, TypeFlags flag);
+
+#include <setjmp.h>
+
+typedef enum ErrorCode {
+    ERROR_NONE,
+    ERROR_UNEXPECTED_TOKEN,
+    ERROR_UNEXPECTED_EOF,
+} ErrorCode;
+
+typedef struct ParsingState {
+    TokenBuffer *t;
+    TypeInfo type;
+    StrBase* base;
+    u32 curr;
+
+    struct {
+        ErrorCode code;
+        jmp_buf crash_handler;
+
+        Token tok;
+        TokenType expected;
+        u32 parserLine;
+    } err;
+} ParsingState;
 
 typedef struct ParsingState ParsingState;
 
@@ -92,10 +114,12 @@ typedef struct ParsingState ParsingState;
 typedef void (*proc)(ParsingState* p);
 DefHashMapDecl(ProcMap, StrID, proc);
 
-ParsingState* BeginParser(TokenBuffer* buffer);
+ParsingState BeginParser(Allocator a, TokenBuffer *buffer, StrBase* b);
 void AddProc(ParsingState* p, proc newproc);
 void RunParsers(ParsingState* p);
 
-u32 ParseType(TypeInfo* info, ParsingState* p);
+u32 ParseType(ParsingState* p);
+
+void TypeInfoFree(TypeInfo* t);
 
 #endif

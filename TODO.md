@@ -59,9 +59,10 @@
     - [X] Add into header?
 - [ ] Merge CGen + Improve CGen code Quality
     - [ ] Rewrite!
+    - [ ] Print Type
     - [ ] Parse Type
         - [ ] Base Type
-        - [ ] Pointers
+        - [X] Pointers
         - [ ] Consts
         - [ ] Struct
         - [ ] Union

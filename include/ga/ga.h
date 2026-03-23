@@ -46,6 +46,10 @@ typedef struct GAPlane {
 } GAPlane;
 
 typedef struct GAMultiVector {
+    f32 unit;
+    GAPlane plane;
+    GALine line;
+    GAPoint point;
 } GAMultiVector;
 
 //Intuitive Constructors
@@ -69,12 +73,13 @@ GALine scaleLine(GALine l, f32 s);
 GAPlane scalePlane(GAPlane p, f32 s);
 
 //Rejection
-GAPlane rejectPlane(GAPlane p);
-GALine rejectLine(GALine l);
+GAPlane perpPlaneAlongLine(GAPlane p, GALine l);
+GALine perpPlaneAlongPoint(GAPlane a, GAPoint b);
+GAPlane perpLineAlongPoint(GALine a, GAPoint b);
 
-//Metrics
-f32 normLine(GALine l);
-f32 normIdealLine(GALine l);
+//Projection
+GAPoint projectPointOntoPlane(GAPoint a, GAPlane b);
+GAPlane projectPlaneOntoPoint(GAPlane a, GAPoint b);
 
 //Meets
 GALine meetPlanes3(GAPlane a, GAPlane b);
@@ -89,6 +94,7 @@ GAPoint normPoint3(GAPoint p);
 
 //Duals
 GAPoint dualPlane3(GAPlane p);
+GALine dualLine3(GALine l);
 GAPlane dualPoint3(GAPoint p);
 
 //Reflect things over plane
@@ -128,6 +134,28 @@ f32 innerPlanePlane(GAPlane a, GAPlane b);
 
 
 #ifdef GA_IMPL
+
+GAPoint makePoint(f32 x, f32 y, f32 z) {
+    return (GAPoint){
+        .a = 1,
+        .b = x,
+        .c = y,
+        .d = z,
+    };
+}
+
+GALine makeLine(f32 x, f32 y, f32 z, f32 dx, f32 dy, f32 dz) {
+    return joinPoints3(makePoint(x, y, z), makePoint(x + dx, y + dy, z + dz));
+}
+
+GAPlane makePlane(f32 a, f32 b, f32 c, f32 d) {
+    return (GAPlane) {
+        .a = d,
+        .b = a,
+        .c = b,
+        .d = c,
+    };
+}
 
 GALine meetPlanes3(GAPlane a, GAPlane b) {
     return (GALine){
@@ -170,6 +198,17 @@ GAPoint dualPlane3(GAPlane p) {
     return a.point;
 }
 
+GALine dualLine3(GALine l) {
+    return (GALine) {
+        .a = l.f,
+        .b = l.e,
+        .c = l.d,
+        .d = l.c,
+        .e = l.b,
+        .f = l.a,
+    };
+}
+
 GAPlane dualPoint3(GAPoint p) {
     union Unify a = {0};
     a.point = p;
@@ -177,7 +216,7 @@ GAPlane dualPoint3(GAPoint p) {
 }
 
 GALine joinPoints3(GAPoint a, GAPoint b) {
-    return meetPlanes3(dualPoint3(a), dualPoint3(b));
+    return dualLine3(meetPlanes3(dualPoint3(a), dualPoint3(b)));
 }
 
 GAPlane joinPointLine(GAPoint a, GALine b) {
@@ -190,6 +229,72 @@ GALine idealLineToLine(GAIdealLine l) {
         .b = l.b,
         .c = l.c,
     };
+}
+
+GAPoint scalePoint(GAPoint p, f32 s) {
+    return (GAPoint) {
+        .a = p.a * s,
+        .b = p.b * s,
+        .c = p.c * s,
+        .d = p.d * s,
+    };
+}
+
+GALine scaleLine(GALine l, f32 s) {
+    return (GALine) {
+        .a = l.a * s,
+        .b = l.b * s,
+        .c = l.c * s,
+        .d = l.d * s,
+        .e = l.e * s,
+        .f = l.f * s,
+    };
+}
+
+GAPlane scalePlane(GAPlane p, f32 s) {
+    return (GAPlane) {
+        .a = p.a * s,
+        .b = p.b * s,
+        .c = p.c * s,
+        .d = p.d * s,
+    };
+}
+
+GAPlane perpPlaneAlongLine(GAPlane p, GALine l) {
+    return (GAPlane) {
+        .a = p.b * l.a + p.c * l.b + p.d * l.c,
+        .b = p.c * l.d - p.d * l.e,
+        .c = p.d * l.f - p.b * l.d,
+        .d = p.b * l.e - p.c * l.f,
+    };
+}
+
+GALine perpPlaneAlongPoint(GAPlane a, GAPoint b) {
+    return (GALine) {
+        .a = a.d * b.c - a.c * b.d,
+        .b = a.b * b.d - a.d * b.b,
+        .c = a.c * b.b - a.b * b.c,
+        .d = a.d * b.a,
+        .e = a.c * b.a,
+        .f = a.b * b.a,
+    };
+}
+
+GAPlane perpLineAlongPoint(GALine a, GAPoint b) {
+    return (GAPlane) {
+        .a = a.d * b.d + a.e * b.c + a.f * b.b,
+        .b = -(a.f * b.a),
+        .c = -(a.e * b.a),
+        .d = -(a.d * b.a),
+    };
+}
+
+GAPoint projectPointOntoPlane(GAPoint a, GAPlane b) {
+    return meetLinesPlane(b, perpPlaneAlongPoint(b, a));
+}
+
+GAPlane projectPlaneOntoPoint(GAPlane a, GAPoint b) {
+    return dualPoint3(projectPointOntoPlane(dualPlane3(a), dualPoint3(b)));
 }
 
 #endif

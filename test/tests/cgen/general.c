@@ -6,7 +6,7 @@ int main() {
 
     ScratchArena sc = ScratchArenaGet(NULL);
 
-    file testfile = fileopen(sstring("../resources/tokenizer.h"), FILE_READ); 
+    file testfile = fileopen(sstring("../resources/type_parsing.h"), FILE_READ); 
 
     SString buffer = {
         .data = ArenaAlloc(&sc.arena, testfile.stats.size),
@@ -31,11 +31,19 @@ int main() {
         ArenaSetPos(&sc.arena, pos);
     }
 
+    ParsingState parser = BeginParser(GlobalAllocator, &tokens, &b);
+    u32 t = ParseType(&parser); 
+
+    Type type = parser.type.types.data[t];
+    debuglog("IsBase: %d", !!(type.flags & TYPE_POINTER));
+
 
     ScratchArenaEnd(sc);
 
     TokenBufferFree(&tokens);
     StrBaseFree(&b);
+
+    TypeInfoFree(&parser.type);
 
 
     return 0;
