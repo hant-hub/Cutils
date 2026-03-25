@@ -1,6 +1,25 @@
 ## TODO List:
 
 
+### Cutils Image Library
+- [X] PPM output
+- [X] PAM output (for transparency)
+- [X] Research BMP
+- [X] Parsing
+    - [X] Set up assets folder for tests
+    - [X] Parse Headers
+    - [X] Image size and compression
+    - [X] Output bytes
+- [ ] Handle Compressed BMP
+    - [ ] 4 bit RLE
+    - [ ] 8 bit RLE
+    - [ ] 16 bit color
+    - [ ] 8 bit color
+    - [ ] 4 bit color
+    - [ ] 1 bit color
+- [ ] Saving
+    - [ ] Build Headers
+    - [ ] Minimal example
 
 ### Cutils Math Module
 - [ ] finish current functions
@@ -12,6 +31,9 @@
 - [ ] translators
 - [ ] motors
 
+## Cutils Sub Tasks
+- [X] Convert small to big endian
+- [X] convert big to small endian
 
 
 ### Cutils Array Slices

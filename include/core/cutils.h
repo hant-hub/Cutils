@@ -46,6 +46,18 @@ typedef float f32;
 typedef double f64;
 
 /*
+    Endian Utils
+*/
+
+u16 FlipEndian16(u16 i);
+u32 FlipEndian32(u32 i);
+u64 FlipEndian64(u64 i);
+
+f32 FlipEndianF(f32 f);
+f64 FlipEndianD(f64 f);
+
+
+/*
     Custom Memory Allocators
 */
 

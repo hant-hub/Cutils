@@ -14,6 +14,30 @@
 #include <dirent.h>
 #include <ds/ds.h>
 
+#include <byteswap.h>
+
+/*
+    Endian Utilities
+*/
+u16 FlipEndian16(u16 i) {
+    return bswap_16(i);
+}
+u32 FlipEndian32(u32 i) {
+    return bswap_32(i);
+}
+u64 FlipEndian64(u64 i) {
+    return bswap_64(i);
+}
+
+f32 FlipEndianF(f32 f) {
+    return bswap_32(f);
+}
+
+f64 FlipEndianD(f64 f) {
+    return bswap_64(f);
+}
+
+
 /*
     Memory Allocators
 */
@@ -146,9 +170,9 @@ ScratchArena ScratchArenaGet(ArenaAllocator persist) {
     static __thread ArenaAllocator a = 0;
     static __thread ArenaAllocator b = 0;
     if (!a)
-        a = ArenaCreate(GlobalAllocator, MB(4L));
+        a = ArenaCreate(GlobalAllocator, MB(100L));
     if (!b)
-        b = ArenaCreate(GlobalAllocator, MB(4L));
+        b = ArenaCreate(GlobalAllocator, MB(100L));
 
     if (persist == a) {
         return ScratchArenaBegin(b);
