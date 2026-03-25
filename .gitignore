@@ -2,3 +2,4 @@
 build/*
 sb
 compile_commands.json
+resources/kermit.bmp
