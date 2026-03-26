@@ -1,4 +1,3 @@
-#define SILL_IMPL
 #include <sill/sill.h>
 
 struct pixel {

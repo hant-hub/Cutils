@@ -170,9 +170,9 @@ ScratchArena ScratchArenaGet(ArenaAllocator persist) {
     static __thread ArenaAllocator a = 0;
     static __thread ArenaAllocator b = 0;
     if (!a)
-        a = ArenaCreate(GlobalAllocator, MB(100L));
+        a = ArenaCreate(GlobalAllocator, MB(200L));
     if (!b)
-        b = ArenaCreate(GlobalAllocator, MB(100L));
+        b = ArenaCreate(GlobalAllocator, MB(200L));
 
     if (persist == a) {
         return ScratchArenaBegin(b);
