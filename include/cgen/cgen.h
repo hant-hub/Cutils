@@ -9,6 +9,8 @@ typedef enum TokenType {
     TOKEN_ID = 128,
     TOKEN_STRUCT,
     TOKEN_TYPEDEF,
+    TOKEN_CONST,
+    TOKEN_INVALID,
 } TokenType;
 
 typedef struct Token {
@@ -119,6 +121,7 @@ void AddProc(ParsingState* p, proc newproc);
 void RunParsers(ParsingState* p);
 
 u32 ParseType(ParsingState* p);
+SString TypeName(ArenaAllocator a, ParsingState* p, u32 tid);
 
 void TypeInfoFree(TypeInfo* t);
 

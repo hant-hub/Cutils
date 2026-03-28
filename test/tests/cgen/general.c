@@ -35,7 +35,10 @@ int main() {
     u32 t = ParseType(&parser); 
 
     Type type = parser.type.types.data[t];
-    debuglog("IsBase: %d", !!(type.flags & TYPE_POINTER));
+    Type inner = parser.type.types.data[type.inner];
+    debuglog("Type: %s", TypeName(sc.arena, &parser, t));
+    debuglog("inner: %s", TypeName(sc.arena, &parser, type.inner));
+    debuglog("Base type? %d", inner.flags & TYPE_BASE);
 
 
     ScratchArenaEnd(sc);

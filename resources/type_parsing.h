@@ -1,4 +1,4 @@
-int* b; // pointer
+const int* const** const b; // pointer
 
 struct {
     int b;

@@ -1,4 +1,5 @@
 #include <cgen/cgen.h>
+#include <core/cutils.h>
 
 DefDynArrayImpl(TokenBuffer, Token);
 
@@ -25,6 +26,7 @@ TokenBuffer Tokenize(SString data, StrBase *b, Allocator a) {
 
     StrID struct_name = StrBaseAdd(b, sstring("struct"));
     StrID typedef_name = StrBaseAdd(b, sstring("typedef"));
+    StrID const_name = StrBaseAdd(b, sstring("const")); 
 
     for (u32 curr = 0; curr < data.len;) {
         switch (state) {
@@ -95,6 +97,8 @@ TokenBuffer Tokenize(SString data, StrBase *b, Allocator a) {
                 tok.t = TOKEN_STRUCT;
             } else if (id == typedef_name) {
                 tok.t = TOKEN_TYPEDEF;
+            } else if (id == const_name) {
+                tok.t = TOKEN_CONST;
             } else {
                 tok.t = TOKEN_ID;
             }
@@ -148,9 +152,11 @@ SString TokenName(Token t, StrBase *b, ArenaAllocator *persist) {
     }
 
     SString token_names[] = {
-        sstring("Id"),
-        sstring("Struct"),
-        sstring("Typedef"),
+        [TOKEN_ID - TOKEN_ID] = sstring("Id"),
+        [TOKEN_STRUCT - TOKEN_ID] = sstring("Struct"),
+        [TOKEN_TYPEDEF - TOKEN_ID] = sstring("Typedef"),
+        [TOKEN_CONST - TOKEN_ID] = sstring("Const"),
+        [TOKEN_INVALID - TOKEN_ID] = sstring("Invalid Token (EOF)"),
         sstring("Unknown Token"),
     };
     u32 idx = MIN(t.t - TOKEN_ID, ARRAY_SIZE(token_names) - 1);
@@ -227,11 +233,21 @@ Token _NextToken(ParsingState* p, u32 lineNum) {
     return p->t->data[p->curr];
 }
 
+Token _PeekToken(ParsingState* p, u32 linenum) {
+    if (p->curr + 1 >= p->t->size) {
+        return (Token){.t = TOKEN_INVALID};
+    }
+
+    return p->t->data[p->curr + 1];
+}
+
 #define NextToken(p) _NextToken(p, __LINE__)
+#define PeekToken(p) _PeekToken(p, __LINE__) 
 #define Expect(p, t) _Expect(p, t, __LINE__)
 
 TypeID GetOuterID(u32 inner, TypeFlags flag) {
-    return (inner << 4) | MSB16(flag);
+    //Uses MSB32 because there is no equivalent for 16 bits
+    return (inner << 4) | MSB32(flag);
 }
 
 u32 GetBaseType(ParsingState *p, StrID name) {
@@ -304,7 +320,7 @@ u32 HandleIndirection(ParsingState *p, u32 base) {
     while (1) {
         Token t = NextToken(p);
         
-        if (t.t != '*') {
+        if (t.t != '*' && t.t != TOKEN_CONST) {
             break;
         }
 
@@ -315,6 +331,8 @@ u32 HandleIndirection(ParsingState *p, u32 base) {
 
         if (t.t == '*') {
             ref.flags = TYPE_POINTER;
+        } else if (t.t == TOKEN_CONST) {
+            ref.flags = TYPE_CONST;
         }
         
         base = GetType(p, ref);
@@ -328,6 +346,38 @@ u32 ParseType(ParsingState *p) {
     switch (p->t->data[p->curr].t) {
     case TOKEN_ID: {
         u32 base = GetBaseType(p, curr.id);
+        Token t = PeekToken(p); 
+        
+        if (t.t == TOKEN_CONST) {
+            Type ref = {
+                .name = 0,
+                .inner = base,
+                .flags = TYPE_CONST,
+            };
+            base = GetType(p, ref);
+            NextToken(p);
+        }
+
+        base = HandleIndirection(p, base);
+
+        return base;
+    } break;
+    case TOKEN_CONST: {
+        Token t = NextToken(p);
+        u32 base = GetBaseType(p, t.id);
+
+        Type ref = {
+            .name = 0,
+            .inner = base,
+            .flags = TYPE_CONST,
+        };
+        base = GetType(p, ref);
+        
+        //skip duplicate consts
+        while (PeekToken(p).t == TOKEN_CONST) {
+            NextToken(p);
+        }
+
         base = HandleIndirection(p, base);
 
         return base;
@@ -336,9 +386,56 @@ u32 ParseType(ParsingState *p) {
     } break;
     case TOKEN_TYPEDEF: {
     } break;
+    default: {
+        p->err.code = ERROR_UNEXPECTED_TOKEN;
+        p->err.parserLine = __LINE__;
+        longjmp(p->err.crash_handler, 1);
+    } break;
     }
 
     todo();
+}
+
+SString TypeName(ArenaAllocator a, ParsingState* p, u32 tid) {
+    Type t = p->type.types.data[tid];
+
+    if (t.flags & TYPE_BASE) {
+        return GetStr(p->base, t.name);
+    }
+    ScratchArena sc = ScratchArenaGet(a);
+    if (t.flags & TYPE_POINTER) {
+        SString base = TypeName(sc.arena, p, t.inner);
+        SString new = {
+            .data = ArenaAlloc(&sc.arena, base.len + 1),
+            .len = base.len + 1,
+        };
+        memcpy(new.data, base.data, base.len); 
+        new.data[base.len] = '*';
+
+        ScratchArenaEnd(sc);
+        return new;
+    }
+
+    if (t.flags & TYPE_CONST) {
+        SString base = TypeName(sc.arena, p, t.inner);
+        SString const_str = sstring("const");
+
+        SString new = {
+            .data = ArenaAlloc(&sc.arena, base.len + const_str.len + 1),
+            .len = base.len + const_str.len + 1,
+        };
+
+        memcpy(new.data, base.data, base.len); 
+        new.data[base.len] = ' ';
+        memcpy(&new.data[base.len + 1], const_str.data, const_str.len);
+
+        ScratchArenaEnd(sc);
+        return new;
+    }
+
+
+    ScratchArenaEnd(sc);
+    return sstring("Unknown Type");
 }
 
 void AddProc(ParsingState *p, proc newproc);

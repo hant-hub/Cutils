@@ -81,16 +81,16 @@
     - [X] Add into header?
 - [ ] Merge CGen + Improve CGen code Quality
     - [ ] Rewrite!
-    - [ ] Print Type
+    - [X] Print Type
     - [ ] Parse Type
-        - [ ] Base Type
+        - [X] Base Type
         - [X] Pointers
-        - [ ] Consts
+        - [X] Consts
         - [ ] Struct
         - [ ] Union
     - [ ] Parse Map
     - [ ] Multiline Directives
-    - [ ] Error Handler
+    - [X] Error Handler
 
 
 ### Re-Architecting
