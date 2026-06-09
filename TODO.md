@@ -23,6 +23,9 @@
 
 ### Cutils Math Module
 - [ ] finish current functions
+- [ ] projection
+    - [ ] calc proper formula (inner product followed by geometric product)
+    - [ ] revist rejection just in case
 - [ ] Sandwich product
     - [ ] point
     - [ ] line
@@ -30,6 +33,7 @@
 - [ ] rotors
 - [ ] translators
 - [ ] motors
+- [ ] matricies
 
 ## Cutils Sub Tasks
 - [X] Convert small to big endian
@@ -54,14 +58,21 @@
             - [X] Path Depth
 
 ### SimpleDS
-- [ ] Hashmap struct equality
-    - [ ] eq var
+- [X] Hashmap struct equality
 - [ ] Rewrite To Void*
     - [ ] rework api
         - [ ] stb style
         - [ ] struct with v pointer
         - [ ] macros for get and void*
     - [ ] dyn Array
+- [ ] Queue
+    - [ ] Fixed Size (small)
+        - [ ] Pool
+    - [ ] Large Size (using pages)
+    - [ ] Dynamic (idk pick a data structure)
+- [ ] Circular Buffer
+    - [ ] Fixed Size (small)
+    - [ ] Fixed Size (large)
 - [ ] Sparse Set
 - [ ] Bin Tree
 - [ ] Trie?
@@ -89,7 +100,7 @@
         - [ ] Struct
         - [ ] Union
     - [ ] Parse Map
-    - [ ] Multiline Directives
+    - [X] Multiline Directives
     - [X] Error Handler
 
 

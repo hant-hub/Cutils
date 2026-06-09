@@ -80,6 +80,7 @@ GAPlane perpLineAlongPoint(GALine a, GAPoint b);
 //Projection
 GAPoint projectPointOntoPlane(GAPoint a, GAPlane b);
 GAPlane projectPlaneOntoPoint(GAPlane a, GAPoint b);
+GALine projectPlaneOntoLine(GAPlane p, GALine l);
 
 //Meets
 GALine meetPlanes3(GAPlane a, GAPlane b);
@@ -294,8 +295,9 @@ GAPoint projectPointOntoPlane(GAPoint a, GAPlane b) {
 }
 
 GAPlane projectPlaneOntoPoint(GAPlane a, GAPoint b) {
-    return dualPoint3(projectPointOntoPlane(dualPlane3(a), dualPoint3(b)));
+    return joinPointLine(b, perpPlaneAlongPoint(a, b));
 }
+
 
 #endif
 #endif

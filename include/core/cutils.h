@@ -311,15 +311,15 @@ u32 printwarn(const char *format, ...);
 u32 printerr(const char *format, ...);
 
 #define debuglog(format, ...)                                                  \
-    printlog("[LOG] " __FILE__ ":%d]:\t" format "\n", __LINE__, ##__VA_ARGS__)
+    printlog("\e[0m[LOG] " __FILE__ ":%d]:\t" format "\n", __LINE__, ##__VA_ARGS__)
 
 #define debugwarn(format, ...)                                                 \
-    printwarn("\033[38;2;255;255;0m[WARN]" __FILE__ ":%d]:\t" format           \
-              "\033[0m\n",                                                     \
+    printwarn("\e[38;2;255;255;0m[WARN]" __FILE__ ":%d]:\t" format           \
+              "\e[0m\n",                                                     \
               __LINE__, ##__VA_ARGS__)
 
 #define debugerr(format, ...)                                                  \
-    printerr("\033[38;2;255;0;0m[ERR] " __FILE__ ":%d]:\t" format "\033[0m\n", \
+    printerr("\e[38;2;255;0;0m[ERR] " __FILE__ ":%d]:\t" format "\e[0m\n", \
              __LINE__, ##__VA_ARGS__)
 
 /*

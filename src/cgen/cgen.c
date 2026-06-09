@@ -10,7 +10,10 @@ DefHashMapImpl(ProcMap, StrID, proc);
 typedef enum TokenizerState {
     TOKENIZER_NONE,
     TOKENIZER_COMMENT_C,
-    TOKENIZER_SKIP_LINE, // cpp comment + preprocessor directives
+    TOKENIZER_SKIP_LINE,    // cpp comment
+    TOKENIZER_SKIP_DIR,     // preprocessor directives (looks for backslash)
+    TOKENIZER_SKIP_DIR_EXT, // Skips line then dumps back to preprocessor
+                            // directive
     TOKENIZER_ID,
 } TokenizerState;
 
@@ -26,7 +29,7 @@ TokenBuffer Tokenize(SString data, StrBase *b, Allocator a) {
 
     StrID struct_name = StrBaseAdd(b, sstring("struct"));
     StrID typedef_name = StrBaseAdd(b, sstring("typedef"));
-    StrID const_name = StrBaseAdd(b, sstring("const")); 
+    StrID const_name = StrBaseAdd(b, sstring("const"));
 
     for (u32 curr = 0; curr < data.len;) {
         switch (state) {
@@ -71,7 +74,7 @@ TokenBuffer Tokenize(SString data, StrBase *b, Allocator a) {
             // skip preprocessor directives
             if (chars[curr] == '#') {
                 curr++;
-                state = TOKENIZER_SKIP_LINE;
+                state = TOKENIZER_SKIP_DIR;
                 break;
             }
 
@@ -104,6 +107,31 @@ TokenBuffer Tokenize(SString data, StrBase *b, Allocator a) {
             }
             TokenBufferPush(&buffer, tok);
             state = TOKENIZER_NONE;
+        } break;
+
+        case TOKENIZER_SKIP_DIR: {
+            if (chars[curr] == '\\') {
+                curr++;
+                state = TOKENIZER_SKIP_DIR_EXT;
+                break;
+            }
+
+            if (chars[curr] == '\n') {
+                curr++;
+                state = TOKENIZER_NONE;
+                break;
+            }
+
+            curr++;
+        } break;
+
+        case TOKENIZER_SKIP_DIR_EXT: {
+            if (chars[curr] == '\n') {
+                curr++;
+                state = TOKENIZER_SKIP_DIR;
+                break;
+            }
+            curr++;
         } break;
 
         case TOKENIZER_SKIP_LINE: {
@@ -186,24 +214,32 @@ SString TokenName(Token t, StrBase *b, ArenaAllocator *persist) {
 void HandleError(ParsingState *p) {
     switch (p->err.code) {
     case ERROR_UNEXPECTED_EOF: {
-        printerr("%d: Unexpected EOF, expected %d\n", p->err.parserLine, p->err.expected);
+        printerr("%d: Unexpected EOF, expected %d\n", p->err.parserLine,
+                 p->err.expected);
         panic();
     } break;
     case ERROR_UNEXPECTED_TOKEN: {
-        printerr("%d: Unexpected token: Expected %d, Got %d at %d",
-                p->err.parserLine, p->err.expected, p->err.tok.t, p->err.tok.line);
+        ScratchArena a = ScratchArenaGet(NULL);
+        SString str = TokenName(p->err.tok, p->base, &a.arena);
+
+        printerr("%d: Unexpected token: Expected (%d, %c), Got (%d, %c, %s) at %d\n",
+                 p->err.parserLine, p->err.expected, p->err.expected, p->err.tok.t, p->err.tok.t,
+                 str, p->err.tok.line);
+
+        ScratchArenaEnd(a);
         panic();
     } break;
     default: {
-        printerr("%d, %d Unknown Error Code!\n", p->err.parserLine, p->err.tok.line);
+        printerr("%d, %d Unknown Error Code!\n", p->err.parserLine,
+                 p->err.tok.line);
         panic();
     } break;
     }
 }
 
-void _Expect(ParsingState* p, TokenType t, u32 lineNum) {
+void _Expect(ParsingState *p, TokenType t, u32 lineNum) {
     if (p->curr >= p->t->size) {
-        //EOF
+        // EOF
         p->err.code = ERROR_UNEXPECTED_EOF;
         p->err.parserLine = lineNum;
         longjmp(p->err.crash_handler, 1);
@@ -212,7 +248,7 @@ void _Expect(ParsingState* p, TokenType t, u32 lineNum) {
     Token tok = p->t->data[p->curr++];
 
     if (tok.t != t) {
-        //Unexpected Token
+        // Unexpected Token
         p->err.code = ERROR_UNEXPECTED_TOKEN;
         p->err.parserLine = lineNum;
         p->err.expected = t;
@@ -221,10 +257,10 @@ void _Expect(ParsingState* p, TokenType t, u32 lineNum) {
     }
 }
 
-Token _NextToken(ParsingState* p, u32 lineNum) {
+Token _NextToken(ParsingState *p, u32 lineNum) {
     p->curr++;
     if (p->curr >= p->t->size) {
-        //EOF
+        // EOF
         p->err.code = ERROR_UNEXPECTED_EOF;
         p->err.parserLine = lineNum;
         longjmp(p->err.crash_handler, 1);
@@ -233,7 +269,7 @@ Token _NextToken(ParsingState* p, u32 lineNum) {
     return p->t->data[p->curr];
 }
 
-Token _PeekToken(ParsingState* p, u32 linenum) {
+Token _PeekToken(ParsingState *p, u32 linenum) {
     if (p->curr + 1 >= p->t->size) {
         return (Token){.t = TOKEN_INVALID};
     }
@@ -242,11 +278,11 @@ Token _PeekToken(ParsingState* p, u32 linenum) {
 }
 
 #define NextToken(p) _NextToken(p, __LINE__)
-#define PeekToken(p) _PeekToken(p, __LINE__) 
+#define PeekToken(p) _PeekToken(p, __LINE__)
 #define Expect(p, t) _Expect(p, t, __LINE__)
 
 TypeID GetOuterID(u32 inner, TypeFlags flag) {
-    //Uses MSB32 because there is no equivalent for 16 bits
+    // Uses MSB32 because there is no equivalent for 16 bits
     return (inner << 4) | MSB32(flag);
 }
 
@@ -269,12 +305,11 @@ u32 GetBaseType(ParsingState *p, StrID name) {
     return type->types.size - 1;
 }
 
-
-u32 GetType(ParsingState* p, Type t) {
+u32 GetType(ParsingState *p, Type t) {
     TypeInfo *type = &p->type;
-    
+
     TypeID id = GetOuterID(t.inner, t.flags);
-    u32* tid = OuterTypeMapGet(&type->omap, id);
+    u32 *tid = OuterTypeMapGet(&type->omap, id);
     if (tid) {
         return *tid;
     }
@@ -284,7 +319,6 @@ u32 GetType(ParsingState* p, Type t) {
 
     return type->types.size - 1;
 }
-
 
 ParsingState BeginParser(Allocator a, TokenBuffer *buffer, StrBase *b) {
     ParsingState p = (ParsingState){
@@ -297,6 +331,7 @@ ParsingState BeginParser(Allocator a, TokenBuffer *buffer, StrBase *b) {
                 .nmap.a = a,
                 .omap.a = a,
             },
+        .err = {0},
     };
 
     GetBaseType(&p, StrBaseAdd(b, sstring("void")));
@@ -314,12 +349,12 @@ ParsingState BeginParser(Allocator a, TokenBuffer *buffer, StrBase *b) {
     return p;
 }
 
-u32 ParseStruct(ParsingState *p);
+Member* ParseStruct(ArenaAllocator a, ParsingState *p) {}
 
 u32 HandleIndirection(ParsingState *p, u32 base) {
     while (1) {
         Token t = NextToken(p);
-        
+
         if (t.t != '*' && t.t != TOKEN_CONST) {
             break;
         }
@@ -334,7 +369,7 @@ u32 HandleIndirection(ParsingState *p, u32 base) {
         } else if (t.t == TOKEN_CONST) {
             ref.flags = TYPE_CONST;
         }
-        
+
         base = GetType(p, ref);
     }
 
@@ -346,8 +381,8 @@ u32 ParseType(ParsingState *p) {
     switch (p->t->data[p->curr].t) {
     case TOKEN_ID: {
         u32 base = GetBaseType(p, curr.id);
-        Token t = PeekToken(p); 
-        
+        Token t = PeekToken(p);
+
         if (t.t == TOKEN_CONST) {
             Type ref = {
                 .name = 0,
@@ -372,17 +407,36 @@ u32 ParseType(ParsingState *p) {
             .flags = TYPE_CONST,
         };
         base = GetType(p, ref);
-        
-        //skip duplicate consts
-        while (PeekToken(p).t == TOKEN_CONST) {
-            NextToken(p);
-        }
+
+        // skip duplicate consts
+        while (PeekToken(p).t == TOKEN_CONST) { NextToken(p); }
 
         base = HandleIndirection(p, base);
 
         return base;
     } break;
     case TOKEN_STRUCT: {
+        Token t = NextToken(p);   
+        Type struct_type = {
+            .flags = TYPE_STRUCT,
+            .inner = 0,
+        };
+        u32 tid = -1;
+
+        if (t.t == TOKEN_ID) {
+            struct_type.name = t.id;
+            tid = GetBaseType(p, t.id);
+            NextToken(p);
+        } else {
+            struct_type.name = StrBaseAdd(p->base, sstring("Anonymous Struct"));
+        }
+        Expect(p, '{');
+        
+        ScratchArena sc = ScratchArenaGet(NULL); 
+        Member* members = ParseStruct(sc.arena, p); 
+        ScratchArenaEnd(sc);
+
+        return tid;
     } break;
     case TOKEN_TYPEDEF: {
     } break;
@@ -393,10 +447,16 @@ u32 ParseType(ParsingState *p) {
     } break;
     }
 
-    todo();
+    {
+        ScratchArena a = ScratchArenaGet(NULL);
+        Token t = PeekToken(p);
+        printlog("Current Token: %s\n", TokenName(t, p->base, &a.arena));
+        ScratchArenaEnd(a);
+        todo();
+    }
 }
 
-SString TypeName(ArenaAllocator a, ParsingState* p, u32 tid) {
+SString TypeName(ArenaAllocator a, ParsingState *p, u32 tid) {
     Type t = p->type.types.data[tid];
 
     if (t.flags & TYPE_BASE) {
@@ -409,7 +469,7 @@ SString TypeName(ArenaAllocator a, ParsingState* p, u32 tid) {
             .data = ArenaAlloc(&sc.arena, base.len + 1),
             .len = base.len + 1,
         };
-        memcpy(new.data, base.data, base.len); 
+        memcpy(new.data, base.data, base.len);
         new.data[base.len] = '*';
 
         ScratchArenaEnd(sc);
@@ -425,14 +485,13 @@ SString TypeName(ArenaAllocator a, ParsingState* p, u32 tid) {
             .len = base.len + const_str.len + 1,
         };
 
-        memcpy(new.data, base.data, base.len); 
+        memcpy(new.data, base.data, base.len);
         new.data[base.len] = ' ';
         memcpy(&new.data[base.len + 1], const_str.data, const_str.len);
 
         ScratchArenaEnd(sc);
         return new;
     }
-
 
     ScratchArenaEnd(sc);
     return sstring("Unknown Type");
@@ -441,7 +500,7 @@ SString TypeName(ArenaAllocator a, ParsingState* p, u32 tid) {
 void AddProc(ParsingState *p, proc newproc);
 void RunParsers(ParsingState *p);
 
-void TypeInfoFree(TypeInfo* t) {
+void TypeInfoFree(TypeInfo *t) {
     NamedTypeMapFree(&t->nmap);
     OuterTypeMapFree(&t->omap);
     dynFree(t->types);

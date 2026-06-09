@@ -93,12 +93,16 @@ int main() {
         debuglog("Point: (%f %f %f) %f", point.b, point.c, point.d, point.a);
     }
     {
-        GAPlane p = makePlane(1, 1, 1, 0);
+        GAPlane p = makePlane(1, 1, 1, 1);
         GAPoint t = makePoint(-1, -2, 1);
 
         GAPlane plane = projectPlaneOntoPoint(p, t);
         debuglog("Plane: %fx + %fy + %fz + %f = 0", plane.b, plane.c, plane.d, plane.a);
+        GAPoint point = dualPlane3(plane);
+        debuglog("Point: (%f %f %f) %f", point.b, point.c, point.d, point.a);
     }
+
+
 
 
 

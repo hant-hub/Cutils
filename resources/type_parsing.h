@@ -1,10 +1,16 @@
+struct wtf {
+    int a;
+    int b;
+};
+
+
 const int* const** const b; // pointer
 
 struct {
     int b;
     int (*c)();
     int ** d;
-    struct int w;
+    int w;
 } a;
 int* (*const*const j)();
 const int*const (*const*const k)();
