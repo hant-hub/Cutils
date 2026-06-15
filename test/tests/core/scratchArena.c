@@ -60,6 +60,20 @@ int main() {
         assert(chars[i] == i);
     }
 
+    //test conversion
+    {
+        Allocator g = ArenaGetAllocator(&sc.arena);
+        char* chars = Alloc(g, 10); 
+        for (u32 i = 0; i < 10; i++) {
+            chars[i] = i;
+        }
+
+        for (u32 i = 0; i < 10; i++) {
+            assert(chars[i] == i);
+        }
+    }
+
+
 
     ScratchArenaEnd(sc);
 }

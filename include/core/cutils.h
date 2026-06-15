@@ -103,6 +103,9 @@ void ArenaClear(ArenaAllocator *a);
 
 void ArenaDestroy(ArenaAllocator s);
 
+//make generic allocator from Arena
+Allocator ArenaGetAllocator(ArenaAllocator* a);
+
 // Scratch Arena
 typedef struct ScratchArena {
     ArenaAllocator arena;

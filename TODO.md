@@ -66,8 +66,7 @@
         - [ ] macros for get and void*
     - [ ] dyn Array
 - [ ] Queue
-    - [ ] Fixed Size (small)
-        - [ ] Pool
+    - [X] Fixed Size (small)
     - [ ] Large Size (using pages)
     - [ ] Dynamic (idk pick a data structure)
 - [ ] Circular Buffer

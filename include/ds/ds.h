@@ -697,4 +697,57 @@
         Free(p->a, p->slots, p->cap * sizeof(item));                           \
         Free(p->a, p->freelist, p->cap * sizeof(u32));                         \
     }
+
+
+/*
+    Simple Queue
+
+    Fixed Size Queue of items
+*/
+
+#define DefSimpleQueueDecl(name, type)                                         \
+    typedef struct name {                                                      \
+        Allocator a;                                                           \
+        u32 cap;                                                               \
+        u32 size;                                                              \
+        u32 first;                                                             \
+        type *data;                                                            \
+    } name
+
+#define DefSimpleQueueImpl(name, type)                                         \
+    name name##Create(Allocator a, u32 max_size) {                             \
+        name q = {                                                             \
+            .a = a,                                                            \
+            .cap = max_size,                                                   \
+        };                                                                     \
+        q.data = Alloc(a, max_size * sizeof(type));                            \
+        return q;                                                              \
+    }                                                                          \
+    void name##Destroy(name *q) {                                              \
+        Free(q->a, q->data, q->cap * sizeof(type));                            \
+        q->cap = 0;                                                            \
+    }                                                                          \
+    bool8 name##Empty(name *q) { return q->size == 0; }                        \
+    bool8 name##Full(name *q) { return q->size == q->cap; }                    \
+    bool8 name##Push(name *q, type item) {                                     \
+        if (name##Full(q)) {                                                   \
+            return FALSE;                                                      \
+        }                                                                      \
+        u32 slot = (q->first + q->size) % q->cap;                              \
+        q->data[slot] = item;                                                  \
+        q->size++;                                                             \
+        return TRUE;                                                           \
+    }                                                                          \
+    bool8 name##Pop(name *q, type *out) {                                      \
+        if (name##Empty(q)) {                                                  \
+            return FALSE;                                                      \
+        }                                                                      \
+        *out = q->data[q->first];                                              \
+        q->first = (q->first + 1) % q->cap;                                    \
+        q->size--;                                                             \
+        return TRUE;                                                           \
+    }
+
+
+
 #endif

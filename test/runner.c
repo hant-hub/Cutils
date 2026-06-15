@@ -57,7 +57,7 @@ void printstatus(u32 shift, int verbose) {
         return;
     }
 
-    printf("%*s", 20 - shift, " ");
+    printf("%*s", 30 - shift, " ");
 
     while (waitpid(0, &status, 0) > 0) {
         if (!WIFEXITED(status) || WIFSIGNALED(status)) {

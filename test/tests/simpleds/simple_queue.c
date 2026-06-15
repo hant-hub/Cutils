@@ -3,7 +3,7 @@
 #include <core/cutils.h>
 #include <ds/ds.h>
 
-#define DefQueueDecl(name, type)                                               \
+#define DefSimpleQueueDecl(name, type)                                         \
     typedef struct name {                                                      \
         Allocator a;                                                           \
         u32 cap;                                                               \
@@ -12,7 +12,7 @@
         type *data;                                                            \
     } name
 
-#define DefQueueImpl(name, type)                                               \
+#define DefSimpleQueueImpl(name, type)                                         \
     name name##Create(Allocator a, u32 max_size) {                             \
         name q = {                                                             \
             .a = a,                                                            \
@@ -46,11 +46,11 @@
         return TRUE;                                                           \
     }
 
-DefQueueDecl(Queue, int);
-DefQueueImpl(Queue, int);
+DefSimpleQueueDecl(Queue, int);
+DefSimpleQueueImpl(Queue, int);
 
-DefQueueDecl(Queuel, u64);
-DefQueueImpl(Queuel, u64);
+DefSimpleQueueDecl(Queuel, u64);
+DefSimpleQueueImpl(Queuel, u64);
 
 int main() {
 

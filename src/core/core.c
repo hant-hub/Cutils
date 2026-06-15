@@ -108,6 +108,30 @@ ArenaAllocator ArenaCreate(Allocator a, u64 size) {
 
 u64 ArenaGetPos(ArenaAllocator a) { return a->size; }
 
+static alloc_func_def(arena_alloc) {
+    if (!new) {
+        // free
+        // Arena's don't free, do nothing
+        return NULL;
+    }
+
+    if (!ptr && !old) {
+        // alloc
+        return ArenaAlloc(ctx, new);
+    }
+
+    // realloc
+    // Just alloc again because no free
+    return ArenaAlloc(ctx, new);
+}
+
+Allocator ArenaGetAllocator(ArenaAllocator* a) {
+    return (Allocator) {
+        .a = arena_alloc,
+        .ctx = a,
+    };
+}
+
 void *ArenaAlloc(ArenaAllocator *arena, u64 size) {
     ArenaAllocator a = *arena;
     if (size + a->size > (a->cap)) {
@@ -859,6 +883,7 @@ u32 sformat(SString dst, const char *format, ...) {
     vformat(finfo, args, format);
 
     va_end(args);
+
     return info.idx;
 }
 

@@ -7,3 +7,4 @@ BraceWrapping:
 
 AllowShortLoopsOnASingleLine: true
 AllowShortBlocksOnASingleLine: true
+PointerAlignment: Left

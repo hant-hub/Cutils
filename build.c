@@ -99,6 +99,7 @@ int main(int argc, char *argv[]) {
             "tests/ga",
             "tests/cgen",
             "tests/sill",
+            "tests/sbuild",
         };
         for (int gid = 0; gid < (sizeof(grouplist)/sizeof(grouplist[0])); gid++) {
             char buf[PATH_MAX + 1] = {0};
@@ -112,7 +113,6 @@ int main(int argc, char *argv[]) {
                 sb_EXEC() {
                     sb_add_file(test);
                     sb_add_file("build/cutils.a");
-                    sb_add_header("include/cutils.h");
 
                     sb_add_include_path("include/");
 
@@ -132,6 +132,7 @@ int main(int argc, char *argv[]) {
 
                     sb_export_command();
                 }
+                sb_fence();
             }
         }
 
