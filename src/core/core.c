@@ -695,11 +695,11 @@ static void format_float(formatInfo info, f64 num) {
     info.f((u8)mdig + '0', info.ctx);
 }
 
-static ptrdiff_t format_arg(formatInfo info, va_list args, const char *format) {
+static ptrdiff_t format_arg(formatInfo info, va_list *args, const char *format) {
     ptrdiff_t out = 0;
     switch (format[0]) {
     case 'd': {
-        i64 s = va_arg(args, i32);
+        i64 s = va_arg((*args), i32);
         if (s < 0) {
             info.f('-', info.ctx);
             s *= -1;
@@ -730,7 +730,7 @@ static ptrdiff_t format_arg(formatInfo info, va_list args, const char *format) {
         out++;
     } break;
     case 'u': {
-        u64 num = va_arg(args, u32);
+        u64 num = va_arg((*args), u32);
 
         if (num == 0) {
             info.f('0', info.ctx);
@@ -756,7 +756,7 @@ static ptrdiff_t format_arg(formatInfo info, va_list args, const char *format) {
         out++;
     } break;
     case 'l': {
-        i64 s = va_arg(args, i64);
+        i64 s = va_arg((*args), i64);
         if (s < 0) {
             info.f('-', info.ctx);
             s *= -1;
@@ -787,22 +787,22 @@ static ptrdiff_t format_arg(formatInfo info, va_list args, const char *format) {
         out++;
     } break;
     case 'f': {
-        f64 s = va_arg(args, f64);
+        f64 s = va_arg((*args), f64);
         format_float(info, s);
         out++;
     } break;
     case 's': {
-        SString s = va_arg(args, SString);
+        SString s = va_arg((*args), SString);
         for (u32 i = 0; i < s.len; i++) { info.f(s.data[i], info.ctx); }
         out++;
     } break;
     case 'c': {
-        int c = va_arg(args, int);
+        int c = va_arg((*args), int);
         info.f(c, info.ctx);
         out++;
     } break;
     case 'n': {
-        const char *s = va_arg(args, const char *);
+        const char *s = va_arg((*args), const char *);
         while (s[0]) {
             info.f(s[0], info.ctx);
             s++;
@@ -810,7 +810,7 @@ static ptrdiff_t format_arg(formatInfo info, va_list args, const char *format) {
         out++;
     } break;
     case 'x': {
-        u64 num = va_arg(args, u64);
+        u64 num = va_arg((*args), u64);
 
         if (num == 0) {
             info.f('0', info.ctx);
@@ -850,7 +850,7 @@ static ptrdiff_t format_arg(formatInfo info, va_list args, const char *format) {
     return out;
 }
 
-static void vformat(formatInfo info, va_list args, const char *format) {
+static void vformat(formatInfo info, va_list* args, const char *format) {
 
     while (format[0]) {
         switch (format[0]) {
@@ -888,7 +888,7 @@ u32 sformat(SString dst, const char *format, ...) {
     va_list args;
     va_start(args, format);
 
-    vformat(finfo, args, format);
+    vformat(finfo, &args, format);
 
     va_end(args);
 
@@ -918,7 +918,7 @@ u32 fformat(file *dst, const char *format, ...) {
 
     va_list args;
     va_start(args, format);
-    vformat(finfo, args, format);
+    vformat(finfo, &args, format);
     va_end(args);
     return info.idx;
 }
@@ -959,7 +959,7 @@ u32 printlog(const char *format, ...) {
 
     va_list args;
     va_start(args, format);
-    vformat(finfo, args, format);
+    vformat(finfo, &args, format);
     va_end(args);
     return info.idx;
 }
@@ -976,7 +976,7 @@ u32 printwarn(const char *format, ...) {
 
     va_list args;
     va_start(args, format);
-    vformat(finfo, args, format);
+    vformat(finfo, &args, format);
     va_end(args);
     return info.idx;
 }
@@ -993,7 +993,7 @@ u32 printerr(const char *format, ...) {
 
     va_list args;
     va_start(args, format);
-    vformat(finfo, args, format);
+    vformat(finfo, &args, format);
     va_end(args);
     return info.idx;
 }
