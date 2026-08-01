@@ -72,6 +72,7 @@ static u32 AllocSlot(StrBase *base) {
         memset(&base->strstore[oldsize], 0, (base->maxslots - oldsize) * sizeof(SString));
     }
 
+    base->strsize++;
     return base->strsize++;
 }
 
