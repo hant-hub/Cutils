@@ -132,14 +132,19 @@ typedef struct Bucket {
     u32 num;
 } Bucket;
 
-void ScheduleTree(TaskContext* ctx, u32 depth, TaskID curr) {
-    Task* c = &ctx->tasks.data[curr];
-    for (u32 i = 0; i < c->reqs.num; i++) {
-        ScheduleTree(ctx, depth + 1, ctx->reqs.data[i + c->reqs.start]);
-    }
+typedef dynArray(TaskID) TaskBuf;
+
+void GatherTasks(TaskContext* ctx, TaskID id, u32* total, TaskBuf* buf) {
+
 }
 
 void ExecTree(TaskContext* ctx, TaskID root) {
+    //gather tasks
+    u32 total = 0;
+    TaskBuf tasks = {GlobalAllocator};
+    GatherTasks(ctx, root, &total, &tasks);
+
+
     //Schedule
     dynArray(Bucket) schedule = {GlobalAllocator};
     dynArray(TaskID) pass = {GlobalAllocator};

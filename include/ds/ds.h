@@ -748,6 +748,80 @@
         return TRUE;                                                           \
     }
 
+#ifdef DS_IMPL
+
+/*
+    Exponential Array - Pointer Stable Dynamically sized Container
+*/
+
+#define MAX_CHUNKS 32
+#define MIN_CHUNK_SIZE 4
 
 
+#define InitExar(mem, type) \
+    (Exar){.a = mem, .e_size = sizeof(type)}
+
+typedef struct Exar {
+    Allocator a;
+    u32 size;
+    u32 e_size;
+    char* chunks[MAX_CHUNKS]; //variable size
+} Exar;
+
+
+void* ExarInsert(Exar* e, void* data) {
+    u32 index = MIN_CHUNK_SIZE + e->size++;
+
+    u32 ct = index >> MSB32(MIN_CHUNK_SIZE);
+    u32 chunk = (ct ? MSB32(ct) + 1 : 0);
+    u32 cindex = (~(1 << (chunk + 1)) & index); 
+    chunk--;
+
+
+    if (!e->chunks[chunk]) {
+        u32 chunk_size = MIN_CHUNK_SIZE << chunk;
+        e->chunks[chunk] = Alloc(e->a, chunk_size * e->e_size);
+    }
+
+
+    //e->chunks[chunk][cindex] = val;
+    
+    char* dest = ((e->chunks[chunk]) + cindex * e->e_size);
+    for (u32 i = 0; i < e->e_size; i++) {
+        dest[i] = ((char*)data)[i];
+    }
+
+    return (void*) dest;
+}
+
+void* ExarGet(Exar* e, u32 index) {
+    if (index >= e->size) return NULL;
+    index += MIN_CHUNK_SIZE;
+
+    u32 ct = index >> MSB32(MIN_CHUNK_SIZE);
+    u32 chunk = (ct ? MSB32(ct) + 1 : 0);
+    u32 cindex = (~(1 << (chunk + 1)) & index); 
+    chunk--;
+
+    if (!e->chunks[chunk]) return NULL;
+    char* dest = ((e->chunks[chunk]) + cindex * e->e_size);
+    return dest;
+}
+
+void ExarClear(Exar* e) {
+    e->size = 0;
+}
+
+void ExarFree(Exar* e) {
+    for (u32 i = 0; i < MAX_CHUNKS; i++) {
+        u32 chunk_size = MIN_CHUNK_SIZE << i;
+        if (e->chunks[i]) {
+            Free(e->a, e->chunks[i], chunk_size * e->e_size);
+            e->chunks[i] = NULL;
+        } else break;
+    }
+    e->size = 0;
+}
+
+#endif
 #endif
