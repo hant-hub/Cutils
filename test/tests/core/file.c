@@ -4,6 +4,12 @@
 
 int main() {
     setdirExe();
+    //file stat
+    file meta = filestat(sstring("."));
+    printf("Meta data: %ld, %ld\n", meta.stats.modified.s, meta.stats.modified.ns);
+
+
+    //file open
     file t = fileopen(sstring("/proc/self/status"), FILE_READ);
     file out = {
         .handle = 1,

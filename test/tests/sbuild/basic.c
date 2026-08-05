@@ -1,32 +1,68 @@
 #define SB_IMPL
 #include <sbuild/sbuild.h>
+#include <../src/core/core.c>
 
 
-int main() {
-    TaskContext ctx = TaskContextCreate(GlobalAllocator);
-    SString e = sstring("echo");
-    SString t = sstring("test");
+int main(int argc, char* argv[]) {
+    //setdir(sstring("../.."));
 
-    BeginCmd(&ctx, sstring("e2"));
-    AddArg(&ctx, t);
-    TaskID e2 = PushCmd(&ctx);
+    logfile.buffered = FALSE;
+    //printlog("src: %n\n", __FILE_NAME__);
+    //AutoRebuild(argc, argv, "-I", "include");
 
-    BeginCmd(&ctx, sstring("e3"));
-    AddReq(&ctx, e2);
-    AddArg(&ctx, t);
-    TaskID e3 = PushCmd(&ctx);
+    TaskGraph g = CreateTaskGraph();
+    Task* t4 = AddTask(&g, "t4");
+    AddCmd(t4, "some", "command");
+    Task* t5 = AddTask(&g, "t5");
+    AddCmd(t5, "some");
 
-    BeginCmd(&ctx, sstring("e4"));
-    AddArg(&ctx, t);
-    TaskID e4 = PushCmd(&ctx);
+    Task* t2 = AddTask(&g, "t2", t4, t5);
+    Task* t3 = AddTask(&g, "t3", 0);
 
-    BeginCmd(&ctx, sstring("root"));
-    AddReq(&ctx, e3);
-    AddReq(&ctx, e4);
-    AddArg(&ctx, e);
-    TaskID root = PushCmd(&ctx);
+    Task* t1 = AddTask(&g, "t1", t2, t3);
+    AddCmd(t1, "echo", "test");
 
-    PrintTaskTree(&ctx, root);
-    TaskContextDestroy(&ctx);
+    //PrintTaskTree(t1, TRUE);
+    ClearTaskGraph(&g);
+
+    t1 = AddTask(&g, "t1", 0);
+    AddCmd(t1, "echo", "Cmd Successful!");
+    //RunTask(t1);
+
+    ClearTaskGraph(&g);
+
+    t4 = AddTask(&g, "t4");
+    AddCmd(t4, "echo", "t4");
+
+    t5 = AddTask(&g, "t5");
+    //AddCmd(t5, "echo", "t5");
+
+    t2 = AddTask(&g, "t2", t4, t5);
+    AddCmd(t2, "echo", "t2");
+
+    t3 = AddTask(&g, "t3");
+    AddCmd(t3, "echo", "t3");
+
+    t1 = AddTask(&g, "t1", t2, t3, t5);
+    AddCmd(t1, "echo", "t1");
+
+    PrintTaskTree(t1, TRUE);
+    Exec(t1, 2);
+
+    printlog("Fixed\n");
+
+    AddCmd(t5, "echo", "t5");
+    Exec(t1, 2);
+
+    ClearTaskGraph(&g);
+
+    //conditional task adding
+    t3 = AddTask(&g, "dep");
+    t1 = AddTaskCond(0, &g, "conditional", t3);
+    t2 = AddTask(&g, "root", t1);
+
+    PrintTaskTree(t2, TRUE);
+
+    FreeTaskGraph(&g);
     return 0;
 }

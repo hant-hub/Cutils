@@ -82,7 +82,7 @@ void* BMPread(ArenaAllocator a, file* f, u32* outwidth, u32* outheight, u32* out
     ScratchArena sc = ScratchArenaGet(a);    
     parsingState* state = &(parsingState){
         .data = {
-            .data = ArenaAlloc(&sc.arena, f->stats.size),
+            .data = ArenaAlloc(sc.arena, f->stats.size),
             .len = f->stats.size,
         }
     };
@@ -135,7 +135,7 @@ void* BMPread(ArenaAllocator a, file* f, u32* outwidth, u32* outheight, u32* out
     u32 channels = *outchannels ? *outchannels : 3;
 
     debuglog("channels: %d", channels);
-    u8* data = ArenaAlloc(&a, width * height * channels);    
+    u8* data = ArenaAlloc(a, width * height * channels);    
     u32 cursor = (width * height * channels) - (width * channels);
     for (u32 i = 0; i < height; i++) {
         for (u32 i = 0; i < width; i++) {

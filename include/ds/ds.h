@@ -1,4 +1,5 @@
 #ifndef DS_H
+#define DS_H
 #include <core/cutils.h>
 #include <string.h>
 
@@ -748,7 +749,63 @@
         return TRUE;                                                           \
     }
 
-#ifdef DS_IMPL
+/*
+    Dynamically Sized Queues
+*/
+
+#define DefDynQueueDecl(name, type)                                            \
+    typedef struct name {                                                      \
+        Allocator a;                                                           \
+        u32 cap;                                                               \
+        u32 size;                                                              \
+        u32 first;                                                             \
+        type* data;                                                            \
+    } name;
+
+#define DefDynQueueImpl(name, type)                                            \
+    name name##Create(Allocator a) { return (name){.a = a}; }                  \
+    void name##Destroy(name* q) {                                              \
+        if (!q->data)                                                          \
+            return;                                                            \
+        Free(q->a, q->data, q->cap);                                           \
+    }                                                                          \
+    bool8 name##Empty(name* q) { return q->size == 0; }                        \
+    bool8 name##Full(name* q) { return q->size >= q->cap; }                    \
+    void name##Push(name* q, type item) {                                       \
+        if (name##Full(q)) {                                                   \
+            u32 oldcap = q->cap;                                               \
+            q->cap = q->cap ? q->cap * 2 : 1;                                  \
+                                                                               \
+            type* new = Alloc(q->a, q->cap * sizeof(q->data[0]));               \
+            if (!new) {                                                        \
+                q->cap = oldcap;                                               \
+                return;                                                        \
+            }                                                                  \
+                                                                               \
+            for (u32 i = 0; i < q->size; i++) {                                \
+                new[i] = q->data[(q->first + i) % oldcap];                     \
+            }                                                                  \
+                                                                               \
+            Free(q->a, q->data, oldcap * sizeof(q->data[0]));                  \
+            q->data = new;                                                     \
+            q->first = 0;                                                      \
+        }                                                                      \
+                                                                               \
+        u32 slot = (q->first + q->size) % q->cap;                              \
+        q->data[slot] = item;                                                  \
+        q->size++;                                                             \
+    }                                                                          \
+    bool8 name##Pop(name* q, type* out) {                                       \
+        if (name##Empty(q)) {                                                  \
+            return FALSE;                                                      \
+        }                                                                      \
+        *out = q->data[q->first];                                              \
+        q->first = (q->first + 1) % q->cap;                                    \
+        q->size--;                                                             \
+        return TRUE;                                                           \
+    }
+
+
 
 /*
     Exponential Array - Pointer Stable Dynamically sized Container
@@ -767,6 +824,19 @@ typedef struct Exar {
     u32 e_size;
     char* chunks[MAX_CHUNKS]; //variable size
 } Exar;
+
+void* ExarInsert(Exar* e, void* data);
+void* ExarGet(Exar* e, u32 index);
+void ExarClear(Exar* e);
+void ExarFree(Exar* e);
+
+#ifdef DS_IMPL
+
+/*
+    Exponential Array - Pointer Stable Dynamically sized Container
+*/
+
+
 
 
 void* ExarInsert(Exar* e, void* data) {

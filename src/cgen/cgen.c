@@ -168,7 +168,7 @@ TokenBuffer Tokenize(SString data, StrBase *b, Allocator a) {
     return buffer;
 }
 
-SString TokenName(Token t, StrBase *b, ArenaAllocator *persist) {
+SString TokenName(Token t, StrBase *b, ArenaAllocator persist) {
 
     if (t.t < TOKEN_ID) {
         SString out = {
@@ -220,7 +220,7 @@ void HandleError(ParsingState *p) {
     } break;
     case ERROR_UNEXPECTED_TOKEN: {
         ScratchArena a = ScratchArenaGet(NULL);
-        SString str = TokenName(p->err.tok, p->base, &a.arena);
+        SString str = TokenName(p->err.tok, p->base, a.arena);
 
         printerr("%d: Unexpected token: Expected (%d, %c), Got (%d, %c, %s) at %d\n",
                  p->err.parserLine, p->err.expected, p->err.expected, p->err.tok.t, p->err.tok.t,
@@ -349,7 +349,7 @@ ParsingState BeginParser(Allocator a, TokenBuffer *buffer, StrBase *b) {
     return p;
 }
 
-Member* ParseStruct(ArenaAllocator a, ParsingState *p) {}
+Member* ParseStruct(ArenaAllocator a, ParsingState *p) { return NULL; }
 
 u32 HandleIndirection(ParsingState *p, u32 base) {
     while (1) {
@@ -450,7 +450,7 @@ u32 ParseType(ParsingState *p) {
     {
         ScratchArena a = ScratchArenaGet(NULL);
         Token t = PeekToken(p);
-        printlog("Current Token: %s\n", TokenName(t, p->base, &a.arena));
+        printlog("Current Token: %s\n", TokenName(t, p->base, a.arena));
         ScratchArenaEnd(a);
         todo();
     }
@@ -466,7 +466,7 @@ SString TypeName(ArenaAllocator a, ParsingState *p, u32 tid) {
     if (t.flags & TYPE_POINTER) {
         SString base = TypeName(sc.arena, p, t.inner);
         SString new = {
-            .data = ArenaAlloc(&sc.arena, base.len + 1),
+            .data = ArenaAlloc(sc.arena, base.len + 1),
             .len = base.len + 1,
         };
         memcpy(new.data, base.data, base.len);
@@ -481,7 +481,7 @@ SString TypeName(ArenaAllocator a, ParsingState *p, u32 tid) {
         SString const_str = sstring("const");
 
         SString new = {
-            .data = ArenaAlloc(&sc.arena, base.len + const_str.len + 1),
+            .data = ArenaAlloc(sc.arena, base.len + const_str.len + 1),
             .len = base.len + const_str.len + 1,
         };
 

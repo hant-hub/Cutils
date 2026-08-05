@@ -125,15 +125,15 @@ static alloc_func_def(arena_alloc) {
     return ArenaAlloc(ctx, new);
 }
 
-Allocator ArenaGetAllocator(ArenaAllocator* a) {
+Allocator ArenaGetAllocator(ArenaAllocator a) {
     return (Allocator) {
         .a = arena_alloc,
         .ctx = a,
     };
 }
 
-void *ArenaAlloc(ArenaAllocator *arena, u64 size) {
-    ArenaAllocator a = *arena;
+void *ArenaAlloc(ArenaAllocator arena, u64 size) {
+    ArenaAllocator a = arena;
     if (size + a->size > (a->cap)) {
         return NULL;
     }
@@ -143,23 +143,23 @@ void *ArenaAlloc(ArenaAllocator *arena, u64 size) {
     return p;
 }
 
-void ArenaExtendLast(ArenaAllocator *arena, u64 size) {
-    ArenaAllocator a = *arena;
+void ArenaExtendLast(ArenaAllocator arena, u64 size) {
+    ArenaAllocator a = arena;
     if (size + a->size > (a->cap)) {
         return;
     }
     a->size += size;
 }
 
-void *ArenaAllocZero(ArenaAllocator *a, u64 size) {
+void *ArenaAllocZero(ArenaAllocator a, u64 size) {
     void *p = ArenaAlloc(a, size);
     if (p)
         memset(p, 0, size);
     return p;
 }
 
-void ArenaPop(ArenaAllocator *arena, u64 size) {
-    ArenaAllocator a = *arena;
+void ArenaPop(ArenaAllocator arena, u64 size) {
+    ArenaAllocator a = arena;
     if (size > a->size) {
         a->size = 0;
     } else {
@@ -167,15 +167,15 @@ void ArenaPop(ArenaAllocator *arena, u64 size) {
     }
 }
 
-void ArenaSetPos(ArenaAllocator *a, u64 pos) {
-    u64 diff = (*a)->size - pos;
+void ArenaSetPos(ArenaAllocator a, u64 pos) {
+    u64 diff = a->size - pos;
     ArenaPop(a, diff);
 }
 
-void ArenaClear(ArenaAllocator *a) {
-    u64 size = (*a)->cap;
-    Allocator mem = (*a)->a;
-    (*a)->size = 0;
+void ArenaClear(ArenaAllocator a) {
+    u64 size = a->cap;
+    Allocator mem = a->a;
+    a->size = 0;
 }
 
 void ArenaDestroy(ArenaAllocator s) {
@@ -186,7 +186,7 @@ ScratchArena ScratchArenaBegin(ArenaAllocator a) {
     return (ScratchArena){.arena = a, .base = ArenaGetPos(a)};
 }
 
-void ScratchArenaEnd(ScratchArena s) { ArenaSetPos(&s.arena, s.base); }
+void ScratchArenaEnd(ScratchArena s) { ArenaSetPos(s.arena, s.base); }
 
 // Should never live longer than a single
 // function call.
@@ -261,7 +261,7 @@ SString Sstrtok(SString str, const char delim) {
 }
 
 char* SStringGetCstr(SString s, ArenaAllocator a) {
-    char* cstr = ArenaAlloc(&a, s.len + 1);
+    char* cstr = ArenaAlloc(a, s.len + 1);
     memcpy(cstr, s.data, s.len);
     cstr[s.len] = 0;
     return cstr;
@@ -306,11 +306,56 @@ file fileopen(const SString filename, file_permissions p) {
         return (file){.handle = -1};
     }
 
+
     return (file){
         .handle = fd,
         .stats =
             {
                 .size = statbuf.st_size,
+                .modified = {
+                    .s = statbuf.st_mtim.tv_sec,
+                    .ns = statbuf.st_mtim.tv_nsec,
+                },
+                .access = {
+                    .s = statbuf.st_atim.tv_sec,
+                    .ns = statbuf.st_atim.tv_nsec,
+                },
+            },
+    };
+}
+
+file filestat(const SString filename) {
+    ScratchArena sc = ScratchArenaGet(NULL);
+
+    char* const data = ArenaAllocZero(sc.arena, filename.len + 1);
+    memcpy(data, filename.data, filename.len);
+
+    struct stat statbuf;
+    if (stat(data, &statbuf)) {
+        // error here
+        // TODO(ELI): Once logging is working,
+        // make log error and return invalid file
+        debugerr("Failed to Stat file: %s", filename);
+
+        ScratchArenaEnd(sc);
+        return (file){.handle = -1};
+    }
+
+    ScratchArenaEnd(sc);
+
+    return (file){
+        .handle = -1,
+        .stats =
+            {
+                .size = statbuf.st_size,
+                .modified = {
+                    .s = statbuf.st_mtim.tv_sec,
+                    .ns = statbuf.st_mtim.tv_nsec,
+                },
+                .access = {
+                    .s = statbuf.st_atim.tv_sec,
+                    .ns = statbuf.st_atim.tv_nsec,
+                },
             },
     };
 }

@@ -22,7 +22,7 @@ typedef struct Token {
 DefDynArrayDecl(TokenBuffer, Token);
 
 TokenBuffer Tokenize(SString data, StrBase *b, Allocator a);
-SString TokenName(Token t, StrBase *b, ArenaAllocator *persist);
+SString TokenName(Token t, StrBase *b, ArenaAllocator persist);
 
 typedef enum TypeFlags : u16 {
     //base types

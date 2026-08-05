@@ -10,7 +10,7 @@ int main() {
     file testfile = fileopen(sstring("../resources/type_parsing.h"), FILE_READ); 
 
     SString buffer = {
-        .data = ArenaAlloc(&sc.arena, testfile.stats.size),
+        .data = ArenaAlloc(sc.arena, testfile.stats.size),
         .len = testfile.stats.size,
     };
     fileread(buffer, testfile);
@@ -28,8 +28,8 @@ int main() {
     printlog("Tokens:\n");
     u64 pos = ArenaGetPos(sc.arena);
     for (int i = 0; i < tokens.size; i++) {
-        printlog("\t%s\n", TokenName(tokens.data[i], &b, &sc.arena));
-        ArenaSetPos(&sc.arena, pos);
+        printlog("\t%s\n", TokenName(tokens.data[i], &b, sc.arena));
+        ArenaSetPos(sc.arena, pos);
     }
 
     ParsingState parser = BeginParser(GlobalAllocator, &tokens, &b);

@@ -92,19 +92,19 @@ typedef struct ArenaAllocator {
 ArenaAllocator ArenaCreate(Allocator a, u64 size);
 
 u64 ArenaGetPos(ArenaAllocator a);
-void ArenaSetPos(ArenaAllocator *a, u64 pos);
+void ArenaSetPos(ArenaAllocator a, u64 pos);
 
-void *ArenaAlloc(ArenaAllocator *a, u64 size);
-void ArenaExtendLast(ArenaAllocator *a, u64 size);
-void *ArenaAllocZero(ArenaAllocator *a, u64 size);
+void *ArenaAlloc(ArenaAllocator a, u64 size);
+void ArenaExtendLast(ArenaAllocator a, u64 size);
+void *ArenaAllocZero(ArenaAllocator a, u64 size);
 
-void ArenaPop(ArenaAllocator *a, u64 size);
-void ArenaClear(ArenaAllocator *a);
+void ArenaPop(ArenaAllocator a, u64 size);
+void ArenaClear(ArenaAllocator a);
 
 void ArenaDestroy(ArenaAllocator s);
 
 //make generic allocator from Arena
-Allocator ArenaGetAllocator(ArenaAllocator* a);
+Allocator ArenaGetAllocator(ArenaAllocator a);
 
 // Scratch Arena
 typedef struct ScratchArena {
@@ -186,6 +186,19 @@ SString Sstrtok(SString str, const char delim);
 #define isSpace(c) (c == ' ' || (c >= '\t' && c <= '\r'))
 
 /*
+    TIME Helpers
+*/
+
+typedef struct time_spec{
+    u64 s;
+    u64 ns;
+} time_spec;
+
+#define timecmp(t1, op, t2) \
+    (t1.s == t2.s ? t1.ns op t2.ns : t1.s op t2.s)
+
+
+/*
     FILE Handling
 */
 
@@ -200,6 +213,10 @@ typedef enum file_permissions {
 
 typedef struct file_info {
     u32 size;
+
+    time_spec access;
+    time_spec modified;
+
     // In future stuff like time, last modified, etc.
 } file_info;
 
@@ -215,6 +232,8 @@ typedef struct file {
 
 file fileopen(const SString filename, file_permissions p);
 void fileclose(file file);
+
+file filestat(const SString filename);
 
 u64 fileread(SString dst, file src);
 u64 filewrite(file *dst, SString src);
