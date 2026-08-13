@@ -6,6 +6,9 @@
 #define PAGE_SIZE (1 << 12L)
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
 
+#define Spread(...) __VA_ARGS__
+
+
 #define KB(x) (x << 10L)
 #define MB(x) (KB(x) << 10L)
 #define GB(x) (MB(x) << 10L)

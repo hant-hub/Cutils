@@ -1,6 +1,5 @@
 #define SB_IMPL
 #include <sbuild/sbuild.h>
-#include <../src/core/core.c>
 
 
 int main(int argc, char* argv[]) {
@@ -62,7 +61,19 @@ int main(int argc, char* argv[]) {
     t2 = AddTask(&g, "root", t1);
 
     PrintTaskTree(t2, TRUE);
+    ClearTaskGraph(&g);
 
+    t1 = AddTask(&g, "t1");
+    AddCmd(t1, "pwd");
+    t2 = AddTask(&g, "t2");
+    AddCmd(t2, "pwd");
+
+    t3 = AddDummyTask(&g, t1, t2);
+
+    t4 = AddTask(&g, "t4", t3);
+    AddCmd(t4, "pwd");
+
+    PrintTaskTree(t4, FALSE);
     FreeTaskGraph(&g);
     return 0;
 }

@@ -1,3 +1,10 @@
+/*
+    Important!!!
+    Must compile with -I set to include
+*/
+
+
+
 #ifndef SB_H
 #define SB_H
 #include <core/cutils.h>
@@ -9,6 +16,11 @@
 
 typedef struct TaskGraph TaskGraph;
 
+struct Task;
+
+#define task_func(name, task_arg) \
+    void (name)(struct Task* task_arg)
+
 typedef struct Task {
     TaskGraph* g; // back ref
     SString name; // for debug
@@ -18,6 +30,9 @@ typedef struct Task {
 
     dynArray(struct Task*) pre;  // things this task depends on
     dynArray(struct Task*) post; // things which depend on this task
+    
+    task_func(*func, t);         //proc for io tasks
+     
     dynArray(u32) cmds;          // command which makes up this task
 } Task;
 
@@ -37,6 +52,10 @@ typedef dynArray(i8) CBuf;
     _AutoRebuild(__FILE__, argc, argv,                                         \
                  ARRAY_SIZE(((const char*[]){__VA_ARGS__})), ##__VA_ARGS__)
 
+#define AddDummyTask(g, ...) \
+    _AddTask(g, "", ARRAY_SIZE(((Task*[]){__VA_ARGS__})),##__VA_ARGS__)
+
+
 #define AddTask(g, name, ...)                                                  \
     _AddTask(g, name, ARRAY_SIZE(((Task*[]){__VA_ARGS__})), ##__VA_ARGS__)
 
@@ -46,18 +65,40 @@ typedef dynArray(i8) CBuf;
 #define AddCmd(t, ...)                                                         \
     _AddCmd(t, ARRAY_SIZE(((const char*[]){__VA_ARGS__})), ##__VA_ARGS__)
 
+#define AddProc(t, p) \
+    (t->func = p)
+
+#define CompileCmd(g, file, c, ...) \
+        Compile(g, file, ARRAY_SIZE((((const char*[]){c}))), (const char*[]){c}, ARRAY_SIZE(((Task*[]){__VA_ARGS__})),##__VA_ARGS__)
+
+#define CompileMultiCmd(g, f, c, ...) \
+        CompileMany(g, \
+                ARRAY_SIZE((((const char*[]){f}))), (const char*[]){f}, \
+                ARRAY_SIZE((((const char*[]){c}))), (const char*[]){c}, \
+                ARRAY_SIZE(((Task*[]){__VA_ARGS__})),##__VA_ARGS__) \
+
 TaskGraph CreateTaskGraph();
 void ClearTaskGraph(TaskGraph* g);
 void FreeTaskGraph(TaskGraph* g);
 Task* _AddTask(TaskGraph* g, const char* name, u32 num_dep, ...);
 void _AddCmd(Task* t, u32 num_args, ...);
 
+void AddDep(Task* t, Task* d);
 void PrintTaskTree(Task* t, bool8 v);
 
 // returns TRUE if failed, FALSE on success
+// Intended to be used like if (Exec(...)) { handle_error }
 bool8 Exec(Task* t, u32 max_processes);
 
+void BegCompile(TaskGraph* g, bool8 enable_cmds, SString compile_loc);
+void EndCompile(TaskGraph* g, Task* t);
+
+Task* Compile(TaskGraph* g, const char* filename, u32 cmd_size, const char** cmd, u32 num_arg, ...);
+Task* CompileMany(TaskGraph* g, u32 filenum, const char** files, u32 cmd_size, const char** cmd, u32 num_arg, ...);
+
 #ifdef SB_IMPL
+#include "../src/core/core.c"
+
 #include <stdarg.h>
 #include <unistd.h>
 
@@ -149,6 +190,21 @@ static u32 AddStr(TaskGraph* t, SString str) {
     return idx;
 }
 
+void AddDep(Task* t, Task* d) {
+    if (!d) return;
+    if (d->cmds.size || d->func) {
+        dynPush(t->pre, d);
+        return;
+    }
+    //d must have no effect since d->func == NULL
+    //and d->cmds.size == 0
+
+    //close transitives from dummy tasks
+    for (u32 i = 0; i < d->pre.size; i++) {
+        dynPush(t->pre, d->pre.data[i]);
+    }
+}
+
 Task* _AddTask(TaskGraph* g, const char* name, u32 num_dep, ...) {
     Task v = {
         .g = g,
@@ -164,9 +220,7 @@ Task* _AddTask(TaskGraph* g, const char* name, u32 num_dep, ...) {
 
     for (u32 i = 0; i < num_dep; i++) {
         Task* d = va_arg(args, Task*);
-        if (d)
-            dynPush(t->pre, d);
-        // dynPush(d->post, t);
+        AddDep(t, d);
     }
 
     va_end(args);
@@ -231,13 +285,33 @@ void PrintTaskTree(Task* t, bool8 v) {
 
 #include <stdio.h>
 
-static void RunTask(Task* t) {
+DefDynQueueDecl(TaskQueue, Task*);
+DefDynQueueImpl(TaskQueue, Task*);
+
+static void RunTask(Task* t, TaskQueue* q) {
     if (!t) {
         debugerr("Tried to Run NULL Task\n");
         return; // skip
     }
 
     TaskGraph* g = t->g;
+
+    if (t->func) {
+        //run func on main process
+        //avoids ipc
+        t->visited = FALSE;
+        t->func(t);
+
+        for (u32 i = 0; i < t->post.size; i++) {
+            Task* n = t->post.data[i];
+            n->blockers--;
+
+            if (n->blockers == 0 && (n->func || n->cmds.size)) {
+                TaskQueuePush(q, n);
+            }
+        }
+        return;
+    }
 
     pid_t id = fork();
 
@@ -255,21 +329,23 @@ static void RunTask(Task* t) {
     // alloc enough for all args + NULL ptr
     char** args = ArenaAllocZero(a.arena, sizeof(char*) * (t->cmds.size + 1));
 
-    if (!t->cmds.size) {
+    //should be impossible to trigger in practice
+    //I filter at the Add Task stage
+    //and at the scheduling stage, basically if a task is a dummy
+    //task it should never get here
+    if (!t->cmds.size && !t->func) { 
         fprintf(stderr, "Error, invalid task: %s\n", t->name.data);
+        exit(1);
     }
 
     for (u32 i = 0; i < t->cmds.size; i++) {
         args[i] = &g->str_data.data[t->cmds.data[i]];
     }
-
+    
     execvp(args[0], args);
-
     panic();
 }
 
-DefDynQueueDecl(TaskQueue, Task*);
-DefDynQueueImpl(TaskQueue, Task*);
 
 #include <sys/wait.h>
 
@@ -345,7 +421,7 @@ bool8 Exec(Task* t, u32 max_processes) {
                 Task* n = fin->post.data[i];
                 n->blockers--;
 
-                if (n->blockers == 0) {
+                if (n->blockers == 0 && (n->func || n->cmds.size)) {
                     TaskQueuePush(&queue, n);
                 }
             }
@@ -358,7 +434,7 @@ bool8 Exec(Task* t, u32 max_processes) {
         Task* curr = NULL;
         if (TaskQueuePop(&queue, &curr)) {
             // run task
-            RunTask(curr);
+            RunTask(curr, &queue);
         }
     }
 
@@ -393,6 +469,127 @@ bool8 Exec(Task* t, u32 max_processes) {
 
     ScratchArenaEnd(sc);
     return failed;
+}
+
+
+//DO NOT TOUCH
+//Internal Implementation data, should not be touched
+//unless you know what you are doing
+static struct {
+     bool8 written;
+     bool8 enabled;
+     SString compile_file;
+     file compile_cmds;
+     Task* last;
+} _c_intern;
+
+task_func(beg_compile, t) {
+    _c_intern.compile_cmds = fileopen(_c_intern.compile_file, FILE_WRITE | FILE_CREAT | FILE_TRUNC);
+    filewrite(&_c_intern.compile_cmds, sstring("[\n"));
+}
+
+task_func(add_entry, t) {
+    ScratchArena sc = ScratchArenaGet(NULL);
+    TaskGraph* g = t->g;
+
+    char* buffer = ArenaAlloc(sc.arena, PATH_MAX + 1);
+    getcwd(buffer, PATH_MAX);
+    
+    SString compile_entry = sstring(
+            "{\n"
+            "\t\"directory\": \"%n\",\n"
+            "\t\"file\": \"%n\",\n"
+            "\t\"arguments\": [ ");
+
+    //printlog("Entry:\n");
+
+    if (_c_intern.written) {
+        fformat(&_c_intern.compile_cmds, ",\n");
+    }
+    _c_intern.written = TRUE;
+
+    fformat(&_c_intern.compile_cmds, (char*)compile_entry.data, buffer, &g->str_data.data[t->cmds.data[0]]);
+
+    for (u32 i = 1; i < t->cmds.size; i++) {
+        if (i > 1) fformat(&_c_intern.compile_cmds, ",");
+        fformat(&_c_intern.compile_cmds, "\"%n\" ", &g->str_data.data[t->cmds.data[i]]);
+    }
+    fformat(&_c_intern.compile_cmds,
+            "]\n"
+            "}"
+            );
+
+
+    ScratchArenaEnd(sc);
+}
+
+task_func(end_compile, t) {
+    _c_intern.written = FALSE;
+    filewrite(&_c_intern.compile_cmds, sstring("\n]\n"));
+    fileclose(_c_intern.compile_cmds);
+}
+
+void BegCompile(TaskGraph* g, bool8 enable_cmds, SString compile_loc) {
+    _c_intern.enabled = enable_cmds;
+
+    _c_intern.compile_file = compile_loc;
+
+    Task* start = AddTask(g, "init_compile");
+    AddProc(start, beg_compile);
+    _c_intern.last = start;
+}
+
+Task* Compile(TaskGraph* g, const char* filename, u32 cmd_size, const char** cmd, u32 num_arg, ...) {
+    //compilation
+    Task* compile = AddTask(g, filename);
+    AddCmd(compile, "cc", filename);
+
+    Task* entry = AddTask(g, filename, _c_intern.last);
+    AddProc(entry, add_entry);
+    AddCmd(entry, filename);
+    _c_intern.last = entry;
+
+    va_list args;
+    va_start(args, num_arg);
+    for (u32 i = 0; i < num_arg; i++) {
+        Task* arg = va_arg(args, Task*);
+        AddDep(compile, arg);
+    }
+    va_end(args);
+
+    for (u32 i = 0; i < cmd_size; i++) {
+        AddCmd(compile, cmd[i]);
+        AddCmd(entry, cmd[i]);
+    }
+
+    return compile;
+}
+
+Task* CompileMany(TaskGraph* g, u32 filenum, const char** files, u32 cmd_size, const char** cmd, u32 num_arg, ...) {
+    Task* first = AddDummyTask(g);
+
+    va_list args;
+    va_start(args, num_arg);
+    for (u32 i = 0; i < num_arg; i++) {
+        Task* arg = va_arg(args, Task*);
+        AddDep(first, arg);
+    }
+    va_end(args);
+
+    Task* end = AddDummyTask(g);
+    for (u32 i = 0; i < filenum; i++) {
+        Task* c = Compile(g, files[i], cmd_size, cmd, 1, first);
+        AddDep(end, c);
+    }
+
+    return end;
+}
+
+void EndCompile(TaskGraph* g, Task* t) {
+    if (!_c_intern.enabled) return; //skips connecting to graph
+    Task* end = AddTask(g, "end_compile", _c_intern.last);
+    AddProc(end, end_compile);
+    AddDep(t, end);
 }
 
 #endif

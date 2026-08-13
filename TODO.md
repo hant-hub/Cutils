@@ -1,5 +1,25 @@
 ## TODO List:
 
+### Cutils Improvements
+- [ ] thread-safe printing
+    - [ ] locks
+    - [ ] locks on files
+    - [ ] enable/disable locks
+
+### Sbuild
+- [X] Graph Data Structure
+- [X] Working Commands + Fences
+- [X] Auto Rebuild
+- [ ] Output compile_commands.json
+    - [X] Logical Tasks
+    - [X] parallel task graph
+    - [X] Formatting
+    - [X] integration
+    - [ ] additional compilation funcs
+        - [ ] chain
+        - [ ] fan
+        - [ ] git
+        - [ ] curl
 
 ### Cutils Image Library
 - [X] PPM output
@@ -67,6 +87,7 @@
     - [ ] dyn Array
 - [ ] Queue
     - [X] Fixed Size (small)
+    - [X] Dynamic Queue
     - [ ] Large Size (using pages)
     - [ ] Dynamic (idk pick a data structure)
 - [ ] Circular Buffer
