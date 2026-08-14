@@ -7,6 +7,7 @@
 #include "sa.h"
 
 int main(int argc, char *argv[]) {
+    sb_chdir_exe();
     SA options = Parse(argc, argv);
     if (options.err) exit(-1);
     SAvals opts = options.vals;
