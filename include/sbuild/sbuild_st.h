@@ -1371,12 +1371,6 @@ typedef dynArray(i8) CBuf;
 #define CompileCmd(g, file, c, ...) \
         Compile(g, file, ARRAY_SIZE((((const char*[]){c}))), (const char*[]){c}, ARRAY_SIZE(((Task*[]){__VA_ARGS__})),##__VA_ARGS__)
 
-#define CompileMultiCmd(g, f, c, ...) \
-        CompileMany(g, \
-                ARRAY_SIZE((((const char*[]){f}))), (const char*[]){f}, \
-                ARRAY_SIZE((((const char*[]){c}))), (const char*[]){c}, \
-                ARRAY_SIZE(((Task*[]){__VA_ARGS__})),##__VA_ARGS__) \
-
 TaskGraph CreateTaskGraph();
 void ClearTaskGraph(TaskGraph* g);
 void FreeTaskGraph(TaskGraph* g);
@@ -1394,7 +1388,6 @@ void BegCompile(TaskGraph* g, bool8 enable_cmds, SString compile_loc);
 void EndCompile(TaskGraph* g, Task* t);
 
 Task* Compile(TaskGraph* g, const char* filename, u32 cmd_size, const char** cmd, u32 num_arg, ...);
-Task* CompileMany(TaskGraph* g, u32 filenum, const char** files, u32 cmd_size, const char** cmd, u32 num_arg, ...);
 
 #ifdef SB_IMPL
 #include <linux/limits.h>
@@ -2990,10 +2983,9 @@ task_func(add_entry, t) {
     SString compile_entry = sstring(
             "{\n"
             "\t\"directory\": \"%n\",\n"
-            "\t\"file\": \"%n\",\n"
+            "\t\"file\": \"%n\",\n" //artifact
             "\t\"arguments\": [ ");
 
-    //printlog("Entry:\n");
 
     if (_c_intern.written) {
         fformat(&_c_intern.compile_cmds, ",\n");
@@ -3031,10 +3023,13 @@ void BegCompile(TaskGraph* g, bool8 enable_cmds, SString compile_loc) {
     _c_intern.last = start;
 }
 
+/**
+ * filename is the name of the final build artifact
+*/
 Task* Compile(TaskGraph* g, const char* filename, u32 cmd_size, const char** cmd, u32 num_arg, ...) {
     //compilation
     Task* compile = AddTask(g, filename);
-    AddCmd(compile, "cc", filename);
+    AddCmd(compile, "cc", "-o", filename);
 
     Task* entry = AddTask(g, filename, _c_intern.last);
     AddProc(entry, add_entry);
@@ -3055,26 +3050,6 @@ Task* Compile(TaskGraph* g, const char* filename, u32 cmd_size, const char** cmd
     }
 
     return compile;
-}
-
-Task* CompileMany(TaskGraph* g, u32 filenum, const char** files, u32 cmd_size, const char** cmd, u32 num_arg, ...) {
-    Task* first = AddDummyTask(g);
-
-    va_list args;
-    va_start(args, num_arg);
-    for (u32 i = 0; i < num_arg; i++) {
-        Task* arg = va_arg(args, Task*);
-        AddDep(first, arg);
-    }
-    va_end(args);
-
-    Task* end = AddDummyTask(g);
-    for (u32 i = 0; i < filenum; i++) {
-        Task* c = Compile(g, files[i], cmd_size, cmd, 1, first);
-        AddDep(end, c);
-    }
-
-    return end;
 }
 
 void EndCompile(TaskGraph* g, Task* t) {

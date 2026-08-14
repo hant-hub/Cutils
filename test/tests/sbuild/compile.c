@@ -79,8 +79,8 @@ int main(int argc, char* argv[]) {
     //enabled
     {
         BegCompile(&g, TRUE, sstring("/tmp/compile_cmds.json"));
-        Task* t = CompileCmd(&g, "../resources/hello.c", Spread("-o", "a.out"));
-        Task* t2 = CompileCmd(&g, "../resources/hello.c", Spread("-o", "a.out"));
+        Task* t = CompileCmd(&g, "a.out", Spread("../resources/hello.c"));
+        Task* t2 = CompileCmd(&g, "a.out", Spread("../resources/hello.c"));
         Task* end = AddDummyTask(&g, t, t2);
         EndCompile(&g, end);
 
@@ -93,34 +93,13 @@ int main(int argc, char* argv[]) {
     {
 
         BegCompile(&g, FALSE, sstring(""));
-        Task* t = CompileCmd(&g, "../resources/hello.c", Spread("-o", "a.out"));
-        Task* t2 = CompileCmd(&g, "../resources/hello.c", Spread("-o", "a.out"), t);
+        Task* t = CompileCmd(&g, "a.out", Spread("../resources/hello.c"));
+        Task* t2 = CompileCmd(&g, "a.out", Spread( "../resources/hello.c" ), t);
         Task* end = AddDummyTask(&g, t, t2);
 
         EndCompile(&g, end);
 
         PrintTaskTree(end, FALSE);
-        Exec(t, 1);
-        ClearTaskGraph(&g);
-    }
-
-    //multi
-    {
-        BegCompile(&g, FALSE, sstring(""));
-        Task* t = CompileMultiCmd(&g, Spread(
-                    "../resources/hello.c",
-                    "../resources/hello.c",
-                    "../resources/hello.c",
-                    "../resources/hello.c",
-                    "../resources/hello.c",
-                    "../resources/hello.c",
-                    "../resources/hello.c",
-                    "../resources/hello.c"
-                    ), Spread("-o", "a.out"));
-
-        EndCompile(&g, t);
-
-        PrintTaskTree(t, FALSE);
         Exec(t, 1);
         ClearTaskGraph(&g);
     }
