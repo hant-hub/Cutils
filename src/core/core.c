@@ -486,7 +486,7 @@ void setdirExe() {
     }
     char *cursor = tmp;
     while (cursor[0]) cursor++;
-    while (cursor[0] != '/') cursor--;
+    while (cursor > tmp && cursor[0] != '/') cursor--;
     cursor[0] = 0;
 
     chdir(tmp);
