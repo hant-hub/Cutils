@@ -94,13 +94,13 @@ int main(int argc, char *argv[]) {
         sb_fence();
         // tests
         char* grouplist[] = {
-            "tests/core",
-            "tests/simpleds",
-            "tests/strbase",
-            "tests/ga",
-            "tests/cgen",
-            "tests/sill",
-            "tests/sbuild",
+            "./tests/core",
+            "./tests/simpleds",
+            "./tests/strbase",
+            "./tests/ga",
+            "./tests/cgen",
+            "./tests/sill",
+            "./tests/sbuild",
         };
         for (int gid = 0; gid < (sizeof(grouplist)/sizeof(grouplist[0])); gid++) {
             char buf[PATH_MAX + 1] = {0};
