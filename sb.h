@@ -399,14 +399,23 @@ void sb_unmapfile(sb_file f, void *map) {
 
 void sb_readfile(void *dst, sb_file f, uint32_t num_bytes) { assert(0); }
 
-void sb_chdir(char *name) { chdir(name); }
+void sb_chdir(char *name) { 
+    int r = chdir(name); 
+    printf("%d\n", r);
+}
 
 void sb_chdir_exe() {
     char tmp[PATH_MAX] = {0};
-    if (readlink("/proc/self/exe", tmp, PATH_MAX) < 0) {
+    long res = 0;
+    if ((res = readlink("/proc/self/exe", tmp, PATH_MAX)) < 0) {
         sb_printf("Error: Failed to find Build Binary\n");
         sb_exit(-1);
     }
+    
+    while (tmp[res - 1] != '/') res--; 
+    tmp[res] = 0;
+
+    printf("%s\n", tmp);
     sb_chdir(tmp);
 }
 
@@ -446,7 +455,7 @@ int sb_cmptime(const char *binary, const char *source) {
 
     if (b) {
         sb_printf("Source Not Found\n");
-        sb_exit(-1);
+        return 0;
     }
 
     if (a) {

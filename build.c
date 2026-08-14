@@ -7,7 +7,6 @@
 #include "sa.h"
 
 int main(int argc, char *argv[]) {
-    sb_chdir_exe();
     SA options = Parse(argc, argv);
     if (options.err) exit(-1);
     SAvals opts = options.vals;
@@ -94,28 +93,28 @@ int main(int argc, char *argv[]) {
         sb_fence();
         // tests
         char* grouplist[] = {
-            "./tests/core",
-            "./tests/simpleds",
-            "./tests/strbase",
-            "./tests/ga",
-            "./tests/cgen",
-            "./tests/sill",
-            "./tests/sbuild",
+            "tests/core",
+            "tests/simpleds",
+            "tests/strbase",
+            "tests/ga",
+            "tests/cgen",
+            "tests/sill",
+            "tests/sbuild",
         };
         for (int gid = 0; gid < (sizeof(grouplist)/sizeof(grouplist[0])); gid++) {
             char buf[PATH_MAX + 1] = {0};
-            snprintf(buf, PATH_MAX, "build/%s", grouplist[gid]);
+            snprintf(buf, PATH_MAX, "./build/%s", grouplist[gid]);
             sb_mkdir(buf);
-            snprintf(buf, PATH_MAX, "test/%s/", grouplist[gid]);
+            snprintf(buf, PATH_MAX, "./test/%s/", grouplist[gid]);
 
             sb_FOREACHFILE(buf, test) {
                 if (sb_cmpext(test, ".c"))
                     continue;
                 sb_EXEC() {
                     sb_add_file(test);
-                    sb_add_file("build/cutils.a");
+                    sb_add_file("./build/cutils.a");
 
-                    sb_add_include_path("include/");
+                    sb_add_include_path("./include/");
 
                     sb_add_flag("g");
                     sb_add_flag("DCU_IMPL");
