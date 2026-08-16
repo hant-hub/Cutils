@@ -7,6 +7,7 @@
 #include "sa.h"
 
 int main(int argc, char *argv[]) {
+    sb_chdir_exe();
     SA options = Parse(argc, argv);
     if (options.err) exit(-1);
     SAvals opts = options.vals;
@@ -14,7 +15,6 @@ int main(int argc, char *argv[]) {
     printf("Opts: T = %s\n", opts.t.val);
 
     sb_BUILD(argc, argv) {
-        sb_chdir_exe();
         sb_mkdir("build/");
         sb_mkdir("build/tests");
         sb_target_dir("build/");
