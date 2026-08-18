@@ -15,7 +15,7 @@
     - [X] parallel task graph
     - [X] Formatting
     - [X] integration
-    - [ ] Append Flags
+    - [X] Append Flags
     - [ ] additional compilation funcs
         - [ ] git
         - [ ] curl
