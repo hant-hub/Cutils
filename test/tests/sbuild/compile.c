@@ -60,11 +60,11 @@ int main(int argc, char* argv[]) {
 
         Task* mid = AddTask(&g, "mid", start);
         AddProc(mid, add_entry);
-        AddCmd(mid, "test/tests/sbuild/compile.c", "-I", "include/");
+        AddArg(mid, "test/tests/sbuild/compile.c", "-I", "include/");
 
         Task* mid1 = AddTask(&g, "mid1", mid);
         AddProc(mid1, add_entry);
-        AddCmd(mid1, "include/sbuild/sbuild.h", "-I", "include/");
+        AddArg(mid1, "include/sbuild/sbuild.h", "-I", "include/");
 
         Task* end = AddTask(&g, "end", mid1);
         AddProc(end, end_compile);
@@ -82,10 +82,10 @@ int main(int argc, char* argv[]) {
         Task* t = CompileCmd(&g, "a.out", Spread("../resources/hello.c"));
         Task* t2 = CompileCmd(&g, "a.out", Spread("../resources/hello.c"));
         Task* end = AddDummyTask(&g, t, t2);
-        EndCompile(&g, end);
+        end = EndCompile(&g, end);
 
         PrintTaskTree(end, FALSE);
-        Exec(t, 1);
+        assert(!Exec(end, 1));
         ClearTaskGraph(&g);
     }
 
@@ -97,7 +97,7 @@ int main(int argc, char* argv[]) {
         Task* t2 = CompileCmd(&g, "a.out", Spread( "../resources/hello.c" ), t);
         Task* end = AddDummyTask(&g, t, t2);
 
-        EndCompile(&g, end);
+        end = EndCompile(&g, end);
 
         PrintTaskTree(end, FALSE);
         Exec(t, 1);
