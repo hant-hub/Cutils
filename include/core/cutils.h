@@ -2,6 +2,7 @@
 #define CUTILS_H
 
 #include <stdint.h>
+#include <pthread.h>
 
 #define PAGE_SIZE (1 << 12L)
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
@@ -230,6 +231,7 @@ typedef struct file {
     u16 accum;
     bool8 closefd; // 0 means close, 1 means don't close
     bool8 buffered;
+
     i8 buf[PAGE_SIZE];
 } file;
 
@@ -316,7 +318,6 @@ Format Table:
 
     %c -> char (print int as char)
 */
-// Not threadsafe
 u32 fformat(file *dst, const char *format, ...);
 
 /*

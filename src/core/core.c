@@ -16,6 +16,11 @@
 
 #include <byteswap.h>
 
+//use platform threads in general case
+//required for stuff like printlog
+#include <pthread.h>
+
+
 /*
     Endian Utilities
 */
@@ -986,7 +991,11 @@ file errfile = {
 
 void flush_log(void) { fileflush(&logfile); }
 
+static pthread_mutex_t print_mutex = { PTHREAD_MUTEX_INITIALIZER };
+
 u32 printlog(const char *format, ...) {
+    pthread_mutex_lock(&print_mutex); 
+
     static bool8 schedule_flush = FALSE;
     if (!schedule_flush) {
         schedule_flush = TRUE;
@@ -1006,10 +1015,13 @@ u32 printlog(const char *format, ...) {
     va_start(args, format);
     vformat(finfo, &args, format);
     va_end(args);
+
+    pthread_mutex_unlock(&print_mutex);
     return info.idx;
 }
 
 u32 printwarn(const char *format, ...) {
+    pthread_mutex_lock(&print_mutex); 
     fileInfo info = {
         .dst = &warnfile,
     };
@@ -1023,6 +1035,7 @@ u32 printwarn(const char *format, ...) {
     va_start(args, format);
     vformat(finfo, &args, format);
     va_end(args);
+    pthread_mutex_unlock(&print_mutex);
     return info.idx;
 }
 
@@ -1040,6 +1053,7 @@ u32 printerr(const char *format, ...) {
     va_start(args, format);
     vformat(finfo, &args, format);
     va_end(args);
+    pthread_mutex_unlock(&print_mutex);
     return info.idx;
 }
 
