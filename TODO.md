@@ -2,9 +2,12 @@
 
 ### Cutils Improvements
 - [ ] thread-safe printing
-    - [ ] locks
+    - [X] locks
     - [ ] locks on files
     - [ ] enable/disable locks
+- [ ] Arena Buffer Concatenation
+    - [ ] Extend Buf
+    - [ ] Concat Bufs
 
 ### Sbuild
 - [X] Graph Data Structure
