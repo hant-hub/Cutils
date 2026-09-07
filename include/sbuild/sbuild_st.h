@@ -1,11 +1,10 @@
 
 /*
-    
+
    Stand Alone version, Simply include this directly
    to use.
 
 */
-
 
 #ifndef SB_H
 #define SB_H
@@ -19,7 +18,6 @@
 
 #define Spread(...) __VA_ARGS__
 
-
 #define KB(x) (x << 10L)
 #define MB(x) (KB(x) << 10L)
 #define GB(x) (MB(x) << 10L)
@@ -28,9 +26,9 @@
 #define MAX(x, y) (x > y ? x : y)
 #define CLAMP(min, max, t) (MAX(MIN(max, t), min))
 
-#define MSB16(i) (15 - __builtin_clz((unsigned int)i)) 
-#define MSB32(i) (31 - __builtin_clz(i)) 
-#define MSB64(i) (63 - __builtin_clzll(i)) 
+#define MSB16(i) (15 - __builtin_clz((unsigned int)i))
+#define MSB32(i) (31 - __builtin_clz(i))
+#define MSB64(i) (63 - __builtin_clzll(i))
 
 #define CUTILS_INLINE __inline __attribute__((always_inline))
 
@@ -70,21 +68,19 @@ u64 FlipEndian64(u64 i);
 f32 FlipEndianF(f32 f);
 f64 FlipEndianD(f64 f);
 
-
 /*
     Custom Memory Allocators
 */
 
-#define NULL ((void *)0)
+#define NULL ((void*)0)
 
-#define alloc_func_def(name)                                                   \
-    void *(name)(void *ctx, void *ptr, u64 old, u64 new)
+#define alloc_func_def(name) void*(name)(void* ctx, void* ptr, u64 old, u64 new)
 
 typedef alloc_func_def(*alloc_func);
 
 typedef struct Allocator {
     alloc_func a;
-    void *ctx;
+    void* ctx;
 } Allocator;
 
 #define Alloc(mem, size) mem.a(mem.ctx, NULL, 0, size)
@@ -101,23 +97,23 @@ typedef struct ArenaAllocator {
     u64 cap;
     u64 size;
     char data[];
-} *ArenaAllocator;
+}* ArenaAllocator;
 
 ArenaAllocator ArenaCreate(Allocator a, u64 size);
 
 u64 ArenaGetPos(ArenaAllocator a);
 void ArenaSetPos(ArenaAllocator a, u64 pos);
 
-void *ArenaAlloc(ArenaAllocator a, u64 size);
-void ArenaExtendLast(ArenaAllocator a, u64 size);
-void *ArenaAllocZero(ArenaAllocator a, u64 size);
+void* ArenaAlloc(ArenaAllocator a, u64 size);
+u64 ArenaExtendLast(ArenaAllocator a, u64 size);
+void* ArenaAllocZero(ArenaAllocator a, u64 size);
 
 void ArenaPop(ArenaAllocator a, u64 size);
 void ArenaClear(ArenaAllocator a);
 
 void ArenaDestroy(ArenaAllocator s);
 
-//make generic allocator from Arena
+// make generic allocator from Arena
 Allocator ArenaGetAllocator(ArenaAllocator a);
 
 // Scratch Arena
@@ -135,12 +131,12 @@ typedef struct StackAllocator {
     u64 cap;
     u64 size;
     char data[];
-} *StackAllocator;
+}* StackAllocator;
 
 StackAllocator StackCreate(Allocator a, u64 size);
 void StackDestroy(Allocator a, StackAllocator s);
 
-void *StackAlloc(StackAllocator s, u64 size);
+void* StackAlloc(StackAllocator s, u64 size);
 void StackSet(StackAllocator s, u64 pos);
 void StackReset(StackAllocator s);
 
@@ -150,12 +146,12 @@ void StackReset(StackAllocator s);
 
 typedef struct SString {
     u32 len;
-    i8 *data;
+    i8* data;
 } SString;
 
 typedef struct LString {
     u64 len;
-    i8 *data;
+    i8* data;
 } LString;
 
 bool8 Sstrcmp(SString a, SString b);
@@ -169,7 +165,7 @@ char* SStringGetCstr(SString s, ArenaAllocator a);
 
 #define slice(type)                                                            \
     struct {                                                                   \
-        type *data;                                                            \
+        type* data;                                                            \
         u32 size;                                                              \
     }
 
@@ -185,7 +181,7 @@ char* SStringGetCstr(SString s, ArenaAllocator a);
 SString Sstrtok(SString str, const char delim);
 
 #define sstring(x)                                                             \
-    (SString) { sizeof(x) - 1, (i8 *)x }
+    (SString) { sizeof(x) - 1, (i8*)x }
 
 #define sstringify(data, len)                                                  \
     (SString) { len, data }
@@ -203,14 +199,12 @@ SString Sstrtok(SString str, const char delim);
     TIME Helpers
 */
 
-typedef struct time_spec{
+typedef struct time_spec {
     u64 s;
     u64 ns;
 } time_spec;
 
-#define timecmp(t1, op, t2) \
-    (t1.s == t2.s ? t1.ns op t2.ns : t1.s op t2.s)
-
+#define timecmp(t1, op, t2) (t1.s == t2.s ? t1.ns op t2.ns : t1.s op t2.s)
 
 /*
     FILE Handling
@@ -250,8 +244,8 @@ void fileclose(file file);
 file filestat(const SString filename);
 
 u64 fileread(SString dst, file src);
-u64 filewrite(file *dst, SString src);
-void fileflush(file *dst);
+u64 filewrite(file* dst, SString src);
+void fileflush(file* dst);
 
 u64 fileload(SString handle, const SString filename);
 u64 filesave(const SString filename, SString handle);
@@ -277,10 +271,10 @@ typedef enum DirType {
 } DirType;
 
 void DirBegin(SString filepath);
-SString DirNext(DirType *t);
+SString DirNext(DirType* t);
 
 void DirBeginRec(SString filepath, u32 max_depth);
-SString DirNextRec(DirType *t);
+SString DirNextRec(DirType* t);
 
 /*
     Custom Format
@@ -306,7 +300,7 @@ Format Table:
     %c -> char (print int as char)
 
 */
-u32 sformat(SString dst, const char *format, ...);
+u32 sformat(SString dst, const char* format, ...);
 
 /*
 Format Table:
@@ -328,7 +322,7 @@ Format Table:
     %c -> char (print int as char)
 */
 // Not threadsafe
-u32 fformat(file *dst, const char *format, ...);
+u32 fformat(file* dst, const char* format, ...);
 
 /*
     Custom Logging
@@ -342,20 +336,20 @@ extern file logfile;
 extern file warnfile;
 extern file errfile;
 
-u32 printlog(const char *format, ...);
-u32 printwarn(const char *format, ...);
-u32 printerr(const char *format, ...);
+u32 printlog(const char* format, ...);
+u32 printwarn(const char* format, ...);
+u32 printerr(const char* format, ...);
 
 #define debuglog(format, ...)                                                  \
-    printlog("\e[0m[LOG] " __FILE__ ":%d]:\t" format "\n", __LINE__, ##__VA_ARGS__)
+    printlog("\e[0m[LOG] " __FILE__ ":%d]:\t" format "\n", __LINE__,           \
+             ##__VA_ARGS__)
 
 #define debugwarn(format, ...)                                                 \
-    printwarn("\e[38;2;255;255;0m[WARN]" __FILE__ ":%d]:\t" format           \
-              "\e[0m\n",                                                     \
+    printwarn("\e[38;2;255;255;0m[WARN]" __FILE__ ":%d]:\t" format "\e[0m\n",  \
               __LINE__, ##__VA_ARGS__)
 
 #define debugerr(format, ...)                                                  \
-    printerr("\e[38;2;255;0;0m[ERR] " __FILE__ ":%d]:\t" format "\e[0m\n", \
+    printerr("\e[38;2;255;0;0m[ERR] " __FILE__ ":%d]:\t" format "\e[0m\n",     \
              __LINE__, ##__VA_ARGS__)
 
 /*
@@ -409,8 +403,8 @@ v2i v2iMul(v2i a, v2i b);
 v2f v2fMul(v2f a, v2f b);
 v2d v2dMul(v2d a, v2d b);
 
-u64 FNVHash64(u8 *data, u64 size);
-u32 FNVHash32(u8 *data, u32 size);
+u64 FNVHash64(u8* data, u64 size);
+u32 FNVHash32(u8* data, u32 size);
 
 #endif
 
@@ -430,7 +424,7 @@ u32 FNVHash32(u8 *data, u32 size);
         Allocator a;                                                           \
         u64 size;                                                              \
         u64 cap;                                                               \
-        type *data;                                                            \
+        type* data;                                                            \
     }
 
 #define dynPush(array, val)                                                    \
@@ -467,7 +461,7 @@ u32 FNVHash32(u8 *data, u32 size);
         }                                                                      \
                                                                                \
         if (array.size < newsize) {                                            \
-            char *d = (char *)&array.data[array.size];                         \
+            char* d = (char*)&array.data[array.size];                          \
             for (u32 i = 0;                                                    \
                  i < (newsize - array.size) * sizeof(array.data[0]); i++)      \
                 d[i] = 0;                                                      \
@@ -516,19 +510,19 @@ u32 FNVHash32(u8 *data, u32 size);
         Allocator a;                                                           \
         u64 size;                                                              \
         u64 cap;                                                               \
-        type *data;                                                            \
+        type* data;                                                            \
     } name;                                                                    \
-    void name##Push(name *arr, type val);                                      \
-    void name##Reserve(name *arr, u64 size);                                   \
-    void name##Resize(name *arr, u64 size);                                    \
-    type name##Back(name *arr);                                                \
-    void name##Free(name *arr);                                                \
-    void name##Ins(name *arr, u64 idx, type val);                              \
-    void name##Del(name *arr, u64 idx);                                        \
-    void name##Ext(name *arr, type *vals, u64 num)
+    void name##Push(name* arr, type val);                                      \
+    void name##Reserve(name* arr, u64 size);                                   \
+    void name##Resize(name* arr, u64 size);                                    \
+    type name##Back(name* arr);                                                \
+    void name##Free(name* arr);                                                \
+    void name##Ins(name* arr, u64 idx, type val);                              \
+    void name##Del(name* arr, u64 idx);                                        \
+    void name##Ext(name* arr, type* vals, u64 num)
 
 #define DefDynArrayImpl(name, type)                                            \
-    void name##Push(name *arr, type val) {                                     \
+    void name##Push(name* arr, type val) {                                     \
         if (arr->size + 1 > arr->cap) {                                        \
             u64 oldcap = arr->cap;                                             \
                                                                                \
@@ -538,7 +532,7 @@ u32 FNVHash32(u8 *data, u32 size);
         }                                                                      \
         arr->data[arr->size++] = val;                                          \
     }                                                                          \
-    void name##Reserve(name *arr, u64 size) {                                  \
+    void name##Reserve(name* arr, u64 size) {                                  \
         if (arr->cap < size) {                                                 \
             arr->data =                                                        \
                 Realloc(arr->a, arr->data, arr->cap * sizeof(arr->data[0]),    \
@@ -546,7 +540,7 @@ u32 FNVHash32(u8 *data, u32 size);
             arr->cap = size;                                                   \
         }                                                                      \
     }                                                                          \
-    void name##Resize(name *arr, u64 size) {                                   \
+    void name##Resize(name* arr, u64 size) {                                   \
         if (arr->cap < size) {                                                 \
             u64 oldsize = arr->cap;                                            \
             while (arr->cap < size) {                                          \
@@ -558,30 +552,30 @@ u32 FNVHash32(u8 *data, u32 size);
         }                                                                      \
                                                                                \
         if (arr->size < size) {                                                \
-            char *d = (char *)&arr->data[arr->size];                           \
+            char* d = (char*)&arr->data[arr->size];                            \
             u32 len = (size - arr->size) * sizeof(arr->data[0]);               \
             for (u32 i = 0; i < len; i++) d[i] = 0;                            \
         }                                                                      \
         arr->size = size;                                                      \
     }                                                                          \
-    type name##Back(name *arr) { return arr->data[arr->size - 1]; }            \
-    void name##Free(name *arr) {                                               \
+    type name##Back(name* arr) { return arr->data[arr->size - 1]; }            \
+    void name##Free(name* arr) {                                               \
         Free(arr->a, arr->data, arr->cap * sizeof(arr->data[0]));              \
     }                                                                          \
-    void name##Ins(name *arr, u64 idx, type val) {                             \
+    void name##Ins(name* arr, u64 idx, type val) {                             \
         name##Resize(arr, arr->size + 1);                                      \
         for (i64 i = arr->size - 1; i >= idx; i--) {                           \
             arr->data[i + 1] = arr->data[i];                                   \
         }                                                                      \
         arr->data[idx] = val;                                                  \
     }                                                                          \
-    void name##Del(name *arr, u64 idx) {                                       \
+    void name##Del(name* arr, u64 idx) {                                       \
         for (u32 i = idx; i < arr->size - 1; i++) {                            \
             arr->data[i] = arr->data[i + 1];                                   \
         }                                                                      \
         name##Resize(arr, arr->size - 1);                                      \
     }                                                                          \
-    void name##Ext(name *arr, type *vals, u64 num) {                           \
+    void name##Ext(name* arr, type* vals, u64 num) {                           \
         name##Resize(arr, arr->size + num);                                    \
         for (u64 i = arr->size - num; i < arr->size; i++) {                    \
             arr->data[i] = vals[i - arr->size + num];                          \
@@ -606,17 +600,17 @@ u32 FNVHash32(u8 *data, u32 size);
         struct {                                                               \
             key k;                                                             \
             i32 m;                                                             \
-        } *keys;                                                               \
-        val *vals;                                                             \
+        }* keys;                                                               \
+        val* vals;                                                             \
     } name;                                                                    \
-    void name##Ins(name *, key, val);                                          \
-    val *name##Get(name *, key);                                               \
-    void name##Del(name *, key);                                               \
-    void name##Clear(name *);                                                  \
-    void name##Free(name *);
+    void name##Ins(name*, key, val);                                           \
+    val* name##Get(name*, key);                                                \
+    void name##Del(name*, key);                                                \
+    void name##Clear(name*);                                                   \
+    void name##Free(name*);
 
 #define DefHashMapImpl(name, key, val)                                         \
-    void name##Ins(name *map, key ky, val vl) {                                \
+    void name##Ins(name* map, key ky, val vl) {                                \
         if (map->cap * MAX_LOAD <= map->size + 1) {                            \
             u64 oldcap = map->cap;                                             \
             map->cap = map->cap ? map->cap * 2 : MIN_CAP;                      \
@@ -634,7 +628,7 @@ u32 FNVHash32(u8 *data, u32 size);
                                                                                \
                 key tempk = oldkeys[i].k;                                      \
                 val tempv = oldvals[i];                                        \
-                u32 hash = FNVHash32((u8 *)&tempk, sizeof(tempk));             \
+                u32 hash = FNVHash32((u8*)&tempk, sizeof(tempk));              \
                                                                                \
                 u32 idx = hash % map->cap;                                     \
                 u32 dist = 0;                                                  \
@@ -675,7 +669,7 @@ u32 FNVHash32(u8 *data, u32 size);
                                                                                \
         key tempk = ky;                                                        \
         val tempv = vl;                                                        \
-        u32 hash = FNVHash32((u8 *)&tempk, sizeof(tempk));                     \
+        u32 hash = FNVHash32((u8*)&tempk, sizeof(tempk));                      \
                                                                                \
         u32 idx = hash % map->cap;                                             \
         u32 dist = 0;                                                          \
@@ -710,11 +704,11 @@ u32 FNVHash32(u8 *data, u32 size);
             dist++;                                                            \
         }                                                                      \
     }                                                                          \
-    val *name##Get(name *map, key ky) {                                        \
+    val* name##Get(name* map, key ky) {                                        \
         if (!map->cap)                                                         \
             return NULL;                                                       \
         key tempk = ky;                                                        \
-        u32 hash = FNVHash32((u8 *)&tempk, sizeof(tempk));                     \
+        u32 hash = FNVHash32((u8*)&tempk, sizeof(tempk));                      \
                                                                                \
         u32 idx = hash % map->cap;                                             \
         u32 dist = 0;                                                          \
@@ -736,11 +730,11 @@ u32 FNVHash32(u8 *data, u32 size);
                                                                                \
         return NULL;                                                           \
     }                                                                          \
-    void name##Del(name *map, key ky) {                                        \
+    void name##Del(name* map, key ky) {                                        \
                                                                                \
         key tempk = ky;                                                        \
                                                                                \
-        u32 hash = FNVHash32((u8 *)&tempk, sizeof(tempk));                     \
+        u32 hash = FNVHash32((u8*)&tempk, sizeof(tempk));                      \
         u32 idx = hash % map->cap;                                             \
         u32 dist = 0;                                                          \
                                                                                \
@@ -773,7 +767,7 @@ u32 FNVHash32(u8 *data, u32 size);
                                                                                \
         map->keys[prev].m = -1;                                                \
     }                                                                          \
-    void name##Reserve(name *map, u64 size) {                                  \
+    void name##Reserve(name* map, u64 size) {                                  \
         u32 oldcap = map->cap;                                                 \
         while (map->cap < size) {                                              \
             map->cap = map->cap ? map->cap * 2 : MIN_CAP;                      \
@@ -792,7 +786,7 @@ u32 FNVHash32(u8 *data, u32 size);
                                                                                \
             key tempk = oldkeys[i].k;                                          \
             val tempv = oldvals[i];                                            \
-            u32 hash = FNVHash32((u8 *)&tempk, sizeof(tempk));                 \
+            u32 hash = FNVHash32((u8*)&tempk, sizeof(tempk));                  \
                                                                                \
             u32 idx = hash % map->cap;                                         \
             u32 dist = 0;                                                      \
@@ -830,11 +824,11 @@ u32 FNVHash32(u8 *data, u32 size);
         Free(map->a, oldkeys, oldcap * sizeof(map->keys[0]));                  \
         Free(map->a, oldvals, oldcap * sizeof(map->vals[0]));                  \
     }                                                                          \
-    void name##Clear(name *map) {                                              \
+    void name##Clear(name* map) {                                              \
         map->size = 0;                                                         \
         memset(map->keys, -1, map->cap * sizeof(map->keys[0]));                \
     }                                                                          \
-    void name##Free(name *map) {                                               \
+    void name##Free(name* map) {                                               \
         Free(map->a, map->keys, map->cap * sizeof(map->keys[0]));              \
         Free(map->a, map->vals, map->cap * sizeof(map->vals[0]));              \
     }
@@ -847,16 +841,16 @@ u32 FNVHash32(u8 *data, u32 size);
         struct {                                                               \
             SString k;                                                         \
             i32 m;                                                             \
-        } *keys;                                                               \
-        val *vals;                                                             \
+        }* keys;                                                               \
+        val* vals;                                                             \
     } name;                                                                    \
-    void nameIns(name *, SString, val);                                        \
-    val *nameGet(name *, SString);                                             \
-    void nameDel(name *, SString);                                             \
-    void nameFree(name *);
+    void nameIns(name*, SString, val);                                         \
+    val* nameGet(name*, SString);                                              \
+    void nameDel(name*, SString);                                              \
+    void nameFree(name*);
 
 #define DefStringMapImpl(name, val)                                            \
-    void name##Ins(name *map, SString ky, val vl) {                            \
+    void name##Ins(name* map, SString ky, val vl) {                            \
         if (map->cap * MAX_LOAD <= map->size + 1) {                            \
             u64 oldcap = map->cap;                                             \
             map->cap = map->cap ? map->cap * 2 : MIN_CAP;                      \
@@ -874,7 +868,7 @@ u32 FNVHash32(u8 *data, u32 size);
                                                                                \
                 typeof(map->keys[0].k) tempk = oldkeys[i].k;                   \
                 typeof(map->vals[0]) tempv = oldvals[i];                       \
-                u32 hash = FNVHash32((u8 *)tempk.data, tempk.len);             \
+                u32 hash = FNVHash32((u8*)tempk.data, tempk.len);              \
                                                                                \
                 u32 idx = hash % map->cap;                                     \
                 u32 dist = 0;                                                  \
@@ -915,7 +909,7 @@ u32 FNVHash32(u8 *data, u32 size);
                                                                                \
         typeof(map->keys[0].k) tempk = ky;                                     \
         typeof(map->vals[0]) tempv = vl;                                       \
-        u32 hash = FNVHash32((u8 *)tempk.data, tempk.len);                     \
+        u32 hash = FNVHash32((u8*)tempk.data, tempk.len);                      \
                                                                                \
         u32 idx = hash % map->cap;                                             \
         u32 dist = 0;                                                          \
@@ -950,9 +944,9 @@ u32 FNVHash32(u8 *data, u32 size);
             dist++;                                                            \
         }                                                                      \
     }                                                                          \
-    val *name##Get(name *map, SString ky) {                                    \
+    val* name##Get(name* map, SString ky) {                                    \
         typeof(map->keys[0].k) tempk = ky;                                     \
-        u32 hash = FNVHash32((u8 *)tempk.data, tempk.len);                     \
+        u32 hash = FNVHash32((u8*)tempk.data, tempk.len);                      \
                                                                                \
         u32 idx = hash % map->cap;                                             \
         u32 dist = 0;                                                          \
@@ -974,11 +968,11 @@ u32 FNVHash32(u8 *data, u32 size);
                                                                                \
         return NULL;                                                           \
     }                                                                          \
-    void name##Del(name *map, SString ky) {                                    \
+    void name##Del(name* map, SString ky) {                                    \
                                                                                \
         typeof(map->keys[0].k) tempk = ky;                                     \
                                                                                \
-        u32 hash = FNVHash32((u8 *)tempk.data, tempk.len);                     \
+        u32 hash = FNVHash32((u8*)tempk.data, tempk.len);                      \
         u32 idx = hash % map->cap;                                             \
         u32 dist = 0;                                                          \
                                                                                \
@@ -1011,7 +1005,7 @@ u32 FNVHash32(u8 *data, u32 size);
                                                                                \
         map->keys[prev].m = -1;                                                \
     }                                                                          \
-    void name##Reserve(name *map, u64 size) {                                  \
+    void name##Reserve(name* map, u64 size) {                                  \
         u32 oldcap = map->cap;                                                 \
         while (map->cap < size) {                                              \
             map->cap = map->cap ? map->cap * 2 : MIN_CAP;                      \
@@ -1030,7 +1024,7 @@ u32 FNVHash32(u8 *data, u32 size);
                                                                                \
             typeof(map->keys[0].k) tempk = oldkeys[i].k;                       \
             typeof(map->vals[0]) tempv = oldvals[i];                           \
-            u32 hash = FNVHash32((u8 *)tempk.data, tempk.len);                 \
+            u32 hash = FNVHash32((u8*)tempk.data, tempk.len);                  \
                                                                                \
             u32 idx = hash % map->cap;                                         \
             u32 dist = 0;                                                      \
@@ -1068,11 +1062,11 @@ u32 FNVHash32(u8 *data, u32 size);
         Free(map->a, oldkeys, oldcap * sizeof(map->keys[0]));                  \
         Free(map->a, oldvals, oldcap * sizeof(map->vals[0]));                  \
     }                                                                          \
-    void name##Clear(name *map) {                                              \
+    void name##Clear(name* map) {                                              \
         map->size = 0;                                                         \
         memset(map->keys, -1, map->cap * sizeof(map->keys[0]));                \
     }                                                                          \
-    void name##Free(name *map) {                                               \
+    void name##Free(name* map) {                                               \
         Free(map->a, map->keys, map->cap * sizeof(map->keys[0]));              \
         Free(map->a, map->vals, map->cap * sizeof(map->vals[0]));              \
     }
@@ -1086,17 +1080,17 @@ u32 FNVHash32(u8 *data, u32 size);
 #define PoolDecl(name, item)                                                   \
     typedef struct name {                                                      \
         Allocator a;                                                           \
-        item *slots;                                                           \
-        u32 *freelist;                                                         \
+        item* slots;                                                           \
+        u32* freelist;                                                         \
         u32 cap;                                                               \
         u32 freesize;                                                          \
     } name;                                                                    \
-    u32 name##Alloc(name *p);                                                  \
-    void name##Free(name *p, u32 idx);                                         \
-    void name##Destroy(name *p);
+    u32 name##Alloc(name* p);                                                  \
+    void name##Free(name* p, u32 idx);                                         \
+    void name##Destroy(name* p);
 
 #define PoolImpl(name, item)                                                   \
-    u32 name##Alloc(name *p) {                                                 \
+    u32 name##Alloc(name* p) {                                                 \
         if (p->freesize == 0) {                                                \
             u32 oldcap = p->cap;                                               \
             p->cap = p->cap ? p->cap * 2 : 8;                                  \
@@ -1111,12 +1105,11 @@ u32 FNVHash32(u8 *data, u32 size);
         }                                                                      \
         return p->freelist[--p->freesize];                                     \
     }                                                                          \
-    void name##Free(name *p, u32 idx) { p->freelist[p->freesize++] = idx; }    \
-    void name##Destroy(name *p) {                                              \
+    void name##Free(name* p, u32 idx) { p->freelist[p->freesize++] = idx; }    \
+    void name##Destroy(name* p) {                                              \
         Free(p->a, p->slots, p->cap * sizeof(item));                           \
         Free(p->a, p->freelist, p->cap * sizeof(u32));                         \
     }
-
 
 /*
     Simple Queue
@@ -1130,7 +1123,7 @@ u32 FNVHash32(u8 *data, u32 size);
         u32 cap;                                                               \
         u32 size;                                                              \
         u32 first;                                                             \
-        type *data;                                                            \
+        type* data;                                                            \
     } name
 
 #define DefSimpleQueueImpl(name, type)                                         \
@@ -1142,13 +1135,13 @@ u32 FNVHash32(u8 *data, u32 size);
         q.data = Alloc(a, max_size * sizeof(type));                            \
         return q;                                                              \
     }                                                                          \
-    void name##Destroy(name *q) {                                              \
+    void name##Destroy(name* q) {                                              \
         Free(q->a, q->data, q->cap * sizeof(type));                            \
         q->cap = 0;                                                            \
     }                                                                          \
-    bool8 name##Empty(name *q) { return q->size == 0; }                        \
-    bool8 name##Full(name *q) { return q->size == q->cap; }                    \
-    bool8 name##Push(name *q, type item) {                                     \
+    bool8 name##Empty(name* q) { return q->size == 0; }                        \
+    bool8 name##Full(name* q) { return q->size == q->cap; }                    \
+    bool8 name##Push(name* q, type item) {                                     \
         if (name##Full(q)) {                                                   \
             return FALSE;                                                      \
         }                                                                      \
@@ -1157,7 +1150,7 @@ u32 FNVHash32(u8 *data, u32 size);
         q->size++;                                                             \
         return TRUE;                                                           \
     }                                                                          \
-    bool8 name##Pop(name *q, type *out) {                                      \
+    bool8 name##Pop(name* q, type* out) {                                      \
         if (name##Empty(q)) {                                                  \
             return FALSE;                                                      \
         }                                                                      \
@@ -1189,12 +1182,12 @@ u32 FNVHash32(u8 *data, u32 size);
     }                                                                          \
     bool8 name##Empty(name* q) { return q->size == 0; }                        \
     bool8 name##Full(name* q) { return q->size >= q->cap; }                    \
-    void name##Push(name* q, type item) {                                       \
+    void name##Push(name* q, type item) {                                      \
         if (name##Full(q)) {                                                   \
             u32 oldcap = q->cap;                                               \
             q->cap = q->cap ? q->cap * 2 : 1;                                  \
                                                                                \
-            type* new = Alloc(q->a, q->cap * sizeof(q->data[0]));               \
+            type* new = Alloc(q->a, q->cap * sizeof(q->data[0]));              \
             if (!new) {                                                        \
                 q->cap = oldcap;                                               \
                 return;                                                        \
@@ -1213,7 +1206,7 @@ u32 FNVHash32(u8 *data, u32 size);
         q->data[slot] = item;                                                  \
         q->size++;                                                             \
     }                                                                          \
-    bool8 name##Pop(name* q, type* out) {                                       \
+    bool8 name##Pop(name* q, type* out) {                                      \
         if (name##Empty(q)) {                                                  \
             return FALSE;                                                      \
         }                                                                      \
@@ -1223,8 +1216,6 @@ u32 FNVHash32(u8 *data, u32 size);
         return TRUE;                                                           \
     }
 
-
-
 /*
     Exponential Array - Pointer Stable Dynamically sized Container
 */
@@ -1232,15 +1223,14 @@ u32 FNVHash32(u8 *data, u32 size);
 #define MAX_CHUNKS 32
 #define MIN_CHUNK_SIZE 4
 
-
-#define InitExar(mem, type) \
-    (Exar){.a = mem, .e_size = sizeof(type)}
+#define InitExar(mem, type)                                                    \
+    (Exar) { .a = mem, .e_size = sizeof(type) }
 
 typedef struct Exar {
     Allocator a;
     u32 size;
     u32 e_size;
-    char* chunks[MAX_CHUNKS]; //variable size
+    char* chunks[MAX_CHUNKS]; // variable size
 } Exar;
 
 void* ExarInsert(Exar* e, void* data);
@@ -1254,51 +1244,44 @@ void ExarFree(Exar* e);
     Exponential Array - Pointer Stable Dynamically sized Container
 */
 
-
-
-
 void* ExarInsert(Exar* e, void* data) {
     u32 index = MIN_CHUNK_SIZE + e->size++;
 
     u32 ct = index >> MSB32(MIN_CHUNK_SIZE);
     u32 chunk = (ct ? MSB32(ct) + 1 : 0);
-    u32 cindex = (~(1 << (chunk + 1)) & index); 
+    u32 cindex = (~(1 << (chunk + 1)) & index);
     chunk--;
-
 
     if (!e->chunks[chunk]) {
         u32 chunk_size = MIN_CHUNK_SIZE << chunk;
         e->chunks[chunk] = Alloc(e->a, chunk_size * e->e_size);
     }
 
+    // e->chunks[chunk][cindex] = val;
 
-    //e->chunks[chunk][cindex] = val;
-    
     char* dest = ((e->chunks[chunk]) + cindex * e->e_size);
-    for (u32 i = 0; i < e->e_size; i++) {
-        dest[i] = ((char*)data)[i];
-    }
+    for (u32 i = 0; i < e->e_size; i++) { dest[i] = ((char*)data)[i]; }
 
-    return (void*) dest;
+    return (void*)dest;
 }
 
 void* ExarGet(Exar* e, u32 index) {
-    if (index >= e->size) return NULL;
+    if (index >= e->size)
+        return NULL;
     index += MIN_CHUNK_SIZE;
 
     u32 ct = index >> MSB32(MIN_CHUNK_SIZE);
     u32 chunk = (ct ? MSB32(ct) + 1 : 0);
-    u32 cindex = (~(1 << (chunk + 1)) & index); 
+    u32 cindex = (~(1 << (chunk + 1)) & index);
     chunk--;
 
-    if (!e->chunks[chunk]) return NULL;
+    if (!e->chunks[chunk])
+        return NULL;
     char* dest = ((e->chunks[chunk]) + cindex * e->e_size);
     return dest;
 }
 
-void ExarClear(Exar* e) {
-    e->size = 0;
-}
+void ExarClear(Exar* e) { e->size = 0; }
 
 void ExarFree(Exar* e) {
     for (u32 i = 0; i < MAX_CHUNKS; i++) {
@@ -1306,7 +1289,8 @@ void ExarFree(Exar* e) {
         if (e->chunks[i]) {
             Free(e->a, e->chunks[i], chunk_size * e->e_size);
             e->chunks[i] = NULL;
-        } else break;
+        } else
+            break;
     }
     e->size = 0;
 }
@@ -1318,8 +1302,7 @@ typedef struct TaskGraph TaskGraph;
 
 struct Task;
 
-#define task_func(name, task_arg) \
-    void (name)(struct Task* task_arg)
+#define task_func(name, task_arg) void(name)(struct Task * task_arg)
 
 typedef struct Task {
     TaskGraph* g; // back ref
@@ -1330,11 +1313,11 @@ typedef struct Task {
 
     dynArray(struct Task*) pre;  // things this task depends on
     dynArray(struct Task*) post; // things which depend on this task
-    
-    task_func(*func, t);         //proc for io tasks
-     
-    dynArray(u32) cmds;          // command which makes up this task
-    dynArray(u32) args;          // args for proc
+
+    task_func(*func, t); // proc for io tasks
+
+    dynArray(u32) cmds; // command which makes up this task
+    dynArray(u32) args; // args for proc
 } Task;
 
 typedef struct TaskGraph {
@@ -1353,9 +1336,8 @@ typedef dynArray(i8) CBuf;
     _AutoRebuild(__FILE__, argc, argv,                                         \
                  ARRAY_SIZE(((const char*[]){__VA_ARGS__})), ##__VA_ARGS__)
 
-#define AddDummyTask(g, ...) \
-    _AddTask(g, "", ARRAY_SIZE(((Task*[]){__VA_ARGS__})),##__VA_ARGS__)
-
+#define AddDummyTask(g, ...)                                                   \
+    _AddTask(g, "", ARRAY_SIZE(((Task*[]){__VA_ARGS__})), ##__VA_ARGS__)
 
 #define AddTask(g, name, ...)                                                  \
     _AddTask(g, name, ARRAY_SIZE(((Task*[]){__VA_ARGS__})), ##__VA_ARGS__)
@@ -1366,14 +1348,14 @@ typedef dynArray(i8) CBuf;
 #define AddCmd(t, ...)                                                         \
     _AddCmd(t, ARRAY_SIZE(((const char*[]){__VA_ARGS__})), ##__VA_ARGS__)
 
-#define AddArg(t, ...) \
+#define AddArg(t, ...)                                                         \
     _AddArg(t, ARRAY_SIZE(((const char*[]){__VA_ARGS__})), ##__VA_ARGS__)
 
-#define AddProc(t, p) \
-    (t->func = p)
+#define AddProc(t, p) (t->func = p)
 
-#define CompileCmd(g, file, c, ...) \
-        Compile(g, file, ARRAY_SIZE((((const char*[]){c}))), (const char*[]){c}, ARRAY_SIZE(((Task*[]){__VA_ARGS__})),##__VA_ARGS__)
+#define CompileCmd(g, file, c, ...)                                            \
+    Compile(g, file, ARRAY_SIZE((((const char*[]){c}))), (const char*[]){c},   \
+            ARRAY_SIZE(((Task*[]){__VA_ARGS__})), ##__VA_ARGS__)
 
 TaskGraph CreateTaskGraph();
 void ClearTaskGraph(TaskGraph* g);
@@ -1391,7 +1373,8 @@ bool8 Exec(Task* t, u32 max_processes);
 void BegCompile(TaskGraph* g, bool8 enable_cmds, SString compile_loc);
 Task* EndCompile(TaskGraph* g, Task* t);
 
-Task* Compile(TaskGraph* g, const char* filename, u32 cmd_size, const char** cmd, u32 num_arg, ...);
+Task* Compile(TaskGraph* g, const char* filename, u32 cmd_size,
+              const char** cmd, u32 num_arg, ...);
 
 #ifdef SB_IMPL
 #include <linux/limits.h>
@@ -1412,24 +1395,13 @@ Task* Compile(TaskGraph* g, const char* filename, u32 cmd_size, const char** cmd
 /*
     Endian Utilities
 */
-u16 FlipEndian16(u16 i) {
-    return bswap_16(i);
-}
-u32 FlipEndian32(u32 i) {
-    return bswap_32(i);
-}
-u64 FlipEndian64(u64 i) {
-    return bswap_64(i);
-}
+u16 FlipEndian16(u16 i) { return bswap_16(i); }
+u32 FlipEndian32(u32 i) { return bswap_32(i); }
+u64 FlipEndian64(u64 i) { return bswap_64(i); }
 
-f32 FlipEndianF(f32 f) {
-    return bswap_32(f);
-}
+f32 FlipEndianF(f32 f) { return bswap_32(f); }
 
-f64 FlipEndianD(f64 f) {
-    return bswap_64(f);
-}
-
+f64 FlipEndianD(f64 f) { return bswap_64(f); }
 
 /*
     Memory Allocators
@@ -1468,10 +1440,10 @@ void StackDestroy(Allocator a, StackAllocator s) {
     Free(a, s, s->cap + sizeof(struct StackAllocator));
 }
 
-void *StackAlloc(StackAllocator s, u64 size) {
+void* StackAlloc(StackAllocator s, u64 size) {
     if (s->size + size > s->cap)
         return NULL;
-    void *out = &s->data[s->size];
+    void* out = &s->data[s->size];
     s->size += size;
 
     return out;
@@ -1519,33 +1491,34 @@ static alloc_func_def(arena_alloc) {
 }
 
 Allocator ArenaGetAllocator(ArenaAllocator a) {
-    return (Allocator) {
+    return (Allocator){
         .a = arena_alloc,
         .ctx = a,
     };
 }
 
-void *ArenaAlloc(ArenaAllocator arena, u64 size) {
+void* ArenaAlloc(ArenaAllocator arena, u64 size) {
     ArenaAllocator a = arena;
     if (size + a->size > (a->cap)) {
         return NULL;
     }
 
-    void *p = &a->data[a->size];
+    void* p = &a->data[a->size];
     a->size += size;
     return p;
 }
 
-void ArenaExtendLast(ArenaAllocator arena, u64 size) {
+u64 ArenaExtendLast(ArenaAllocator arena, u64 size) {
     ArenaAllocator a = arena;
     if (size + a->size > (a->cap)) {
-        return;
+        return 0;
     }
     a->size += size;
+    return size;
 }
 
-void *ArenaAllocZero(ArenaAllocator a, u64 size) {
-    void *p = ArenaAlloc(a, size);
+void* ArenaAllocZero(ArenaAllocator a, u64 size) {
+    void* p = ArenaAlloc(a, size);
     if (p)
         memset(p, 0, size);
     return p;
@@ -1699,20 +1672,21 @@ file fileopen(const SString filename, file_permissions p) {
         return (file){.handle = -1};
     }
 
-
     return (file){
         .handle = fd,
         .stats =
             {
                 .size = statbuf.st_size,
-                .modified = {
-                    .s = statbuf.st_mtim.tv_sec,
-                    .ns = statbuf.st_mtim.tv_nsec,
-                },
-                .access = {
-                    .s = statbuf.st_atim.tv_sec,
-                    .ns = statbuf.st_atim.tv_nsec,
-                },
+                .modified =
+                    {
+                        .s = statbuf.st_mtim.tv_sec,
+                        .ns = statbuf.st_mtim.tv_nsec,
+                    },
+                .access =
+                    {
+                        .s = statbuf.st_atim.tv_sec,
+                        .ns = statbuf.st_atim.tv_nsec,
+                    },
             },
     };
 }
@@ -1741,21 +1715,23 @@ file filestat(const SString filename) {
         .stats =
             {
                 .size = statbuf.st_size,
-                .modified = {
-                    .s = statbuf.st_mtim.tv_sec,
-                    .ns = statbuf.st_mtim.tv_nsec,
-                },
-                .access = {
-                    .s = statbuf.st_atim.tv_sec,
-                    .ns = statbuf.st_atim.tv_nsec,
-                },
+                .modified =
+                    {
+                        .s = statbuf.st_mtim.tv_sec,
+                        .ns = statbuf.st_mtim.tv_nsec,
+                    },
+                .access =
+                    {
+                        .s = statbuf.st_atim.tv_sec,
+                        .ns = statbuf.st_atim.tv_nsec,
+                    },
             },
     };
 }
 
 static u64 flushdata(u64 handle, SString src) {
     u64 size = src.len;
-    char *buffer = (char *)src.data;
+    char* buffer = (char*)src.data;
     u64 accum = 0;
 
     while (accum != size) {
@@ -1789,7 +1765,7 @@ void fileclose(file file) {
 
 u64 fileread(SString dst, file src) {
     u64 size = dst.len;
-    char *buffer = (char *)dst.data;
+    char* buffer = (char*)dst.data;
 
     u64 accum = 0;
 
@@ -1811,9 +1787,9 @@ u64 fileread(SString dst, file src) {
     return accum;
 }
 
-u64 filewrite(file *dst, SString src) {
+u64 filewrite(file* dst, SString src) {
     u64 size = src.len;
-    char *buffer = (char *)src.data;
+    char* buffer = (char*)src.data;
     u64 accum = 0;
 
     if (!dst->buffered) {
@@ -1833,7 +1809,7 @@ u64 filewrite(file *dst, SString src) {
     }
 }
 
-void fileflush(file *file) {
+void fileflush(file* file) {
     if (file->buffered && file->accum) {
         flushdata(file->handle,
                   (SString){.len = file->accum, .data = file->buf});
@@ -1861,13 +1837,13 @@ u64 filesave(const SString filename, SString handle) {
 
 void filedelete(SString filename) {
     char buf[PATH_MAX + 1] = {0};
-    sformat((SString){.len = PATH_MAX, .data = (i8 *)buf}, "%s", filename);
+    sformat((SString){.len = PATH_MAX, .data = (i8*)buf}, "%s", filename);
     remove(buf);
 }
 
 void setdir(SString dir) {
     char buf[PATH_MAX + 1] = {0};
-    sformat((SString){.len = PATH_MAX, .data = (i8 *)buf}, "%s", dir);
+    sformat((SString){.len = PATH_MAX, .data = (i8*)buf}, "%s", dir);
     chdir(buf);
 }
 
@@ -1877,7 +1853,7 @@ void setdirExe() {
         debugerr("Error: Failed to find Build Binary");
         exit(-1);
     }
-    char *cursor = tmp;
+    char* cursor = tmp;
     while (cursor[0]) cursor++;
     while (cursor > tmp && cursor[0] != '/') cursor--;
     cursor[0] = 0;
@@ -1899,9 +1875,7 @@ SString filepathpopdir(SString filepath) {
 
 SString filepathbasename(SString filepath) {
     SString out = filepath;
-    while(out.len && out.data[out.len - 1] != '/') {
-        out.len--;
-    }
+    while (out.len && out.data[out.len - 1] != '/') { out.len--; }
 
     out.data = &filepath.data[out.len];
     out.len = filepath.len - out.len;
@@ -1911,12 +1885,11 @@ SString filepathbasename(SString filepath) {
 
 SString filepathext(SString filepath) {
     SString out = filepath;
-    
-    while (out.len && out.data[out.len - 1] != '.') {
-        out.len--;
-    }
 
-    if (!out.len) return (SString){0};
+    while (out.len && out.data[out.len - 1] != '.') { out.len--; }
+
+    if (!out.len)
+        return (SString){0};
 
     out.data = &filepath.data[out.len - 1];
     out.len = filepath.len - (out.len - 1);
@@ -1933,7 +1906,8 @@ u32 filepathdepth(SString filepath) {
     }
 
     for (; i < filepath.len; i++) {
-        if (filepath.data[i] == '/') depth++;
+        if (filepath.data[i] == '/')
+            depth++;
     }
 
     return depth;
@@ -1943,11 +1917,11 @@ u32 filepathdepth(SString filepath) {
     Custom Format
 */
 
-typedef void (*wchar)(char c, void *ctx);
+typedef void (*wchar)(char c, void* ctx);
 
 typedef struct formatInfo {
     wchar f;
-    void *ctx;
+    void* ctx;
 } formatInfo;
 
 // 10^{i + 1}
@@ -2133,7 +2107,8 @@ static void format_float(formatInfo info, f64 num) {
     info.f((u8)mdig + '0', info.ctx);
 }
 
-static ptrdiff_t format_arg(formatInfo info, va_list *args, const char *format) {
+static ptrdiff_t format_arg(formatInfo info, va_list* args,
+                            const char* format) {
     ptrdiff_t out = 0;
     switch (format[0]) {
     case 'd': {
@@ -2240,7 +2215,7 @@ static ptrdiff_t format_arg(formatInfo info, va_list *args, const char *format) 
         out++;
     } break;
     case 'n': {
-        const char *s = va_arg((*args), const char *);
+        const char* s = va_arg((*args), const char*);
         while (s[0]) {
             info.f(s[0], info.ctx);
             s++;
@@ -2288,7 +2263,7 @@ static ptrdiff_t format_arg(formatInfo info, va_list *args, const char *format) 
     return out;
 }
 
-static void vformat(formatInfo info, va_list* args, const char *format) {
+static void vformat(formatInfo info, va_list* args, const char* format) {
 
     while (format[0]) {
         switch (format[0]) {
@@ -2309,13 +2284,13 @@ typedef struct strInfo {
     u32 idx;
 } strInfo;
 
-static void strput(char c, void *ctx) {
-    strInfo *info = ctx;
+static void strput(char c, void* ctx) {
+    strInfo* info = ctx;
     if (info->data.len > info->idx)
         info->data.data[info->idx++] = c;
 }
 
-u32 sformat(SString dst, const char *format, ...) {
+u32 sformat(SString dst, const char* format, ...) {
     strInfo info = {.data = dst, .idx = 0};
 
     formatInfo finfo = {
@@ -2334,17 +2309,17 @@ u32 sformat(SString dst, const char *format, ...) {
 }
 
 typedef struct fileInfo {
-    file *dst;
+    file* dst;
     u64 idx;
 } fileInfo;
 
-static void fileput(char c, void *ctx) {
-    fileInfo *info = ctx;
+static void fileput(char c, void* ctx) {
+    fileInfo* info = ctx;
     info->idx++;
-    filewrite(info->dst, (SString){.len = 1, .data = (i8 *)&c});
+    filewrite(info->dst, (SString){.len = 1, .data = (i8*)&c});
 }
 
-u32 fformat(file *dst, const char *format, ...) {
+u32 fformat(file* dst, const char* format, ...) {
     fileInfo info = {
         .dst = dst,
     };
@@ -2379,7 +2354,7 @@ file errfile = {
 
 void flush_log(void) { fileflush(&logfile); }
 
-u32 printlog(const char *format, ...) {
+u32 printlog(const char* format, ...) {
     static bool8 schedule_flush = FALSE;
     if (!schedule_flush) {
         schedule_flush = TRUE;
@@ -2402,7 +2377,7 @@ u32 printlog(const char *format, ...) {
     return info.idx;
 }
 
-u32 printwarn(const char *format, ...) {
+u32 printwarn(const char* format, ...) {
     fileInfo info = {
         .dst = &warnfile,
     };
@@ -2419,7 +2394,7 @@ u32 printwarn(const char *format, ...) {
     return info.idx;
 }
 
-u32 printerr(const char *format, ...) {
+u32 printerr(const char* format, ...) {
     fileInfo info = {
         .dst = &errfile,
     };
@@ -2438,7 +2413,7 @@ u32 printerr(const char *format, ...) {
 
 // Directory Stuff
 
-static DIR *dirpn = NULL;
+static DIR* dirpn = NULL;
 
 void DirBegin(SString filepath) {
     char buf[PATH_MAX + 1] = {0};
@@ -2446,10 +2421,11 @@ void DirBegin(SString filepath) {
     dirpn = opendir(buf);
 }
 
-SString DirNext(DirType *t) {
-    if (!dirpn) return (SString){0};
+SString DirNext(DirType* t) {
+    if (!dirpn)
+        return (SString){0};
 
-    struct dirent *d = NULL;
+    struct dirent* d = NULL;
     d = readdir(dirpn);
 
     *t = T_END;
@@ -2465,13 +2441,13 @@ SString DirNext(DirType *t) {
     else
         *t = T_UNKNOWN;
 
-    return (SString){.data = (i8 *)d->d_name, .len = strlen(d->d_name)};
+    return (SString){.data = (i8*)d->d_name, .len = strlen(d->d_name)};
 }
 
 static dynArray(dynArray(char)) paths = {.a = GlobalAllocator};
 static dynArray(char) curr_path = {.a = GlobalAllocator};
 static dynArray(char) out_path = {.a = GlobalAllocator};
-static DIR *curr = NULL;
+static DIR* curr = NULL;
 static u32 max_depth = 0;
 
 void DirBeginRec(SString filepath, u32 depth) {
@@ -2479,80 +2455,90 @@ void DirBeginRec(SString filepath, u32 depth) {
     char* file = SStringGetCstr(filepath, sc.arena);
 
     curr = opendir(file);
-    
+
     if (curr) {
         curr_path.size = 0;
-        dynExt(curr_path, filepath.data, filepath.len); 
+        dynExt(curr_path, filepath.data, filepath.len);
         max_depth = depth;
     }
 
     ScratchArenaEnd(sc);
 }
 
-SString DirNextRec(DirType *t) {
-        struct dirent* d = NULL;
-        ScratchArena sc = ScratchArenaGet(NULL); 
+SString DirNextRec(DirType* t) {
+    struct dirent* d = NULL;
+    ScratchArena sc = ScratchArenaGet(NULL);
 
-        while (curr || paths.size) {
-            d = readdir(curr);
-    
-            if (!d) {
-                closedir(curr);
-                dynFree(curr_path);
-                curr = NULL;
-                if (!paths.size) break;
+    while (curr || paths.size) {
+        d = readdir(curr);
 
-                curr_path.data = dynBack(paths).data;
-                curr_path.size = dynBack(paths).size;
-                curr_path.cap = dynBack(paths).cap;
-                curr_path.a = dynBack(paths).a;
-                paths.size--;
-
-                char* pathname = SStringGetCstr((SString){.data = (i8*)curr_path.data, .len = curr_path.size}, sc.arena);
-                curr = opendir(pathname);
-                ScratchArenaEnd(sc);
-
-                continue;
-            }
-    
-            if (strcmp(d->d_name, ".") == 0) continue;
-            if (strcmp(d->d_name, "..") == 0) continue;
-    
-            switch (d->d_type) {
-                case DT_DIR:
-                    *t = T_DIR;
-                    dynArray(char) new = {.a = GlobalAllocator};
-                    if (curr_path.data) {
-                        dynExt(new, curr_path.data, curr_path.size);
-                        dynPush(new, '/');
-                    }
-                    u32 len = strlen(d->d_name);
-                    dynExt(new, d->d_name, len);
-                    if (max_depth <= filepathdepth((SString){.data = (i8*)new.data, .len = new.size})) {
-                        dynFree(new);
-                        break;
-                    }
-                    dynResize(paths, paths.size + 1);
-                    dynBack(paths).data = new.data;
-                    dynBack(paths).size = new.size;
-                    dynBack(paths).cap = new.cap;
-                    dynBack(paths).a = new.a;
+        if (!d) {
+            closedir(curr);
+            dynFree(curr_path);
+            curr = NULL;
+            if (!paths.size)
                 break;
-                case DT_REG: *t = T_FILE; break;
-                default: *t = T_UNKNOWN; break;
-            }
-            out_path.size = 0;
-            dynExt(out_path, curr_path.data, curr_path.size);
-            dynPush(out_path, '/');
-            u32 len = strlen(d->d_name);
-            dynExt(out_path, d->d_name, len);
-    
-            return (SString){.data = (i8*)out_path.data, .len = out_path.size};
+
+            curr_path.data = dynBack(paths).data;
+            curr_path.size = dynBack(paths).size;
+            curr_path.cap = dynBack(paths).cap;
+            curr_path.a = dynBack(paths).a;
+            paths.size--;
+
+            char* pathname = SStringGetCstr(
+                (SString){.data = (i8*)curr_path.data, .len = curr_path.size},
+                sc.arena);
+            curr = opendir(pathname);
+            ScratchArenaEnd(sc);
+
+            continue;
         }
-    
-        *t = T_END;
-        ScratchArenaEnd(sc);
-        return (SString){0};
+
+        if (strcmp(d->d_name, ".") == 0)
+            continue;
+        if (strcmp(d->d_name, "..") == 0)
+            continue;
+
+        switch (d->d_type) {
+        case DT_DIR:
+            *t = T_DIR;
+            dynArray(char) new = {.a = GlobalAllocator};
+            if (curr_path.data) {
+                dynExt(new, curr_path.data, curr_path.size);
+                dynPush(new, '/');
+            }
+            u32 len = strlen(d->d_name);
+            dynExt(new, d->d_name, len);
+            if (max_depth <= filepathdepth((SString){.data = (i8*)new.data,
+                                                     .len = new.size})) {
+                dynFree(new);
+                break;
+            }
+            dynResize(paths, paths.size + 1);
+            dynBack(paths).data = new.data;
+            dynBack(paths).size = new.size;
+            dynBack(paths).cap = new.cap;
+            dynBack(paths).a = new.a;
+            break;
+        case DT_REG:
+            *t = T_FILE;
+            break;
+        default:
+            *t = T_UNKNOWN;
+            break;
+        }
+        out_path.size = 0;
+        dynExt(out_path, curr_path.data, curr_path.size);
+        dynPush(out_path, '/');
+        u32 len = strlen(d->d_name);
+        dynExt(out_path, d->d_name, len);
+
+        return (SString){.data = (i8*)out_path.data, .len = out_path.size};
+    }
+
+    *t = T_END;
+    ScratchArenaEnd(sc);
+    return (SString){0};
 }
 
 /*
@@ -2569,7 +2555,7 @@ v2i v2iMul(v2i a, v2i b) { return (v2i){a.x * b.x, a.y * b.y}; }
 v2f v2fMul(v2f a, v2f b) { return (v2f){a.x * b.x, a.y * b.y}; }
 v2d v2dMul(v2d a, v2d b) { return (v2d){a.x * b.x, a.y * b.y}; }
 
-u64 FNVHash64(u8 *data, u64 size) {
+u64 FNVHash64(u8* data, u64 size) {
     u64 hash = 14695981039346656037UL;
     for (u64 i = 0; i < size; i++) {
         hash ^= data[i];
@@ -2578,7 +2564,7 @@ u64 FNVHash64(u8 *data, u64 size) {
     return hash;
 }
 
-u32 FNVHash32(u8 *data, u32 size) {
+u32 FNVHash32(u8* data, u32 size) {
     u32 hash = 2166136261UL;
     for (u32 i = 0; i < size; i++) {
         hash ^= data[i];
@@ -2586,7 +2572,6 @@ u32 FNVHash32(u8 *data, u32 size) {
     }
     return hash;
 }
-
 
 #include <stdarg.h>
 #include <unistd.h>
@@ -2681,18 +2666,17 @@ static u32 AddStr(TaskGraph* t, SString str) {
 }
 
 void AddDep(Task* t, Task* d) {
-    if (!d) return;
+    if (!d)
+        return;
     if (d->cmds.size || d->func) {
         dynPush(t->pre, d);
         return;
     }
-    //d must have no effect since d->func == NULL
-    //and d->cmds.size == 0
+    // d must have no effect since d->func == NULL
+    // and d->cmds.size == 0
 
-    //close transitives from dummy tasks
-    for (u32 i = 0; i < d->pre.size; i++) {
-        dynPush(t->pre, d->pre.data[i]);
-    }
+    // close transitives from dummy tasks
+    for (u32 i = 0; i < d->pre.size; i++) { dynPush(t->pre, d->pre.data[i]); }
 }
 
 Task* _AddTask(TaskGraph* g, const char* name, u32 num_dep, ...) {
@@ -2806,13 +2790,13 @@ static void RunTask(Task* t, TaskQueue* q) {
 
     t->visited = FALSE;
     if (t->func) {
-        //run func on main process
-        //avoids ipc
+        // run func on main process
+        // avoids ipc
         t->func(t);
     }
 
     if (!t->cmds.size) {
-        //process exit if no cmd is to be run
+        // process exit if no cmd is to be run
         for (u32 i = 0; i < t->post.size; i++) {
             Task* n = t->post.data[i];
             n->blockers--;
@@ -2840,10 +2824,10 @@ static void RunTask(Task* t, TaskQueue* q) {
     // alloc enough for all args + NULL ptr
     char** args = ArenaAllocZero(a.arena, sizeof(char*) * (t->cmds.size + 1));
 
-    //This can be triggered if a blank task makes it into
-    //the graph. This shouldn't ever happen since blanks tasks can't
-    //be made dependents
-    if (!t->cmds.size && !t->func) { 
+    // This can be triggered if a blank task makes it into
+    // the graph. This shouldn't ever happen since blanks tasks can't
+    // be made dependents
+    if (!t->cmds.size && !t->func) {
         fprintf(stderr, "Error, invalid task: %s\n", t->name.data);
         exit(1);
     }
@@ -2851,11 +2835,10 @@ static void RunTask(Task* t, TaskQueue* q) {
     for (u32 i = 0; i < t->cmds.size; i++) {
         args[i] = &g->str_data.data[t->cmds.data[i]];
     }
-    
+
     execvp(args[0], args);
     panic();
 }
-
 
 #include <sys/wait.h>
 
@@ -2981,61 +2964,62 @@ bool8 Exec(Task* t, u32 max_processes) {
     return failed;
 }
 
-
-//DO NOT TOUCH
-//Internal Implementation data, should not be touched
-//unless you know what you are doing
+// DO NOT TOUCH
+// Internal Implementation data, should not be touched
+// unless you know what you are doing
 static struct {
-     bool8 written;
-     bool8 enabled;
-     SString compile_file;
-     file compile_cmds;
-     Task* first;
+    bool8 written;
+    bool8 enabled;
+    SString compile_file;
+    file compile_cmds;
+    Task* first;
 } _c_intern;
 
 task_func(beg_compile, t) {
-    if (!_c_intern.enabled) return;
-    _c_intern.compile_cmds = fileopen(_c_intern.compile_file, FILE_WRITE | FILE_CREAT | FILE_TRUNC);
+    if (!_c_intern.enabled)
+        return;
+    _c_intern.compile_cmds =
+        fileopen(_c_intern.compile_file, FILE_WRITE | FILE_CREAT | FILE_TRUNC);
     filewrite(&_c_intern.compile_cmds, sstring("[\n"));
 }
 
 task_func(add_entry, t) {
-    if (!_c_intern.enabled) return;
+    if (!_c_intern.enabled)
+        return;
     ScratchArena sc = ScratchArenaGet(NULL);
     TaskGraph* g = t->g;
 
     char* buffer = ArenaAlloc(sc.arena, PATH_MAX + 1);
     getcwd(buffer, PATH_MAX);
-    
-    SString compile_entry = sstring(
-            "{\n"
-            "\t\"directory\": \"%n\",\n"
-            "\t\"file\": \"%n\",\n" //artifact
-            "\t\"arguments\": [ ");
 
+    SString compile_entry = sstring("{\n"
+                                    "\t\"directory\": \"%n\",\n"
+                                    "\t\"file\": \"%n\",\n" // artifact
+                                    "\t\"arguments\": [ ");
 
     if (_c_intern.written) {
         fformat(&_c_intern.compile_cmds, ",\n");
     }
     _c_intern.written = TRUE;
 
-    fformat(&_c_intern.compile_cmds, (char*)compile_entry.data, buffer, &g->str_data.data[t->args.data[0]]);
+    fformat(&_c_intern.compile_cmds, (char*)compile_entry.data, buffer,
+            &g->str_data.data[t->args.data[0]]);
 
     for (u32 i = 1; i < t->args.size; i++) {
-        if (i > 1) fformat(&_c_intern.compile_cmds, ",");
-        fformat(&_c_intern.compile_cmds, "\"%n\" ", &g->str_data.data[t->args.data[i]]);
+        if (i > 1)
+            fformat(&_c_intern.compile_cmds, ",");
+        fformat(&_c_intern.compile_cmds, "\"%n\" ",
+                &g->str_data.data[t->args.data[i]]);
     }
-    fformat(&_c_intern.compile_cmds,
-            "]\n"
-            "}"
-            );
-
+    fformat(&_c_intern.compile_cmds, "]\n"
+                                     "}");
 
     ScratchArenaEnd(sc);
 }
 
 task_func(end_compile, t) {
-    if (!_c_intern.enabled) return;
+    if (!_c_intern.enabled)
+        return;
     _c_intern.written = FALSE;
     filewrite(&_c_intern.compile_cmds, sstring("\n]\n"));
     fileclose(_c_intern.compile_cmds);
@@ -3052,9 +3036,10 @@ void BegCompile(TaskGraph* g, bool8 enable_cmds, SString compile_loc) {
 
 /**
  * filename is the name of the final build artifact
-*/
-Task* Compile(TaskGraph* g, const char* filename, u32 cmd_size, const char** cmd, u32 num_arg, ...) {
-    //compilation
+ */
+Task* Compile(TaskGraph* g, const char* filename, u32 cmd_size,
+              const char** cmd, u32 num_arg, ...) {
+    // compilation
     Task* compile = AddTask(g, filename, _c_intern.first);
     AddCmd(compile, "cc", "-o", filename);
     AddProc(compile, add_entry);
@@ -3077,7 +3062,8 @@ Task* Compile(TaskGraph* g, const char* filename, u32 cmd_size, const char** cmd
 }
 
 Task* EndCompile(TaskGraph* g, Task* t) {
-    if (!_c_intern.enabled) return t; //skips connecting to graph
+    if (!_c_intern.enabled)
+        return t; // skips connecting to graph
     Task* end = AddTask(g, "end compile", _c_intern.first);
     AddProc(end, end_compile);
 

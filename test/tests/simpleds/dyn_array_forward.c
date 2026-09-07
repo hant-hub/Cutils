@@ -20,7 +20,7 @@ int main() {
     dynResize(ints, 10);
     for (u32 i = 0; i < 10; i++) { ints.data[i] = -(i + 1); };
 
-    dynIns(ints, 6, 0); 
+    dynIns(ints, 6, 0);
     {
         u32 expected[] = {-1, -2, -3, -4, -5, -6, 0, -7, -8, -9, -10};
         arrAssert(ints.data, expected, ARRAY_SIZE(expected));
@@ -43,8 +43,6 @@ int main() {
     for (u32 i = 0; i < ints.size; i++) {
         debuglog("\t%d\t%d", i, ints.data[i]);
     }
-
-
 
     dynFree(ints);
 }

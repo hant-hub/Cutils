@@ -1,13 +1,12 @@
-#include <core/cutils.h>
 #include <cgen/cgen.h>
-
+#include <core/cutils.h>
 
 int main() {
 
     ScratchArena sc = ScratchArenaGet(NULL);
     logfile.buffered = FALSE;
 
-    file testfile = fileopen(sstring("../resources/type_parsing.h"), FILE_READ); 
+    file testfile = fileopen(sstring("../resources/type_parsing.h"), FILE_READ);
 
     SString buffer = {
         .data = ArenaAlloc(sc.arena, testfile.stats.size),
@@ -20,8 +19,8 @@ int main() {
         .mem = GlobalAllocator,
     };
 
-    //debuglog("Loaded Data");
-    //printlog("%s\n", buffer);
+    // debuglog("Loaded Data");
+    // printlog("%s\n", buffer);
 
     TokenBuffer tokens = Tokenize(buffer, &b, GlobalAllocator);
 
@@ -33,7 +32,7 @@ int main() {
     }
 
     ParsingState parser = BeginParser(GlobalAllocator, &tokens, &b);
-    u32 t = ParseType(&parser); 
+    u32 t = ParseType(&parser);
 
     Type type = parser.type.types.data[t];
     Type inner = parser.type.types.data[type.inner];
@@ -41,14 +40,12 @@ int main() {
     debuglog("inner: %s", TypeName(sc.arena, &parser, type.inner));
     debuglog("Base type? %d", inner.flags & TYPE_BASE);
 
-
     ScratchArenaEnd(sc);
 
     TokenBufferFree(&tokens);
     StrBaseFree(&b);
 
     TypeInfoFree(&parser.type);
-
 
     return 0;
 }

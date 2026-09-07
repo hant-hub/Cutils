@@ -17,10 +17,10 @@ typedef enum TokenizerState {
     TOKENIZER_ID,
 } TokenizerState;
 
-TokenBuffer Tokenize(SString data, StrBase *b, Allocator a) {
+TokenBuffer Tokenize(SString data, StrBase* b, Allocator a) {
     TokenBuffer buffer = {a};
 
-    i8 *chars = data.data;
+    i8* chars = data.data;
     TokenizerState state = TOKENIZER_NONE;
     u32 curr_line = 1;
     u32 mark = 0;
@@ -168,7 +168,7 @@ TokenBuffer Tokenize(SString data, StrBase *b, Allocator a) {
     return buffer;
 }
 
-SString TokenName(Token t, StrBase *b, ArenaAllocator persist) {
+SString TokenName(Token t, StrBase* b, ArenaAllocator persist) {
 
     if (t.t < TOKEN_ID) {
         SString out = {
@@ -211,7 +211,7 @@ SString TokenName(Token t, StrBase *b, ArenaAllocator persist) {
     return out;
 }
 
-void HandleError(ParsingState *p) {
+void HandleError(ParsingState* p) {
     switch (p->err.code) {
     case ERROR_UNEXPECTED_EOF: {
         printerr("%d: Unexpected EOF, expected %d\n", p->err.parserLine,
@@ -222,9 +222,10 @@ void HandleError(ParsingState *p) {
         ScratchArena a = ScratchArenaGet(NULL);
         SString str = TokenName(p->err.tok, p->base, a.arena);
 
-        printerr("%d: Unexpected token: Expected (%d, %c), Got (%d, %c, %s) at %d\n",
-                 p->err.parserLine, p->err.expected, p->err.expected, p->err.tok.t, p->err.tok.t,
-                 str, p->err.tok.line);
+        printerr(
+            "%d: Unexpected token: Expected (%d, %c), Got (%d, %c, %s) at %d\n",
+            p->err.parserLine, p->err.expected, p->err.expected, p->err.tok.t,
+            p->err.tok.t, str, p->err.tok.line);
 
         ScratchArenaEnd(a);
         panic();
@@ -237,7 +238,7 @@ void HandleError(ParsingState *p) {
     }
 }
 
-void _Expect(ParsingState *p, TokenType t, u32 lineNum) {
+void _Expect(ParsingState* p, TokenType t, u32 lineNum) {
     if (p->curr >= p->t->size) {
         // EOF
         p->err.code = ERROR_UNEXPECTED_EOF;
@@ -257,7 +258,7 @@ void _Expect(ParsingState *p, TokenType t, u32 lineNum) {
     }
 }
 
-Token _NextToken(ParsingState *p, u32 lineNum) {
+Token _NextToken(ParsingState* p, u32 lineNum) {
     p->curr++;
     if (p->curr >= p->t->size) {
         // EOF
@@ -269,7 +270,7 @@ Token _NextToken(ParsingState *p, u32 lineNum) {
     return p->t->data[p->curr];
 }
 
-Token _PeekToken(ParsingState *p, u32 linenum) {
+Token _PeekToken(ParsingState* p, u32 linenum) {
     if (p->curr + 1 >= p->t->size) {
         return (Token){.t = TOKEN_INVALID};
     }
@@ -286,10 +287,10 @@ TypeID GetOuterID(u32 inner, TypeFlags flag) {
     return (inner << 4) | MSB32(flag);
 }
 
-u32 GetBaseType(ParsingState *p, StrID name) {
-    TypeInfo *type = &p->type;
+u32 GetBaseType(ParsingState* p, StrID name) {
+    TypeInfo* type = &p->type;
 
-    u32 *idx = NamedTypeMapGet(&type->nmap, name);
+    u32* idx = NamedTypeMapGet(&type->nmap, name);
     if (idx)
         return *idx; // no duplicates
 
@@ -305,11 +306,11 @@ u32 GetBaseType(ParsingState *p, StrID name) {
     return type->types.size - 1;
 }
 
-u32 GetType(ParsingState *p, Type t) {
-    TypeInfo *type = &p->type;
+u32 GetType(ParsingState* p, Type t) {
+    TypeInfo* type = &p->type;
 
     TypeID id = GetOuterID(t.inner, t.flags);
-    u32 *tid = OuterTypeMapGet(&type->omap, id);
+    u32* tid = OuterTypeMapGet(&type->omap, id);
     if (tid) {
         return *tid;
     }
@@ -320,7 +321,7 @@ u32 GetType(ParsingState *p, Type t) {
     return type->types.size - 1;
 }
 
-ParsingState BeginParser(Allocator a, TokenBuffer *buffer, StrBase *b) {
+ParsingState BeginParser(Allocator a, TokenBuffer* buffer, StrBase* b) {
     ParsingState p = (ParsingState){
         .t = buffer,
         .base = b,
@@ -349,9 +350,9 @@ ParsingState BeginParser(Allocator a, TokenBuffer *buffer, StrBase *b) {
     return p;
 }
 
-Member* ParseStruct(ArenaAllocator a, ParsingState *p) { return NULL; }
+Member* ParseStruct(ArenaAllocator a, ParsingState* p) { return NULL; }
 
-u32 HandleIndirection(ParsingState *p, u32 base) {
+u32 HandleIndirection(ParsingState* p, u32 base) {
     while (1) {
         Token t = NextToken(p);
 
@@ -376,7 +377,7 @@ u32 HandleIndirection(ParsingState *p, u32 base) {
     return base;
 }
 
-u32 ParseType(ParsingState *p) {
+u32 ParseType(ParsingState* p) {
     Token curr = p->t->data[p->curr];
     switch (p->t->data[p->curr].t) {
     case TOKEN_ID: {
@@ -416,7 +417,7 @@ u32 ParseType(ParsingState *p) {
         return base;
     } break;
     case TOKEN_STRUCT: {
-        Token t = NextToken(p);   
+        Token t = NextToken(p);
         Type struct_type = {
             .flags = TYPE_STRUCT,
             .inner = 0,
@@ -431,9 +432,9 @@ u32 ParseType(ParsingState *p) {
             struct_type.name = StrBaseAdd(p->base, sstring("Anonymous Struct"));
         }
         Expect(p, '{');
-        
-        ScratchArena sc = ScratchArenaGet(NULL); 
-        Member* members = ParseStruct(sc.arena, p); 
+
+        ScratchArena sc = ScratchArenaGet(NULL);
+        Member* members = ParseStruct(sc.arena, p);
         ScratchArenaEnd(sc);
 
         return tid;
@@ -456,7 +457,7 @@ u32 ParseType(ParsingState *p) {
     }
 }
 
-SString TypeName(ArenaAllocator a, ParsingState *p, u32 tid) {
+SString TypeName(ArenaAllocator a, ParsingState* p, u32 tid) {
     Type t = p->type.types.data[tid];
 
     if (t.flags & TYPE_BASE) {
@@ -497,10 +498,10 @@ SString TypeName(ArenaAllocator a, ParsingState *p, u32 tid) {
     return sstring("Unknown Type");
 }
 
-void AddProc(ParsingState *p, proc newproc);
-void RunParsers(ParsingState *p);
+void AddProc(ParsingState* p, proc newproc);
+void RunParsers(ParsingState* p);
 
-void TypeInfoFree(TypeInfo *t) {
+void TypeInfoFree(TypeInfo* t) {
     NamedTypeMapFree(&t->nmap);
     OuterTypeMapFree(&t->omap);
     dynFree(t->types);

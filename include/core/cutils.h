@@ -1,14 +1,13 @@
 #ifndef CUTILS_H
 #define CUTILS_H
 
-#include <stdint.h>
 #include <pthread.h>
+#include <stdint.h>
 
 #define PAGE_SIZE (1 << 12L)
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof(x[0]))
 
 #define Spread(...) __VA_ARGS__
-
 
 #define KB(x) (x << 10L)
 #define MB(x) (KB(x) << 10L)
@@ -18,9 +17,9 @@
 #define MAX(x, y) (x > y ? x : y)
 #define CLAMP(min, max, t) (MAX(MIN(max, t), min))
 
-#define MSB16(i) (15 - __builtin_clz((unsigned int)i)) 
-#define MSB32(i) (31 - __builtin_clz(i)) 
-#define MSB64(i) (63 - __builtin_clzll(i)) 
+#define MSB16(i) (15 - __builtin_clz((unsigned int)i))
+#define MSB32(i) (31 - __builtin_clz(i))
+#define MSB64(i) (63 - __builtin_clzll(i))
 
 #define CUTILS_INLINE __inline __attribute__((always_inline))
 
@@ -60,21 +59,19 @@ u64 FlipEndian64(u64 i);
 f32 FlipEndianF(f32 f);
 f64 FlipEndianD(f64 f);
 
-
 /*
     Custom Memory Allocators
 */
 
-#define NULL ((void *)0)
+#define NULL ((void*)0)
 
-#define alloc_func_def(name)                                                   \
-    void *(name)(void *ctx, void *ptr, u64 old, u64 new)
+#define alloc_func_def(name) void*(name)(void* ctx, void* ptr, u64 old, u64 new)
 
 typedef alloc_func_def(*alloc_func);
 
 typedef struct Allocator {
     alloc_func a;
-    void *ctx;
+    void* ctx;
 } Allocator;
 
 #define Alloc(mem, size) mem.a(mem.ctx, NULL, 0, size)
@@ -91,23 +88,23 @@ typedef struct ArenaAllocator {
     u64 cap;
     u64 size;
     char data[];
-} *ArenaAllocator;
+}* ArenaAllocator;
 
 ArenaAllocator ArenaCreate(Allocator a, u64 size);
 
 u64 ArenaGetPos(ArenaAllocator a);
 void ArenaSetPos(ArenaAllocator a, u64 pos);
 
-void *ArenaAlloc(ArenaAllocator a, u64 size);
-void ArenaExtendLast(ArenaAllocator a, u64 size);
-void *ArenaAllocZero(ArenaAllocator a, u64 size);
+void* ArenaAlloc(ArenaAllocator a, u64 size);
+u64 ArenaExtendLast(ArenaAllocator a, u64 size);
+void* ArenaAllocZero(ArenaAllocator a, u64 size);
 
 void ArenaPop(ArenaAllocator a, u64 size);
 void ArenaClear(ArenaAllocator a);
 
 void ArenaDestroy(ArenaAllocator s);
 
-//make generic allocator from Arena
+// make generic allocator from Arena
 Allocator ArenaGetAllocator(ArenaAllocator a);
 
 // Scratch Arena
@@ -125,12 +122,12 @@ typedef struct StackAllocator {
     u64 cap;
     u64 size;
     char data[];
-} *StackAllocator;
+}* StackAllocator;
 
 StackAllocator StackCreate(Allocator a, u64 size);
 void StackDestroy(Allocator a, StackAllocator s);
 
-void *StackAlloc(StackAllocator s, u64 size);
+void* StackAlloc(StackAllocator s, u64 size);
 void StackSet(StackAllocator s, u64 pos);
 void StackReset(StackAllocator s);
 
@@ -140,12 +137,12 @@ void StackReset(StackAllocator s);
 
 typedef struct SString {
     u32 len;
-    i8 *data;
+    i8* data;
 } SString;
 
 typedef struct LString {
     u64 len;
-    i8 *data;
+    i8* data;
 } LString;
 
 bool8 Sstrcmp(SString a, SString b);
@@ -159,7 +156,7 @@ char* SStringGetCstr(SString s, ArenaAllocator a);
 
 #define slice(type)                                                            \
     struct {                                                                   \
-        type *data;                                                            \
+        type* data;                                                            \
         u32 size;                                                              \
     }
 
@@ -175,7 +172,7 @@ char* SStringGetCstr(SString s, ArenaAllocator a);
 SString Sstrtok(SString str, const char delim);
 
 #define sstring(x)                                                             \
-    (SString) { sizeof(x) - 1, (i8 *)x }
+    (SString) { sizeof(x) - 1, (i8*)x }
 
 #define sstringify(data, len)                                                  \
     (SString) { len, data }
@@ -193,14 +190,12 @@ SString Sstrtok(SString str, const char delim);
     TIME Helpers
 */
 
-typedef struct time_spec{
+typedef struct time_spec {
     u64 s;
     u64 ns;
 } time_spec;
 
-#define timecmp(t1, op, t2) \
-    (t1.s == t2.s ? t1.ns op t2.ns : t1.s op t2.s)
-
+#define timecmp(t1, op, t2) (t1.s == t2.s ? t1.ns op t2.ns : t1.s op t2.s)
 
 /*
     FILE Handling
@@ -241,8 +236,8 @@ void fileclose(file file);
 file filestat(const SString filename);
 
 u64 fileread(SString dst, file src);
-u64 filewrite(file *dst, SString src);
-void fileflush(file *dst);
+u64 filewrite(file* dst, SString src);
+void fileflush(file* dst);
 
 u64 fileload(SString handle, const SString filename);
 u64 filesave(const SString filename, SString handle);
@@ -268,10 +263,10 @@ typedef enum DirType {
 } DirType;
 
 void DirBegin(SString filepath);
-SString DirNext(DirType *t);
+SString DirNext(DirType* t);
 
 void DirBeginRec(SString filepath, u32 max_depth);
-SString DirNextRec(DirType *t);
+SString DirNextRec(DirType* t);
 
 /*
     Custom Format
@@ -297,7 +292,7 @@ Format Table:
     %c -> char (print int as char)
 
 */
-u32 sformat(SString dst, const char *format, ...);
+u32 sformat(SString dst, const char* format, ...);
 
 /*
 Format Table:
@@ -318,7 +313,7 @@ Format Table:
 
     %c -> char (print int as char)
 */
-u32 fformat(file *dst, const char *format, ...);
+u32 fformat(file* dst, const char* format, ...);
 
 /*
     Custom Logging
@@ -332,20 +327,20 @@ extern file logfile;
 extern file warnfile;
 extern file errfile;
 
-u32 printlog(const char *format, ...);
-u32 printwarn(const char *format, ...);
-u32 printerr(const char *format, ...);
+u32 printlog(const char* format, ...);
+u32 printwarn(const char* format, ...);
+u32 printerr(const char* format, ...);
 
 #define debuglog(format, ...)                                                  \
-    printlog("\e[0m[LOG] " __FILE__ ":%d]:\t" format "\n", __LINE__, ##__VA_ARGS__)
+    printlog("\e[0m[LOG] " __FILE__ ":%d]:\t" format "\n", __LINE__,           \
+             ##__VA_ARGS__)
 
 #define debugwarn(format, ...)                                                 \
-    printwarn("\e[38;2;255;255;0m[WARN]" __FILE__ ":%d]:\t" format           \
-              "\e[0m\n",                                                     \
+    printwarn("\e[38;2;255;255;0m[WARN]" __FILE__ ":%d]:\t" format "\e[0m\n",  \
               __LINE__, ##__VA_ARGS__)
 
 #define debugerr(format, ...)                                                  \
-    printerr("\e[38;2;255;0;0m[ERR] " __FILE__ ":%d]:\t" format "\e[0m\n", \
+    printerr("\e[38;2;255;0;0m[ERR] " __FILE__ ":%d]:\t" format "\e[0m\n",     \
              __LINE__, ##__VA_ARGS__)
 
 /*
@@ -399,7 +394,7 @@ v2i v2iMul(v2i a, v2i b);
 v2f v2fMul(v2f a, v2f b);
 v2d v2dMul(v2d a, v2d b);
 
-u64 FNVHash64(u8 *data, u64 size);
-u32 FNVHash32(u8 *data, u32 size);
+u64 FNVHash64(u8* data, u64 size);
+u32 FNVHash32(u8* data, u32 size);
 
 #endif

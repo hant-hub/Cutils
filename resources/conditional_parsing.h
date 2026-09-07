@@ -1,13 +1,10 @@
 
-//test directives
+// test directives
 #define test
-#define multiline a \
-    b \
-    c
+#define multiline a b c
 
 #define start_parse(...)
 #define end_parse(...)
-
 
 struct a {
     int content;

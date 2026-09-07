@@ -15,12 +15,12 @@ int main() {
 
     for (u32 i = 1; i <= 28; i++) { imapIns(&map, 2 * i, i); }
     for (u32 i = 1; i <= 28; i++) {
-        u32 *val = imapGet(&map, 2 * i);
+        u32* val = imapGet(&map, 2 * i);
         assert(val && *val == i);
     }
     imapDel(&map, 10);
     for (u32 i = 1; i <= 28; i++) {
-        u32 *val = imapGet(&map, 2 * i);
+        u32* val = imapGet(&map, 2 * i);
         if (2 * i == 10) {
             assert(!val);
             continue;

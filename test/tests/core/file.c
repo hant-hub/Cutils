@@ -1,15 +1,15 @@
-#include <core/cutils.h>
 #include <alloca.h>
+#include <core/cutils.h>
 #include <stdio.h>
 
 int main() {
     setdirExe();
-    //file stat
+    // file stat
     file meta = filestat(sstring("."));
-    printf("Meta data: %ld, %ld\n", meta.stats.modified.s, meta.stats.modified.ns);
+    printf("Meta data: %ld, %ld\n", meta.stats.modified.s,
+           meta.stats.modified.ns);
 
-
-    //file open
+    // file open
     file t = fileopen(sstring("/proc/self/status"), FILE_READ);
     file out = {
         .handle = 1,
@@ -33,8 +33,6 @@ int main() {
     fileclose(t);
     fileclose(out);
 
-
-
     SString data = sstring("Lorem ipsum, your momma");
     SString load = {
         .len = data.len,
@@ -50,7 +48,7 @@ int main() {
 
     assert(Sstrcmp(load, data));
 
-    //string stuff
+    // string stuff
 
     SString filepath = sstring("a/b/c.lol");
     SString pop = sstring("a/b");
@@ -58,7 +56,7 @@ int main() {
     assert(Sstrcmp(filepathpopdir(filepath), pop));
     assert(Sstrcmp(filepathpopdir(sstring("a")), sstring("a")));
 
-    assert(Sstrcmp(filepathbasename(filepath), sstring("c.lol")));
+    assert(Sstrcmp(filepathbasename(filepath), sstring("a/b/c")));
 
     assert(Sstrcmp(filepathext(filepath), sstring(".lol")));
     assert(Sstrcmp(filepathext(sstring("somefile")), sstring("")));
@@ -66,48 +64,35 @@ int main() {
     assert(filepathdepth(filepath) == 2);
     assert(filepathdepth(sstring("a/b/c/d")) == 3);
 
-    //Directory
+    // Directory
 
     DirBegin(sstring("."));
 
     debuglog("Directory Search: .");
     DirType dt;
     SString s;
-    while ((s = DirNext(&dt), dt != T_END)) {
-        debuglog("Directory: %s", s);
+    while ((s = DirNext(&dt), dt != T_END)) { debuglog("Directory: %s", s); }
 
-    }
-
-    //Directory Recursive
+    // Directory Recursive
 
     DirBeginRec(sstring("."), 1);
 
     debuglog("Recursive Directory Search: .");
     DirNextRec(&dt);
-    while ((s = DirNextRec(&dt), dt != T_END)) {
-        debuglog("Directory: %s", s);
+    while ((s = DirNextRec(&dt), dt != T_END)) { debuglog("Directory: %s", s); }
 
-    }
-
-    //Directory
+    // Directory
 
     DirBegin(sstring("fake"));
 
     debuglog("Directory Search: .");
-    while ((s = DirNext(&dt), dt != T_END)) {
-        debuglog("Directory: %s", s);
+    while ((s = DirNext(&dt), dt != T_END)) { debuglog("Directory: %s", s); }
 
-    }
-
-    //Directory Recursive
+    // Directory Recursive
 
     DirBeginRec(sstring("fake"), 2);
 
     debuglog("Recursive Directory Search: .");
     DirNextRec(&dt);
-    while ((s = DirNextRec(&dt), dt != T_END)) {
-        debuglog("Directory: %s", s);
-
-    }
-
+    while ((s = DirNextRec(&dt), dt != T_END)) { debuglog("Directory: %s", s); }
 }

@@ -5,19 +5,19 @@
 #include <linux/limits.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <string.h>
 
-char *sb_stripext(char *f) {
-    char *cursor = f;
+char* sb_stripext(char* f) {
+    char* cursor = f;
     while (cursor[0]) cursor++;
     while (cursor[0] != '/') cursor--;
     cursor[0] = 0;
     return f;
 }
 
-void runtest(const char *name, int verbose) {
+void runtest(const char* name, int verbose) {
     if (fork()) {
         return;
     }
@@ -32,14 +32,14 @@ void runtest(const char *name, int verbose) {
     // Using valgrind instead of ASAN because ASAN fails to detect certain
     // leaks when just allocating memory but not necessarily touching all of
     // it
-    execlp("valgrind", "valgrind", "--quiet", "--leak-check=full", "--error-exitcode=69",
-           "--", name, NULL);
+    execlp("valgrind", "valgrind", "--quiet", "--leak-check=full",
+           "--error-exitcode=69", "--", name, NULL);
 
     printf("failed to find file\n");
     exit(-1);
 }
 
-u32 printheader(char *name, int verbose) {
+u32 printheader(char* name, int verbose) {
     if (verbose) {
         printf("================\n");
         printf("Running Test: %s\n", name);
@@ -81,8 +81,8 @@ void printstatus(u32 shift, int verbose) {
 }
 
 void runGroup(char* path, char* name, int verbose) {
-    DIR *d = opendir(path);
-    struct dirent *dir = NULL;
+    DIR* d = opendir(path);
+    struct dirent* dir = NULL;
 
     int len = strlen(name);
     len += 4;
@@ -105,7 +105,7 @@ void runGroup(char* path, char* name, int verbose) {
     } while (dir);
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
 
     char tmp[PATH_MAX] = {0};
     if (readlink("/proc/self/exe", tmp, PATH_MAX) < 0) {
@@ -113,14 +113,14 @@ int main(int argc, char *argv[]) {
     }
     chdir(sb_stripext(tmp));
 
-    DIR *d = opendir("tests/");
+    DIR* d = opendir("tests/");
 
     if (!d) {
         debugerr("Failed to open tests");
         exit(-1);
     }
 
-    struct dirent *dir = NULL;
+    struct dirent* dir = NULL;
 
     int verbose = 0;
     if (argc > 1) {
@@ -141,8 +141,10 @@ int main(int argc, char *argv[]) {
     do {
         dir = readdir(d);
         if (dir && dir->d_type == DT_DIR) {
-            if (strcmp(dir->d_name, ".") == 0) continue;            
-            if (strcmp(dir->d_name, "..") == 0) continue;            
+            if (strcmp(dir->d_name, ".") == 0)
+                continue;
+            if (strcmp(dir->d_name, "..") == 0)
+                continue;
 
             char buf[PATH_MAX + 1] = {0};
             snprintf(buf, PATH_MAX, "./tests/%s", dir->d_name);

@@ -9,7 +9,7 @@
         u32 cap;                                                               \
         u32 size;                                                              \
         u32 first;                                                             \
-        type *data;                                                            \
+        type* data;                                                            \
     } name
 
 #define DefSimpleQueueImpl(name, type)                                         \
@@ -21,13 +21,13 @@
         q.data = Alloc(a, max_size * sizeof(type));                            \
         return q;                                                              \
     }                                                                          \
-    void name##Destroy(name *q) {                                              \
+    void name##Destroy(name* q) {                                              \
         Free(q->a, q->data, q->cap * sizeof(type));                            \
         q->cap = 0;                                                            \
     }                                                                          \
-    bool8 name##Empty(name *q) { return q->size == 0; }                        \
-    bool8 name##Full(name *q) { return q->size == q->cap; }                    \
-    bool8 name##Push(name *q, type item) {                                     \
+    bool8 name##Empty(name* q) { return q->size == 0; }                        \
+    bool8 name##Full(name* q) { return q->size == q->cap; }                    \
+    bool8 name##Push(name* q, type item) {                                     \
         if (name##Full(q)) {                                                   \
             return FALSE;                                                      \
         }                                                                      \
@@ -36,7 +36,7 @@
         q->size++;                                                             \
         return TRUE;                                                           \
     }                                                                          \
-    bool8 name##Pop(name *q, type *out) {                                      \
+    bool8 name##Pop(name* q, type* out) {                                      \
         if (name##Empty(q)) {                                                  \
             return FALSE;                                                      \
         }                                                                      \

@@ -1,6 +1,7 @@
 ## TODO List:
 
 ### Cutils Improvements
+- [ ] Update build Script
 - [ ] thread-safe printing
     - [X] locks
     - [ ] locks on files
@@ -13,15 +14,15 @@
 - [X] Graph Data Structure
 - [X] Working Commands + Fences
 - [X] Auto Rebuild
-- [ ] Output compile_commands.json
+- [X] Output compile_commands.json
     - [X] Logical Tasks
     - [X] parallel task graph
     - [X] Formatting
     - [X] integration
     - [X] Append Flags
-    - [ ] additional compilation funcs
-        - [ ] git
-        - [ ] curl
+- [ ] additional compilation funcs
+    - [ ] git
+    - [ ] curl
 
 ### Cutils Image Library
 - [X] PPM output

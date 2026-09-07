@@ -11,7 +11,8 @@ static SString Format_to_tuple[] = {
     [SILL_RGBA_8] = sstring("RGB_ALPHA"),
 };
 
-void PPMoutput(file* f, void* pixelData, SILLformat format, u32 width, u32 height) {
+void PPMoutput(file* f, void* pixelData, SILLformat format, u32 width,
+               u32 height) {
     fformat(f, "P6\n%d %d\n255\n", width, height);
 
     i8* data = pixelData;
@@ -32,7 +33,8 @@ void PPMoutput(file* f, void* pixelData, SILLformat format, u32 width, u32 heigh
     f->buffered = prev_buffered;
 }
 
-void PAMoutput(file* f, void* pixelData, SILLformat format, u32 width, u32 height) {
+void PAMoutput(file* f, void* pixelData, SILLformat format, u32 width,
+               u32 height) {
     u32 depth = Format_to_depth[format];
 
     fformat(f, "P7\n");
@@ -43,21 +45,21 @@ void PAMoutput(file* f, void* pixelData, SILLformat format, u32 width, u32 heigh
     fformat(f, "TUPLTYPE %s\n", Format_to_tuple[format]);
     fformat(f, "ENDHDR\n");
 
-    filewrite(f, (SString){.data = (i8*)pixelData, .len = width * height * Format_to_depth[format]});
+    filewrite(f, (SString){.data = (i8*)pixelData,
+                           .len = width * height * Format_to_depth[format]});
 }
-
 
 typedef struct parsingState {
     SString data;
     u32 idx;
 } parsingState;
 
-#define expect(p, c) \
-    do { \
-        if (p->data.data[p->idx] != c) { \
-            panic(); \
-        } \
-        p->idx++; \
+#define expect(p, c)                                                           \
+    do {                                                                       \
+        if (p->data.data[p->idx] != c) {                                       \
+            panic();                                                           \
+        }                                                                      \
+        p->idx++;                                                              \
     } while (0);
 
 static u32 ReadU32(parsingState* p) {
@@ -78,14 +80,14 @@ static u16 ReadU16(parsingState* p) {
     return val;
 }
 
-void* BMPread(ArenaAllocator a, file* f, u32* outwidth, u32* outheight, u32* outchannels) {
-    ScratchArena sc = ScratchArenaGet(a);    
-    parsingState* state = &(parsingState){
-        .data = {
-            .data = ArenaAlloc(sc.arena, f->stats.size),
-            .len = f->stats.size,
-        }
-    };
+void* BMPread(ArenaAllocator a, file* f, u32* outwidth, u32* outheight,
+              u32* outchannels) {
+    ScratchArena sc = ScratchArenaGet(a);
+    parsingState* state =
+        &(parsingState){.data = {
+                            .data = ArenaAlloc(sc.arena, f->stats.size),
+                            .len = f->stats.size,
+                        }};
 
     fileread(state->data, *f);
     expect(state, 'B');
@@ -100,7 +102,7 @@ void* BMPread(ArenaAllocator a, file* f, u32* outwidth, u32* outheight, u32* out
     u16 planes = ReadU16(state);
 
     debuglog("Image Dimensions (%d %d) %d", width, height, planes);
-    
+
     u16 pixelSize = ReadU16(state);
     debuglog("Pixel Bits: %d", pixelSize);
 
@@ -113,7 +115,7 @@ void* BMPread(ArenaAllocator a, file* f, u32* outwidth, u32* outheight, u32* out
     u32 compression = ReadU32(state);
     debuglog("Compression: %s", compressionTypes[compression]);
 
-    u32 compressedSize = ReadU32(state); //may be zero if no compression
+    u32 compressedSize = ReadU32(state); // may be zero if no compression
     debuglog("Compressed Size: %d", compressedSize);
 
     u32 hresolution = ReadU32(state);
@@ -123,27 +125,31 @@ void* BMPread(ArenaAllocator a, file* f, u32* outwidth, u32* outheight, u32* out
 
     u32 UsedColors = ReadU32(state);
     u32 ImportantColors = ReadU32(state);
-    debuglog("Used Colors/Important Colors: %d / %d", UsedColors, ImportantColors);
+    debuglog("Used Colors/Important Colors: %d / %d", UsedColors,
+             ImportantColors);
 
     if (pixelSize <= 8) {
-        //parse color table
+        // parse color table
     }
-    
+
     u32 linepadding = 4 - ((width * 3) % 4);
-    debuglog("Line Padding: %d", linepadding); 
+    debuglog("Line Padding: %d", linepadding);
 
     u32 channels = *outchannels ? *outchannels : 3;
 
     debuglog("channels: %d", channels);
-    u8* data = ArenaAlloc(a, width * height * channels);    
+    u8* data = ArenaAlloc(a, width * height * channels);
     u32 cursor = (width * height * channels) - (width * channels);
     for (u32 i = 0; i < height; i++) {
         for (u32 i = 0; i < width; i++) {
-            data[cursor + i*channels + 0] = state->data.data[state->idx + i*3 + 2];
-            data[cursor + i*channels + 1] = state->data.data[state->idx + i*3 + 1];
-            data[cursor + i*channels + 2] = state->data.data[state->idx + i*3 + 0];
+            data[cursor + i * channels + 0] =
+                state->data.data[state->idx + i * 3 + 2];
+            data[cursor + i * channels + 1] =
+                state->data.data[state->idx + i * 3 + 1];
+            data[cursor + i * channels + 2] =
+                state->data.data[state->idx + i * 3 + 0];
             for (u32 j = 3; j < channels; j++) {
-                data[cursor + i*channels + j] = 255; //default OPAQUE
+                data[cursor + i * channels + j] = 255; // default OPAQUE
             }
         }
         state->idx += (width * 3) + linepadding;
@@ -161,4 +167,3 @@ void* BMPread(ArenaAllocator a, file* f, u32* outwidth, u32* outheight, u32* out
     fileflush(&logfile);
     return data;
 }
-

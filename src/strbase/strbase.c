@@ -2,7 +2,7 @@
 #include <string.h>
 
 // hashmap
-static void HashResize(StrBase *base) {
+static void HashResize(StrBase* base) {
     if (base->hashsize < base->hashcap * STRBASE_LOAD_MAX)
         return;
 
@@ -11,8 +11,8 @@ static void HashResize(StrBase *base) {
         base->hashcap = base->hashcap ? base->hashcap * 2 : STRBASE_MIN_SIZE;
     }
 
-    u32 *oldkeys = base->stridx;
-    i32 *oldmeta = base->meta;
+    u32* oldkeys = base->stridx;
+    i32* oldmeta = base->meta;
 
     base->stridx = Alloc(base->mem, base->hashcap * sizeof(u32));
     base->meta = Alloc(base->mem, base->hashcap * sizeof(u32));
@@ -28,7 +28,7 @@ static void HashResize(StrBase *base) {
         u32 counter = 0;
 
         SString s = base->strstore[key];
-        u32 idx = FNVHash32((u8 *)s.data, s.len) % base->hashcap;
+        u32 idx = FNVHash32((u8*)s.data, s.len) % base->hashcap;
 
         for (u32 i = 0; i < base->hashcap; i++) {
             if (base->meta[idx] == STRBASE_INAVLID_STR) {
@@ -61,28 +61,29 @@ static void HashResize(StrBase *base) {
 
 // dyn array
 
-static u32 AllocSlot(StrBase *base) {
+static u32 AllocSlot(StrBase* base) {
     if (base->strsize >= base->maxslots) {
         u32 oldsize = base->maxslots;
         base->maxslots = base->maxslots ? base->maxslots * 2 : STRBASE_MIN_SIZE;
 
-        base->strstore = Realloc(base->mem, base->strstore, oldsize * sizeof(SString),
-                                 base->maxslots * sizeof(SString));
+        base->strstore =
+            Realloc(base->mem, base->strstore, oldsize * sizeof(SString),
+                    base->maxslots * sizeof(SString));
 
-        memset(&base->strstore[oldsize], 0, (base->maxslots - oldsize) * sizeof(SString));
+        memset(&base->strstore[oldsize], 0,
+               (base->maxslots - oldsize) * sizeof(SString));
     }
 
     base->strsize++;
     return base->strsize++;
 }
 
-
 // Will copy string into internally managed table
 // free string memory afterward
-StrID StrBaseAdd(StrBase *base, SString s) {
+StrID StrBaseAdd(StrBase* base, SString s) {
     HashResize(base);
 
-    u32 idx = FNVHash32((u8 *)s.data, s.len) % base->hashcap;
+    u32 idx = FNVHash32((u8*)s.data, s.len) % base->hashcap;
     u32 counter = 0;
 
     u32 out = STRBASE_INAVLID_STR;
@@ -161,10 +162,9 @@ StrID StrBaseAdd(StrBase *base, SString s) {
 }
 
 // Returns Zero on miss (this should never happen)
-SString StrBaseGet(StrBase *base, StrID s) { return (SString){0}; }
+SString StrBaseGet(StrBase* base, StrID s) { return (SString){0}; }
 
-
-void StrBaseFree(StrBase *base) {
+void StrBaseFree(StrBase* base) {
     for (u32 i = 0; i < base->maxslots; i++) {
         Free(base->mem, base->strstore[i].data, base->strstore[i].len);
     }

@@ -1,173 +1,202 @@
 #define SB_IMPL
-#include "sb.h"
+#include "./sbuild_st.h"
 
-#define OPTS \
-    X(t, string)
+#define OPTS                                                                   \
+    X(f, bool)                                                                 \
+    X(t, string)                                                               \
+    X(j, int)                                                                  \
+    X(no_debug, bool)                                                          \
+    X(p, bool)                                                                 \
+    X(o, int)
 
 #include "sa.h"
 
-int main(int argc, char *argv[]) {
-    sb_chdir_exe();
+const char* optimization_levels[] = {
+    "", "-O0", "-O1", "-O2", "-O3",
+};
+
+int main(int argc, char* argv[]) {
+    logfile.buffered = FALSE;
+
+    setdirExe();
+    AutoRebuild(argc, argv);
+
     SA options = Parse(argc, argv);
-    if (options.err) exit(-1);
+    if (options.err)
+        exit(-1);
     SAvals opts = options.vals;
 
-    printf("Opts: T = %s\n", opts.t.val);
+    //-o=1 -> -O1 while -o=0 -> -O0 and all other cases -> ""
+    u32 opt_level = opts.o.set && opts.o.val <= 3 ? opts.o.val + 1 : 0;
+    u32 num_jobs = opts.j.set ? opts.j.val : 4;
 
-    sb_BUILD(argc, argv) {
-        sb_mkdir("build/");
-        sb_mkdir("build/tests");
-        sb_target_dir("build/");
+    const char* debug_flag = opts.no_debug.set ? "" : "-g";
 
-        if (sb_check_arg("format")) {
-            // formatting
-            sb_FOREACHFILE("./", test) {
-                if (sb_cmpext(test, ".c") && sb_cmpext(test, ".h"))
-                    continue;
 
-                sb_CMD() {
-                    sb_cmd_main("clang-format");
-                    sb_cmd_opt("i");
-                    sb_cmd_arg(test);
-                }
-            }
-            sb_FOREACHFILE("test/", test) {
-                if (sb_cmpext(test, ".c") && sb_cmpext(test, ".h"))
-                    continue;
+    TaskGraph g = CreateTaskGraph();
+    ScratchArena sc = ScratchArenaGet(NULL);
 
-                sb_CMD() {
-                    sb_cmd_main("clang-format");
-                    sb_cmd_opt("i");
-                    sb_cmd_arg(test);
-                }
-            }
-            sb_FOREACHFILE("include/", test) {
-                if (sb_cmpext(test, ".c") && sb_cmpext(test, ".h"))
-                    continue;
-
-                sb_CMD() {
-                    sb_cmd_main("clang-format");
-                    sb_cmd_opt("i");
-                    sb_cmd_arg(test);
-                }
-            }
-            sb_FOREACHFILE("./", test) {
-                if (sb_cmpext(test, ".c") && sb_cmpext(test, ".h"))
-                    continue;
-
-                sb_CMD() {
-                    sb_cmd_main("clang-format");
-                    sb_cmd_opt("i");
-                    sb_cmd_arg(test);
-                }
-            }
-            sb_fence();
-        }
-
-        //build Static Impl
-        sb_EXEC() {
-            sb_add_flag("c");
-            sb_add_include_path("include/");
-            sb_add_file("src/cutils.c");
-
-            sb_add_flag("g");
-            sb_link_library("m");
-
-            sb_set_out("cutils.o");
-        }
-        sb_fence();
-        sb_CMD() {
-            sb_cmd_main("ar");
-            sb_cmd_arg("rcs");
-            sb_cmd_arg("build/cutils.a");
-            sb_cmd_arg("build/cutils.o");
-        }
-        sb_fence();
-
-        sb_CMD() {
-            sb_cmd_main("cp");
-            sb_cmd_opt("r");
-            sb_cmd_arg("resources");
-            sb_cmd_arg("build/");
-        }
-        sb_fence();
-        // tests
-        char* grouplist[] = {
-            "tests/core",
-            "tests/simpleds",
-            "tests/strbase",
-            "tests/ga",
-            "tests/cgen",
-            "tests/sill",
-            "tests/sbuild",
-        };
-        for (int gid = 0; gid < (sizeof(grouplist)/sizeof(grouplist[0])); gid++) {
-            char buf[PATH_MAX + 1] = {0};
-            snprintf(buf, PATH_MAX, "./build/%s", grouplist[gid]);
-            sb_mkdir(buf);
-            snprintf(buf, PATH_MAX, "./test/%s/", grouplist[gid]);
-
-            sb_FOREACHFILE(buf, test) {
-                if (sb_cmpext(test, ".c"))
-                    continue;
-                sb_EXEC() {
-                    sb_add_file(test);
-                    sb_add_file("./build/cutils.a");
-
-                    sb_add_include_path("./include/");
-
-                    sb_add_flag("g");
-                    sb_add_flag("DCU_IMPL");
-                    sb_link_library("m");
-
-                    char buf[PATH_MAX + 1] = {0};
-                    char final[PATH_MAX + 1] = {0};
-                    strncpy(buf, test, PATH_MAX);
-
-                    char *name = sb_stripext(sb_basename(buf));
-                    snprintf(final, PATH_MAX, "%s/%s", grouplist[gid], name);
-                    printf("test: %d %s\n", gid, final);
-
-                    sb_set_out(final);
-
-                    sb_export_command();
-                }
-                sb_fence();
-            }
-        }
-
-        sb_EXEC() {
-            sb_add_file("test/runner.c");
-            sb_add_header("include/cutils.h");
-
-            sb_add_include_path("include/");
-            sb_add_file("build/cutils.a");
-
-            sb_add_flag("g");
-            sb_link_library("m");
-
-            sb_set_out("runner");
-
-            sb_export_command();
-        }
+    Task* pre_compile = AddDummyTask(&g);
+    if (!filestat(sstring("build")).stats.size) {
+        Task* mkdir = AddTask(&g, "Make Build Dir");
+        AddCmd(mkdir, "mkdir", "build/");
+        AddDep(pre_compile, mkdir);
     }
 
-    if (!sb_check_arg("no-test")) {
-        sb_build_start(argc, argv);
-        sb_target_dir("build/");
-        sb_CMD() { sb_cmd_main("clear"); }
-        sb_fence();
-        sb_CMD() { 
-            sb_cmd_main("build/runner"); 
-
-            if (sb_check_arg("v") || opts.t.set) {
-                sb_cmd_arg("v");
-            }
-
-            if (opts.t.set) {
-                sb_cmd_arg(opts.t.val);
-            }
-        }
-        sb_build_end();
+    if (!filestat(sstring("build/tests")).stats.size) {
+        Task* mkdir = AddTask(&g, "Make Test Dir");
+        AddCmd(mkdir, "mkdir", "build/tests");
+        AddDep(pre_compile, mkdir);
     }
+
+    if (opts.f.set) {
+        Task* format = AddDummyTask(&g);
+        DirBeginRec(sstring("./"), 10);
+        DirType t = T_UNKNOWN;
+        while (t != T_END) {
+            SString name = DirNextRec(&t);
+            char* n = ArenaAllocZero(sc.arena, name.len + 1);
+            memcpy(n, name.data, name.len);
+
+            if (!Sstrcmp(filepathext(name), sstring(".c")) &&
+                !Sstrcmp(filepathext(name), sstring(".h"))) {
+                continue;
+            }
+
+            printlog("format: %n\n", n);
+            Task* format_file = AddTask(&g, "format file");
+            AddCmd(format_file, "clang-format", "-i", n);
+            AddDep(format, format_file);
+        }
+        AddDep(pre_compile, format);
+    }
+
+    // exec and complete pre compile steps
+    Exec(pre_compile, num_jobs);
+    ClearTaskGraph(&g);
+
+    BegCompile(&g, TRUE, sstring("./compile_commands.json"));
+
+    // static lib
+    Task* static_lib = AddDummyTask(&g);
+    {
+        Task* compile =
+            CompileCmd(&g, "./build/cutils.o",
+                       Spread("-c", debug_flag, "src/cutils.c", "-lm", "-Iinclude/",
+                              optimization_levels[opt_level]));
+
+        static_lib = AddTask(&g, "archive Static Lib", compile);
+        AddCmd(static_lib, "ar", "rcs", "build/cutils.a", "build/cutils.o");
+    }
+
+    // cp resources
+    Task* resource = AddTask(&g, "resource copy");
+    AddCmd(resource, "cp", "-r", "resources", "build/");
+
+    // gather tests
+    dynArray(SString) groups = {GlobalAllocator};
+
+    DirBegin(sstring("test/tests"));
+    DirType t = T_UNKNOWN;
+    while (t != T_END) {
+        SString name = DirNext(&t);
+        if (t != T_DIR)
+            continue; // skip non directories
+        if (Sstrcmp(name, sstring(".")))
+            continue;
+        if (Sstrcmp(name, sstring("..")))
+            continue;
+
+        i8* n = ArenaAllocZero(sc.arena, name.len + 1);
+        memcpy(n, name.data, name.len);
+        dynPush(groups, ((SString){name.len, n}));
+    }
+
+    // build tests
+    const SString src_prefix = sstring("./test/tests");
+    const SString dst_prefix = sstring("./build/tests");
+
+    Task** tests = ArenaAllocZero(sc.arena, sizeof(Task*) * groups.size);
+
+    for (u32 i = 0; i < groups.size; i++) {
+        ScratchArena sc2 = ScratchArenaGet(sc.arena);
+
+        u32 group_len = groups.data[i].len + src_prefix.len + 1;
+        i8* group = ArenaAllocZero(sc.arena, group_len + 1);
+        sformat((SString){group_len, (i8*)group}, "%s/%s", src_prefix,
+                groups.data[i]);
+
+        tests[i] = AddDummyTask(&g);
+
+        DirType t = T_UNKNOWN;
+        DirBegin((SString){group_len, group});
+
+        while (t != T_END) {
+            SString file = DirNext(&t);
+            if (t != T_FILE)
+                continue;
+
+            u32 dst_len = groups.data[i].len + dst_prefix.len + file.len +
+                          2; // 2 = num of additional '/'
+            i8* dst = ArenaAllocZero(sc.arena, dst_len + 1);
+            sformat((SString){dst_len, (i8*)dst}, "%s/%s", dst_prefix,
+                    groups.data[i]);
+
+            Task* mkdir = AddTaskCond(
+                !filestat((SString){strlen((char*)dst), dst}).stats.size, &g,
+                "mkdir test");
+            AddCmd(mkdir, "mkdir", "-p", (char*)dst);
+
+            sformat((SString){dst_len, (i8*)dst}, "%s/%s/%s", dst_prefix,
+                    groups.data[i], filepathbasename(file));
+
+            u32 src_len = groups.data[i].len + src_prefix.len + file.len + 2;
+            i8* src = ArenaAllocZero(sc.arena, src_len + 1);
+            sformat((SString){src_len, (i8*)src}, "%s/%s/%s", src_prefix,
+                    groups.data[i], file);
+
+            //tests are always on default optimization with debugging info on
+            Task* compile = CompileCmd(
+                &g, (char*)dst,
+                Spread((char*)src, "build/cutils.a", "-Iinclude/", "-g", "-lm"),
+                mkdir, static_lib);
+
+            AddDep(tests[i], compile);
+        }
+
+        ScratchArenaEnd(sc2);
+    }
+
+    // build test runner
+    Task* runner = CompileCmd(
+        &g, "./build/runner",
+        Spread("test/runner.c", "build/cutils.a", "-Iinclude/", "-g", "-lm"),
+        static_lib);
+
+    Task* end = AddDummyTask(&g, resource, static_lib);
+
+    for (u32 i = 0; i < groups.size; i++) { AddDep(end, tests[i]); }
+    end = EndCompile(&g, end);
+
+    if (opts.t.set) {
+        AddDep(end, runner);
+        Task* run_test = AddTask(&g, "run_test", end);
+        if (strcmp(opts.t.val, "all") == 0 || strcmp(opts.t.val, "") == 0) {
+            AddCmd(run_test, "./build/runner");
+        } else {
+            AddCmd(run_test, "./build/runner", "v", opts.t.val);
+        }
+
+        end = run_test;
+    }
+
+    if (opts.p.set) {
+        PrintTaskTree(end, FALSE);
+    } else {
+        Exec(end, num_jobs);
+    }
+
+    dynFree(groups);
+    ScratchArenaEnd(sc);
+    FreeTaskGraph(&g);
 }

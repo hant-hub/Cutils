@@ -1,9 +1,3 @@
 #include <core/cutils.h>
 
-
-int main() {
-
-
-
-}
-
+int main() {}

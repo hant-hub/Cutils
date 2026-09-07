@@ -4,7 +4,6 @@
 #define GA_IMPL
 #include <ga/ga.h>
 
-
 int main() {
 
     {
@@ -16,7 +15,7 @@ int main() {
         GALine l = meetPlanes3(p1, p2);
 
         debuglog("Line: (%f %f %f) (%f %f %f)", l.a, l.b, l.c, l.d, l.e, l.f);
-        //debuglog("Line: %d", l.f);
+        // debuglog("Line: %d", l.f);
 
         GAPoint point = meetLinesPlane(p3, l);
 
@@ -32,7 +31,8 @@ int main() {
         GALine l = joinPoints3(p1, p2);
         GAPlane plane = joinPointLine(p3, l);
 
-        debuglog("%fx + %fy + %fz + %f = 0", plane.b, plane.c, plane.d, plane.a);
+        debuglog("%fx + %fy + %fz + %f = 0", plane.b, plane.c, plane.d,
+                 plane.a);
     }
 
     {
@@ -55,8 +55,8 @@ int main() {
         debuglog("Point: (%f %f %f) %f", p.b, p.c, p.d, p.a);
 
         GAPlane plane = makePlane(1, 1, 1, 0);
-        debuglog("Plane: %fx + %fy + %fz + %f = 0", plane.b, plane.c, plane.d, plane.a);
-
+        debuglog("Plane: %fx + %fy + %fz + %f = 0", plane.b, plane.c, plane.d,
+                 plane.a);
     }
 
     printlog("\n--------------- Test Rejection ---------------\n");
@@ -65,21 +65,24 @@ int main() {
         GAPlane p = makePlane(0, 0, 1, -1);
 
         GAPlane plane = perpPlaneAlongLine(p, l);
-        debuglog("Plane: %fx + %fy + %fz + %f = 0", plane.b, plane.c, plane.d, plane.a);
+        debuglog("Plane: %fx + %fy + %fz + %f = 0", plane.b, plane.c, plane.d,
+                 plane.a);
     }
     {
-        GAPoint pl = makePoint(1,1,1);
+        GAPoint pl = makePoint(1, 1, 1);
         GAPlane p = makePlane(1, 1, 1, 0);
 
         GALine line = perpPlaneAlongPoint(p, pl);
-        debuglog("Line: (%f %f %f) (%f %f %f)", line.a, line.b, line.c, line.d, line.e, line.f);
+        debuglog("Line: (%f %f %f) (%f %f %f)", line.a, line.b, line.c, line.d,
+                 line.e, line.f);
     }
     {
         GALine l = makeLine(0, 0, 0, 0, 0, 1);
         GAPoint p = makePoint(1, 2, 3);
 
         GAPlane plane = perpLineAlongPoint(l, p);
-        debuglog("Plane: %fx + %fy + %fz + %f = 0", plane.b, plane.c, plane.d, plane.a);
+        debuglog("Plane: %fx + %fy + %fz + %f = 0", plane.b, plane.c, plane.d,
+                 plane.a);
     }
 
     printlog("\n--------------- Test Projection ----------------\n");
@@ -89,7 +92,8 @@ int main() {
 
         GAPoint point = projectPointOntoPlane(t, p);
         GALine line = perpPlaneAlongPoint(p, t);
-        debuglog("Line: (%f %f %f) (%f %f %f)", line.a, line.b, line.c, line.d, line.e, line.f);
+        debuglog("Line: (%f %f %f) (%f %f %f)", line.a, line.b, line.c, line.d,
+                 line.e, line.f);
         debuglog("Point: (%f %f %f) %f", point.b, point.c, point.d, point.a);
     }
     {
@@ -97,14 +101,11 @@ int main() {
         GAPoint t = makePoint(-1, -2, 1);
 
         GAPlane plane = projectPlaneOntoPoint(p, t);
-        debuglog("Plane: %fx + %fy + %fz + %f = 0", plane.b, plane.c, plane.d, plane.a);
+        debuglog("Plane: %fx + %fy + %fz + %f = 0", plane.b, plane.c, plane.d,
+                 plane.a);
         GAPoint point = dualPlane3(plane);
         debuglog("Point: (%f %f %f) %f", point.b, point.c, point.d, point.a);
     }
-
-
-
-
 
     return 0;
 }

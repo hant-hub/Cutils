@@ -21,14 +21,14 @@ typedef struct Token {
 
 DefDynArrayDecl(TokenBuffer, Token);
 
-TokenBuffer Tokenize(SString data, StrBase *b, Allocator a);
-SString TokenName(Token t, StrBase *b, ArenaAllocator persist);
+TokenBuffer Tokenize(SString data, StrBase* b, Allocator a);
+SString TokenName(Token t, StrBase* b, ArenaAllocator persist);
 
 typedef enum TypeFlags : u16 {
-    //base types
+    // base types
     TYPE_BASE = 1 << 0,
 
-    //derived types
+    // derived types
     TYPE_CONST = 1 << 1,
     TYPE_POINTER = 1 << 2,
     TYPE_ALIAS = 1 << 3,
@@ -43,9 +43,9 @@ typedef struct Type {
     u32 inner; // limited to 26 bits
     StrID name;
 
-    //members if we have any
-    struct { 
-        u32 first; //32 bits
+    // members if we have any
+    struct {
+        u32 first; // 32 bits
         u32 num;
     };
 } Type;
@@ -56,11 +56,11 @@ typedef struct Member {
 } Member;
 
 //(inner << 4) | MSB16(flags)
-//26 + 4 bits
+// 26 + 4 bits
 typedef u32 TypeID;
 
 /*
-    INFO(ELI): 
+    INFO(ELI):
     Derived Types do not store a name since the name
     is implicit. They are deduplicated via the Outer Map.
 
@@ -95,7 +95,7 @@ typedef enum ErrorCode {
 } ErrorCode;
 
 typedef struct ParsingState {
-    TokenBuffer *t;
+    TokenBuffer* t;
     TypeInfo type;
     StrBase* base;
     u32 curr;
@@ -112,11 +112,11 @@ typedef struct ParsingState {
 
 typedef struct ParsingState ParsingState;
 
-//Current Plan is to just only proc on identifiers
+// Current Plan is to just only proc on identifiers
 typedef void (*proc)(ParsingState* p);
 DefHashMapDecl(ProcMap, StrID, proc);
 
-ParsingState BeginParser(Allocator a, TokenBuffer *buffer, StrBase* b);
+ParsingState BeginParser(Allocator a, TokenBuffer* buffer, StrBase* b);
 void AddProc(ParsingState* p, proc newproc);
 void RunParsers(ParsingState* p);
 

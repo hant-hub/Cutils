@@ -1,10 +1,9 @@
-#include <ctype.h>
 #include <core/cutils.h>
-
+#include <ctype.h>
 
 int main() {
 
-    //assert equivalent to ctype
+    // assert equivalent to ctype
     for (int c = 0; c < 128; c++) {
         int cu = isAlpha(c);
         int cy = !!isalpha(c);
@@ -40,8 +39,6 @@ int main() {
             panic();
         }
     }
-
-
 
     return 0;
 }

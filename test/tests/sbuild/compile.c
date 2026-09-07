@@ -1,32 +1,25 @@
 #define SB_IMPL
 #include <sbuild/sbuild.h>
 
-task_func(test_proc, t) {
-    printf("%*s\n", t->name.len, t->name.data);
-}
+task_func(test_proc, t) { printf("%*s\n", t->name.len, t->name.data); }
 
 static file f;
 
 task_func(fstart, t) {
     printf("hit\n");
-    f = fileopen(sstring("/tmp/testfile"), FILE_READ | FILE_WRITE | FILE_CREAT | FILE_TRUNC);
+    f = fileopen(sstring("/tmp/testfile"),
+                 FILE_READ | FILE_WRITE | FILE_CREAT | FILE_TRUNC);
 }
 
-task_func(fout, t) {
-    filewrite(&f, sstring("test"));
-}
+task_func(fout, t) { filewrite(&f, sstring("test")); }
 
-task_func(fend, t) {
-    fileclose(f);
-}
-
-
+task_func(fend, t) { fileclose(f); }
 
 int main(int argc, char* argv[]) {
     logfile.buffered = FALSE;
     TaskGraph g = CreateTaskGraph();
-    
-    //test proc
+
+    // test proc
     {
         Task* t = AddTask(&g, "test");
         AddProc(t, test_proc);
@@ -34,7 +27,7 @@ int main(int argc, char* argv[]) {
         ClearTaskGraph(&g);
     }
 
-    //test linked procs
+    // test linked procs
     {
         Task* start = AddTask(&g, "start");
         AddProc(start, fstart);
@@ -52,7 +45,7 @@ int main(int argc, char* argv[]) {
         ClearTaskGraph(&g);
     }
 
-    //test compile_cmd entry
+    // test compile_cmd entry
     {
         _c_intern.compile_file = sstring("/tmp/compile_cmds.json");
         Task* start = AddTask(&g, "start");
@@ -74,9 +67,9 @@ int main(int argc, char* argv[]) {
         ClearTaskGraph(&g);
     }
 
-    //api test
+    // api test
 
-    //enabled
+    // enabled
     {
         BegCompile(&g, TRUE, sstring("/tmp/compile_cmds.json"));
         Task* t = CompileCmd(&g, "a.out", Spread("../resources/hello.c"));
@@ -89,12 +82,12 @@ int main(int argc, char* argv[]) {
         ClearTaskGraph(&g);
     }
 
-    //disabled
+    // disabled
     {
 
         BegCompile(&g, FALSE, sstring(""));
         Task* t = CompileCmd(&g, "a.out", Spread("../resources/hello.c"));
-        Task* t2 = CompileCmd(&g, "a.out", Spread( "../resources/hello.c" ), t);
+        Task* t2 = CompileCmd(&g, "a.out", Spread("../resources/hello.c"), t);
         Task* end = AddDummyTask(&g, t, t2);
 
         end = EndCompile(&g, end);

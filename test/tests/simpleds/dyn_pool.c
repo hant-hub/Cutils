@@ -2,13 +2,12 @@
 #include <core/cutils.h>
 #include <ds/ds.h>
 
-
 PoolDecl(pool, u32);
 PoolImpl(pool, u32);
 
 int main() {
 
-    pool *p = &(pool){
+    pool* p = &(pool){
         .a = GlobalAllocator,
     };
 

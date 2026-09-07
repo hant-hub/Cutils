@@ -19,7 +19,7 @@ typedef struct Nested {
 } Nested;
 
 typedef struct Comment {
-    //cpp style
+    // cpp style
     int cpp;
     /* c style */
     float c;

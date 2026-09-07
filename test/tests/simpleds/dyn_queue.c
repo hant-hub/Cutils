@@ -1,7 +1,6 @@
 #include <core/cutils.h>
 #include <ds/ds.h>
 
-
 DefDynQueueDecl(Queue, u32);
 DefDynQueueImpl(Queue, u32);
 
@@ -55,7 +54,6 @@ int main() {
     QueuePush(&q, 6);
 
     // arrAssert(q.data, ((int[]){3, 4, 2}), 3);
-
 
     printlog("Queue (%d, %d): ", q.size, q.cap);
     for (u32 i = 0; i < q.size; i++) {

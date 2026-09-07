@@ -25,14 +25,14 @@ typedef struct StrBase {
     Allocator mem; // Assume Dynamic Memory
 
     // hashmap for deduplication
-    u32 *stridx;
-    i32 *meta; // meta data for robin hood hashing
+    u32* stridx;
+    i32* meta; // meta data for robin hood hashing
 
     u32 hashsize;
     u32 hashcap;
 
     // Stable Storage (index stability)
-    SString *strstore;
+    SString* strstore;
 
     u32 strsize;
     u32 maxslots;
@@ -40,8 +40,8 @@ typedef struct StrBase {
 
 #define GetStr(base, id) ((base)->strstore[id])
 
-StrID StrBaseAdd(StrBase *base, SString s);
-SString StrBaseGet(StrBase *base, StrID s);
-void StrBaseFree(StrBase *base);
+StrID StrBaseAdd(StrBase* base, SString s);
+SString StrBaseGet(StrBase* base, StrID s);
+void StrBaseFree(StrBase* base);
 
 #endif

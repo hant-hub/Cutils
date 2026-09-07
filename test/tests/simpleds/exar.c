@@ -3,16 +3,12 @@
 #include <core/cutils.h>
 #include <ds/ds.h>
 
-
-
 int main() {
 
     logfile.buffered = FALSE;
 
     Exar new_exar = InitExar(GlobalAllocator, int);
-    for (u32 i = 0; i < 30; i++) {
-        ExarInsert(&new_exar, &i);
-    }
+    for (u32 i = 0; i < 30; i++) { ExarInsert(&new_exar, &i); }
 
     printlog("Test Get\n");
     for (u32 i = 0; i < new_exar.size; i++) {
@@ -31,10 +27,9 @@ int main() {
     printlog("Test Get\n");
     for (u32 i = 0; i < new_exar.size; i++) {
         int* v = ExarGet(&new_exar, i);
-        assert(*v == i*2);
+        assert(*v == i * 2);
         printlog("\tGet %d at %d\n", *v, i);
     }
-
 
     ExarFree(&new_exar);
 
@@ -52,6 +47,4 @@ int main() {
     }
 
     ExarFree(&lex);
-
-
 }

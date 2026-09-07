@@ -4,7 +4,7 @@
 int main() {
     char buf[4097] = {0};
 
-    sformat((SString){.data = (i8 *)buf, .len = 4096},
+    sformat((SString){.data = (i8*)buf, .len = 4096},
             "hit \"%s\" \"%n\" \"%d\", \"%f\"", sstring("bam"), "slam",
             1005432100, 0.02124);
 
@@ -14,8 +14,8 @@ int main() {
         &(file){
             .handle = 1,
         },
-        "fformat: hit \"%s\" \"%n\" \"%d\", \"%f\" \"%c\" \"%x\" \"%u\"\n", sstring("bam"), "slam",
-        1005432100, 0.02124, 'a', &buf, -1);
+        "fformat: hit \"%s\" \"%n\" \"%d\", \"%f\" \"%c\" \"%x\" \"%u\"\n",
+        sstring("bam"), "slam", 1005432100, 0.02124, 'a', &buf, -1);
 
     printlog("test: log\n");
     printwarn("test: warn\n");

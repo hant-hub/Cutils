@@ -16,32 +16,20 @@
 
 #include <byteswap.h>
 
-//use platform threads in general case
-//required for stuff like printlog
+// use platform threads in general case
+// required for stuff like printlog
 #include <pthread.h>
-
 
 /*
     Endian Utilities
 */
-u16 FlipEndian16(u16 i) {
-    return bswap_16(i);
-}
-u32 FlipEndian32(u32 i) {
-    return bswap_32(i);
-}
-u64 FlipEndian64(u64 i) {
-    return bswap_64(i);
-}
+u16 FlipEndian16(u16 i) { return bswap_16(i); }
+u32 FlipEndian32(u32 i) { return bswap_32(i); }
+u64 FlipEndian64(u64 i) { return bswap_64(i); }
 
-f32 FlipEndianF(f32 f) {
-    return bswap_32(f);
-}
+f32 FlipEndianF(f32 f) { return bswap_32(f); }
 
-f64 FlipEndianD(f64 f) {
-    return bswap_64(f);
-}
-
+f64 FlipEndianD(f64 f) { return bswap_64(f); }
 
 /*
     Memory Allocators
@@ -80,10 +68,10 @@ void StackDestroy(Allocator a, StackAllocator s) {
     Free(a, s, s->cap + sizeof(struct StackAllocator));
 }
 
-void *StackAlloc(StackAllocator s, u64 size) {
+void* StackAlloc(StackAllocator s, u64 size) {
     if (s->size + size > s->cap)
         return NULL;
-    void *out = &s->data[s->size];
+    void* out = &s->data[s->size];
     s->size += size;
 
     return out;
@@ -131,33 +119,34 @@ static alloc_func_def(arena_alloc) {
 }
 
 Allocator ArenaGetAllocator(ArenaAllocator a) {
-    return (Allocator) {
+    return (Allocator){
         .a = arena_alloc,
         .ctx = a,
     };
 }
 
-void *ArenaAlloc(ArenaAllocator arena, u64 size) {
+void* ArenaAlloc(ArenaAllocator arena, u64 size) {
     ArenaAllocator a = arena;
     if (size + a->size > (a->cap)) {
         return NULL;
     }
 
-    void *p = &a->data[a->size];
+    void* p = &a->data[a->size];
     a->size += size;
     return p;
 }
 
-void ArenaExtendLast(ArenaAllocator arena, u64 size) {
+u64 ArenaExtendLast(ArenaAllocator arena, u64 size) {
     ArenaAllocator a = arena;
     if (size + a->size > (a->cap)) {
-        return;
+        return 0;
     }
     a->size += size;
+    return size;
 }
 
-void *ArenaAllocZero(ArenaAllocator a, u64 size) {
-    void *p = ArenaAlloc(a, size);
+void* ArenaAllocZero(ArenaAllocator a, u64 size) {
+    void* p = ArenaAlloc(a, size);
     if (p)
         memset(p, 0, size);
     return p;
@@ -311,20 +300,21 @@ file fileopen(const SString filename, file_permissions p) {
         return (file){.handle = -1};
     }
 
-
     return (file){
         .handle = fd,
         .stats =
             {
                 .size = statbuf.st_size,
-                .modified = {
-                    .s = statbuf.st_mtim.tv_sec,
-                    .ns = statbuf.st_mtim.tv_nsec,
-                },
-                .access = {
-                    .s = statbuf.st_atim.tv_sec,
-                    .ns = statbuf.st_atim.tv_nsec,
-                },
+                .modified =
+                    {
+                        .s = statbuf.st_mtim.tv_sec,
+                        .ns = statbuf.st_mtim.tv_nsec,
+                    },
+                .access =
+                    {
+                        .s = statbuf.st_atim.tv_sec,
+                        .ns = statbuf.st_atim.tv_nsec,
+                    },
             },
     };
 }
@@ -353,21 +343,23 @@ file filestat(const SString filename) {
         .stats =
             {
                 .size = statbuf.st_size,
-                .modified = {
-                    .s = statbuf.st_mtim.tv_sec,
-                    .ns = statbuf.st_mtim.tv_nsec,
-                },
-                .access = {
-                    .s = statbuf.st_atim.tv_sec,
-                    .ns = statbuf.st_atim.tv_nsec,
-                },
+                .modified =
+                    {
+                        .s = statbuf.st_mtim.tv_sec,
+                        .ns = statbuf.st_mtim.tv_nsec,
+                    },
+                .access =
+                    {
+                        .s = statbuf.st_atim.tv_sec,
+                        .ns = statbuf.st_atim.tv_nsec,
+                    },
             },
     };
 }
 
 static u64 flushdata(u64 handle, SString src) {
     u64 size = src.len;
-    char *buffer = (char *)src.data;
+    char* buffer = (char*)src.data;
     u64 accum = 0;
 
     while (accum != size) {
@@ -401,7 +393,7 @@ void fileclose(file file) {
 
 u64 fileread(SString dst, file src) {
     u64 size = dst.len;
-    char *buffer = (char *)dst.data;
+    char* buffer = (char*)dst.data;
 
     u64 accum = 0;
 
@@ -423,9 +415,9 @@ u64 fileread(SString dst, file src) {
     return accum;
 }
 
-u64 filewrite(file *dst, SString src) {
+u64 filewrite(file* dst, SString src) {
     u64 size = src.len;
-    char *buffer = (char *)src.data;
+    char* buffer = (char*)src.data;
     u64 accum = 0;
 
     if (!dst->buffered) {
@@ -445,7 +437,7 @@ u64 filewrite(file *dst, SString src) {
     }
 }
 
-void fileflush(file *file) {
+void fileflush(file* file) {
     if (file->buffered && file->accum) {
         flushdata(file->handle,
                   (SString){.len = file->accum, .data = file->buf});
@@ -473,13 +465,13 @@ u64 filesave(const SString filename, SString handle) {
 
 void filedelete(SString filename) {
     char buf[PATH_MAX + 1] = {0};
-    sformat((SString){.len = PATH_MAX, .data = (i8 *)buf}, "%s", filename);
+    sformat((SString){.len = PATH_MAX, .data = (i8*)buf}, "%s", filename);
     remove(buf);
 }
 
 void setdir(SString dir) {
     char buf[PATH_MAX + 1] = {0};
-    sformat((SString){.len = PATH_MAX, .data = (i8 *)buf}, "%s", dir);
+    sformat((SString){.len = PATH_MAX, .data = (i8*)buf}, "%s", dir);
     chdir(buf);
 }
 
@@ -489,7 +481,7 @@ void setdirExe() {
         debugerr("Error: Failed to find Build Binary");
         exit(-1);
     }
-    char *cursor = tmp;
+    char* cursor = tmp;
     while (cursor[0]) cursor++;
     while (cursor > tmp && cursor[0] != '/') cursor--;
     cursor[0] = 0;
@@ -511,24 +503,25 @@ SString filepathpopdir(SString filepath) {
 
 SString filepathbasename(SString filepath) {
     SString out = filepath;
-    while(out.len && out.data[out.len - 1] != '/') {
-        out.len--;
-    }
 
-    out.data = &filepath.data[out.len];
-    out.len = filepath.len - out.len;
+    while (out.len && out.data[out.len - 1] != '.') { out.len--; }
+
+    if (!out.len)
+        return filepath;
+
+    out.data = filepath.data;
+    out.len = out.len - 1;
 
     return out;
 }
 
 SString filepathext(SString filepath) {
     SString out = filepath;
-    
-    while (out.len && out.data[out.len - 1] != '.') {
-        out.len--;
-    }
 
-    if (!out.len) return (SString){0};
+    while (out.len && out.data[out.len - 1] != '.') { out.len--; }
+
+    if (!out.len)
+        return (SString){0};
 
     out.data = &filepath.data[out.len - 1];
     out.len = filepath.len - (out.len - 1);
@@ -545,7 +538,8 @@ u32 filepathdepth(SString filepath) {
     }
 
     for (; i < filepath.len; i++) {
-        if (filepath.data[i] == '/') depth++;
+        if (filepath.data[i] == '/')
+            depth++;
     }
 
     return depth;
@@ -555,11 +549,11 @@ u32 filepathdepth(SString filepath) {
     Custom Format
 */
 
-typedef void (*wchar)(char c, void *ctx);
+typedef void (*wchar)(char c, void* ctx);
 
 typedef struct formatInfo {
     wchar f;
-    void *ctx;
+    void* ctx;
 } formatInfo;
 
 // 10^{i + 1}
@@ -745,7 +739,8 @@ static void format_float(formatInfo info, f64 num) {
     info.f((u8)mdig + '0', info.ctx);
 }
 
-static ptrdiff_t format_arg(formatInfo info, va_list *args, const char *format) {
+static ptrdiff_t format_arg(formatInfo info, va_list* args,
+                            const char* format) {
     ptrdiff_t out = 0;
     switch (format[0]) {
     case 'd': {
@@ -852,7 +847,7 @@ static ptrdiff_t format_arg(formatInfo info, va_list *args, const char *format) 
         out++;
     } break;
     case 'n': {
-        const char *s = va_arg((*args), const char *);
+        const char* s = va_arg((*args), const char*);
         while (s[0]) {
             info.f(s[0], info.ctx);
             s++;
@@ -900,7 +895,7 @@ static ptrdiff_t format_arg(formatInfo info, va_list *args, const char *format) 
     return out;
 }
 
-static void vformat(formatInfo info, va_list* args, const char *format) {
+static void vformat(formatInfo info, va_list* args, const char* format) {
 
     while (format[0]) {
         switch (format[0]) {
@@ -921,13 +916,13 @@ typedef struct strInfo {
     u32 idx;
 } strInfo;
 
-static void strput(char c, void *ctx) {
-    strInfo *info = ctx;
+static void strput(char c, void* ctx) {
+    strInfo* info = ctx;
     if (info->data.len > info->idx)
         info->data.data[info->idx++] = c;
 }
 
-u32 sformat(SString dst, const char *format, ...) {
+u32 sformat(SString dst, const char* format, ...) {
     strInfo info = {.data = dst, .idx = 0};
 
     formatInfo finfo = {
@@ -946,17 +941,17 @@ u32 sformat(SString dst, const char *format, ...) {
 }
 
 typedef struct fileInfo {
-    file *dst;
+    file* dst;
     u64 idx;
 } fileInfo;
 
-static void fileput(char c, void *ctx) {
-    fileInfo *info = ctx;
+static void fileput(char c, void* ctx) {
+    fileInfo* info = ctx;
     info->idx++;
-    filewrite(info->dst, (SString){.len = 1, .data = (i8 *)&c});
+    filewrite(info->dst, (SString){.len = 1, .data = (i8*)&c});
 }
 
-u32 fformat(file *dst, const char *format, ...) {
+u32 fformat(file* dst, const char* format, ...) {
     fileInfo info = {
         .dst = dst,
     };
@@ -991,10 +986,10 @@ file errfile = {
 
 void flush_log(void) { fileflush(&logfile); }
 
-static pthread_mutex_t print_mutex = { PTHREAD_MUTEX_INITIALIZER };
+static pthread_mutex_t print_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-u32 printlog(const char *format, ...) {
-    pthread_mutex_lock(&print_mutex); 
+u32 printlog(const char* format, ...) {
+    pthread_mutex_lock(&print_mutex);
 
     static bool8 schedule_flush = FALSE;
     if (!schedule_flush) {
@@ -1020,8 +1015,8 @@ u32 printlog(const char *format, ...) {
     return info.idx;
 }
 
-u32 printwarn(const char *format, ...) {
-    pthread_mutex_lock(&print_mutex); 
+u32 printwarn(const char* format, ...) {
+    pthread_mutex_lock(&print_mutex);
     fileInfo info = {
         .dst = &warnfile,
     };
@@ -1039,7 +1034,7 @@ u32 printwarn(const char *format, ...) {
     return info.idx;
 }
 
-u32 printerr(const char *format, ...) {
+u32 printerr(const char* format, ...) {
     fileInfo info = {
         .dst = &errfile,
     };
@@ -1059,7 +1054,7 @@ u32 printerr(const char *format, ...) {
 
 // Directory Stuff
 
-static DIR *dirpn = NULL;
+static DIR* dirpn = NULL;
 
 void DirBegin(SString filepath) {
     char buf[PATH_MAX + 1] = {0};
@@ -1067,10 +1062,11 @@ void DirBegin(SString filepath) {
     dirpn = opendir(buf);
 }
 
-SString DirNext(DirType *t) {
-    if (!dirpn) return (SString){0};
+SString DirNext(DirType* t) {
+    if (!dirpn)
+        return (SString){0};
 
-    struct dirent *d = NULL;
+    struct dirent* d = NULL;
     d = readdir(dirpn);
 
     *t = T_END;
@@ -1086,13 +1082,13 @@ SString DirNext(DirType *t) {
     else
         *t = T_UNKNOWN;
 
-    return (SString){.data = (i8 *)d->d_name, .len = strlen(d->d_name)};
+    return (SString){.data = (i8*)d->d_name, .len = strlen(d->d_name)};
 }
 
 static dynArray(dynArray(char)) paths = {.a = GlobalAllocator};
 static dynArray(char) curr_path = {.a = GlobalAllocator};
 static dynArray(char) out_path = {.a = GlobalAllocator};
-static DIR *curr = NULL;
+static DIR* curr = NULL;
 static u32 max_depth = 0;
 
 void DirBeginRec(SString filepath, u32 depth) {
@@ -1100,80 +1096,90 @@ void DirBeginRec(SString filepath, u32 depth) {
     char* file = SStringGetCstr(filepath, sc.arena);
 
     curr = opendir(file);
-    
+
     if (curr) {
         curr_path.size = 0;
-        dynExt(curr_path, filepath.data, filepath.len); 
+        dynExt(curr_path, filepath.data, filepath.len);
         max_depth = depth;
     }
 
     ScratchArenaEnd(sc);
 }
 
-SString DirNextRec(DirType *t) {
-        struct dirent* d = NULL;
-        ScratchArena sc = ScratchArenaGet(NULL); 
+SString DirNextRec(DirType* t) {
+    struct dirent* d = NULL;
+    ScratchArena sc = ScratchArenaGet(NULL);
 
-        while (curr || paths.size) {
-            d = readdir(curr);
-    
-            if (!d) {
-                closedir(curr);
-                dynFree(curr_path);
-                curr = NULL;
-                if (!paths.size) break;
+    while (curr || paths.size) {
+        d = readdir(curr);
 
-                curr_path.data = dynBack(paths).data;
-                curr_path.size = dynBack(paths).size;
-                curr_path.cap = dynBack(paths).cap;
-                curr_path.a = dynBack(paths).a;
-                paths.size--;
-
-                char* pathname = SStringGetCstr((SString){.data = (i8*)curr_path.data, .len = curr_path.size}, sc.arena);
-                curr = opendir(pathname);
-                ScratchArenaEnd(sc);
-
-                continue;
-            }
-    
-            if (strcmp(d->d_name, ".") == 0) continue;
-            if (strcmp(d->d_name, "..") == 0) continue;
-    
-            switch (d->d_type) {
-                case DT_DIR:
-                    *t = T_DIR;
-                    dynArray(char) new = {.a = GlobalAllocator};
-                    if (curr_path.data) {
-                        dynExt(new, curr_path.data, curr_path.size);
-                        dynPush(new, '/');
-                    }
-                    u32 len = strlen(d->d_name);
-                    dynExt(new, d->d_name, len);
-                    if (max_depth <= filepathdepth((SString){.data = (i8*)new.data, .len = new.size})) {
-                        dynFree(new);
-                        break;
-                    }
-                    dynResize(paths, paths.size + 1);
-                    dynBack(paths).data = new.data;
-                    dynBack(paths).size = new.size;
-                    dynBack(paths).cap = new.cap;
-                    dynBack(paths).a = new.a;
+        if (!d) {
+            closedir(curr);
+            dynFree(curr_path);
+            curr = NULL;
+            if (!paths.size)
                 break;
-                case DT_REG: *t = T_FILE; break;
-                default: *t = T_UNKNOWN; break;
-            }
-            out_path.size = 0;
-            dynExt(out_path, curr_path.data, curr_path.size);
-            dynPush(out_path, '/');
-            u32 len = strlen(d->d_name);
-            dynExt(out_path, d->d_name, len);
-    
-            return (SString){.data = (i8*)out_path.data, .len = out_path.size};
+
+            curr_path.data = dynBack(paths).data;
+            curr_path.size = dynBack(paths).size;
+            curr_path.cap = dynBack(paths).cap;
+            curr_path.a = dynBack(paths).a;
+            paths.size--;
+
+            char* pathname = SStringGetCstr(
+                (SString){.data = (i8*)curr_path.data, .len = curr_path.size},
+                sc.arena);
+            curr = opendir(pathname);
+            ScratchArenaEnd(sc);
+
+            continue;
         }
-    
-        *t = T_END;
-        ScratchArenaEnd(sc);
-        return (SString){0};
+
+        if (strcmp(d->d_name, ".") == 0)
+            continue;
+        if (strcmp(d->d_name, "..") == 0)
+            continue;
+
+        switch (d->d_type) {
+        case DT_DIR:
+            *t = T_DIR;
+            dynArray(char) new = {.a = GlobalAllocator};
+            if (curr_path.data) {
+                dynExt(new, curr_path.data, curr_path.size);
+                dynPush(new, '/');
+            }
+            u32 len = strlen(d->d_name);
+            dynExt(new, d->d_name, len);
+            if (max_depth <= filepathdepth((SString){.data = (i8*)new.data,
+                                                     .len = new.size})) {
+                dynFree(new);
+                break;
+            }
+            dynResize(paths, paths.size + 1);
+            dynBack(paths).data = new.data;
+            dynBack(paths).size = new.size;
+            dynBack(paths).cap = new.cap;
+            dynBack(paths).a = new.a;
+            break;
+        case DT_REG:
+            *t = T_FILE;
+            break;
+        default:
+            *t = T_UNKNOWN;
+            break;
+        }
+        out_path.size = 0;
+        dynExt(out_path, curr_path.data, curr_path.size);
+        dynPush(out_path, '/');
+        u32 len = strlen(d->d_name);
+        dynExt(out_path, d->d_name, len);
+
+        return (SString){.data = (i8*)out_path.data, .len = out_path.size};
+    }
+
+    *t = T_END;
+    ScratchArenaEnd(sc);
+    return (SString){0};
 }
 
 /*
@@ -1190,7 +1196,7 @@ v2i v2iMul(v2i a, v2i b) { return (v2i){a.x * b.x, a.y * b.y}; }
 v2f v2fMul(v2f a, v2f b) { return (v2f){a.x * b.x, a.y * b.y}; }
 v2d v2dMul(v2d a, v2d b) { return (v2d){a.x * b.x, a.y * b.y}; }
 
-u64 FNVHash64(u8 *data, u64 size) {
+u64 FNVHash64(u8* data, u64 size) {
     u64 hash = 14695981039346656037UL;
     for (u64 i = 0; i < size; i++) {
         hash ^= data[i];
@@ -1199,7 +1205,7 @@ u64 FNVHash64(u8 *data, u64 size) {
     return hash;
 }
 
-u32 FNVHash32(u8 *data, u32 size) {
+u32 FNVHash32(u8* data, u32 size) {
     u32 hash = 2166136261UL;
     for (u32 i = 0; i < size; i++) {
         hash ^= data[i];
@@ -1207,4 +1213,3 @@ u32 FNVHash32(u8 *data, u32 size) {
     }
     return hash;
 }
-

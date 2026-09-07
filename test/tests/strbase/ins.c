@@ -4,7 +4,7 @@
 #include <strbase/strbase.h>
 
 int main() {
-    StrBase *data = &(StrBase){GlobalAllocator};
+    StrBase* data = &(StrBase){GlobalAllocator};
 
     StrID s = StrBaseAdd(data, sstring("test"));
     StrID s1 = StrBaseAdd(data, sstring("test"));
@@ -19,7 +19,6 @@ int main() {
     assert(s != STRBASE_INAVLID_STR);
     assert(s == s1);
 
-
     printlog("Internal Table State:\n");
     for (u32 i = 0; i < data->hashcap; i++) {
         if (data->meta[i] == -1)
@@ -28,7 +27,6 @@ int main() {
             printlog("\t(%s,%d)\n", GetStr(data, data->stridx[i]),
                      data->meta[i]);
     }
-
 
     StrBaseFree(data);
     return 0;
