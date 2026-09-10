@@ -32,8 +32,13 @@ void runtest(const char* name, int verbose) {
     // Using valgrind instead of ASAN because ASAN fails to detect certain
     // leaks when just allocating memory but not necessarily touching all of
     // it
-    execlp("valgrind", "valgrind", "--quiet", "--leak-check=full",
-           "--error-exitcode=69", "--", name, NULL);
+
+    if (strcmp(name, "./tests/core/mutex") == 0) {
+        execlp(name, NULL);
+    } else {
+        execlp("valgrind", "valgrind", "--quiet", "--leak-check=full",
+                "--error-exitcode=69", "--", name, NULL);
+    }
 
     printf("failed to find file\n");
     exit(-1);

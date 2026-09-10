@@ -2,13 +2,14 @@
 
 ### Cutils Improvements
 - [X] Update build Script
-- [ ] Custom locks
+- [X] Custom locks
     - [X] Bakery Algorithm
-    - [ ] Compare against pure CAS
-- [ ] thread-safe printing
+    - [X] Compare against pure CAS
+    - [X] Approximately Match Pthread
+- [X] thread-safe printing
     - [X] locks
-    - [ ] locks on files
-    - [ ] enable/disable locks
+    - [X] locks on files
+    - [X] enable/disable locks
 
 ### Sbuild
 - [X] Graph Data Structure
