@@ -127,7 +127,7 @@ void _AutoRebuild(const char* filename, int argc, char** argv, u32 num_flags,
     }
 
     printlog("Rebuild\n");
-    fileflush(&logfile);
+    fileflush(logfile);
     execvp(argv[0], argv);
     debugerr("Failed to Exec Rebuilt Build Script");
     panic();

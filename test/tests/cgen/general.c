@@ -4,7 +4,7 @@
 int main() {
 
     ScratchArena sc = ScratchArenaGet(NULL);
-    logfile.buffered = FALSE;
+    logfile->buffered = FALSE;
 
     file testfile = fileopen(sstring("../resources/type_parsing.h"), FILE_READ);
 

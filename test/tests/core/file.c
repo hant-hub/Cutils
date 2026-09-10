@@ -42,7 +42,7 @@ int main() {
     filesave(sstring("test"), data);
     fileload(load, sstring("test"));
 
-    fformat(&logfile, "load: %s\n", load);
+    fformat(logfile, "load: %s\n", load);
 
     filedelete(sstring("test"));
 

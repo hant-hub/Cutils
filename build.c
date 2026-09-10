@@ -16,7 +16,7 @@ const char* optimization_levels[] = {
 };
 
 int main(int argc, char* argv[]) {
-    logfile.buffered = FALSE;
+    logfile->buffered = FALSE;
 
     setdirExe();
     AutoRebuild(argc, argv);
@@ -30,8 +30,10 @@ int main(int argc, char* argv[]) {
     u32 opt_level = opts.o.set && opts.o.val <= 3 ? opts.o.val + 1 : 0;
     u32 num_jobs = opts.j.set ? opts.j.val : 4;
 
+
     const char* debug_flag = opts.no_debug.set ? "" : "-g";
 
+    printlog("Build Options: O=%d\n", opt_level - 1);
 
     TaskGraph g = CreateTaskGraph();
     ScratchArena sc = ScratchArenaGet(NULL);

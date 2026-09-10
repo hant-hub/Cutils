@@ -9,6 +9,7 @@
 
 #include <fcntl.h>
 #include <sys/stat.h>
+
 #include <unistd.h>
 
 #include <dirent.h>
@@ -19,6 +20,57 @@
 // use platform threads in general case
 // required for stuff like printlog
 #include <pthread.h>
+
+
+/*
+    Mutex
+*/
+
+#include <limits.h>
+#include <stdatomic.h>
+#include <sys/errno.h>
+#include <sys/syscall.h>
+#include <linux/futex.h>
+
+
+//simple mutex based around Lambport's Bakery Algorithm
+//Atomics are used for checking whether to enter the mutex
+//and futex is used to sleep on wait
+
+typedef struct _Mutex_lock {
+    atomic_int lock;
+} _Mutex_lock;
+
+static inline int futex(u32* uaddr, int op, u32 val, const time_spec* timeout, u32* uaddr2, u32 val2) {
+    return syscall(SYS_futex, uaddr, op, val, timeout, uaddr2, val2);
+}
+
+// 0 -> unlocked
+// 1 -> locked
+// 2 -> waiters
+void MutexLock(Mutex* mutex) {
+    _Mutex_lock* m = (_Mutex_lock*)mutex;
+
+    while (1) {
+        int expected = 0;
+        bool8 success = atomic_compare_exchange_strong_explicit(&m->lock, &expected, 1, memory_order_acquire, memory_order_relaxed);
+        if (success) {
+            return;
+        }
+
+        if (expected != 2) success = atomic_compare_exchange_strong_explicit(&m->lock, &expected, 2, memory_order_acquire, memory_order_relaxed);
+        if (success) futex((u32*)&m->lock, FUTEX_WAIT_PRIVATE, 2, NULL, NULL, 0);
+    }
+}
+
+void MutexUnlock(Mutex* mutex) {
+    _Mutex_lock* m = (_Mutex_lock*)mutex;
+    //only wake if contention
+
+    int c = atomic_exchange_explicit(&m->lock, 0, memory_order_release);
+    if (c == 2) futex((u32*)&m->lock, FUTEX_WAKE_PRIVATE, 1, NULL, NULL, 0);
+}
+
 
 /*
     Endian Utilities
@@ -968,28 +1020,23 @@ u32 fformat(file* dst, const char* format, ...) {
     return info.idx;
 }
 
-file logfile = {
+file stdout_file = {
     .handle = STDOUT_FILENO,
     .buffered = 1,
     .closefd = 1,
 };
 
-file warnfile = {
-    .handle = STDERR_FILENO,
-    .closefd = 1,
-};
+file* logfile = &stdout_file;
+file* warnfile = &stdout_file;
+file* errfile = &stdout_file;
 
-file errfile = {
-    .handle = STDERR_FILENO,
-    .closefd = 1,
-};
-
-void flush_log(void) { fileflush(&logfile); }
+void flush_log(void) { fileflush(logfile); }
 
 static pthread_mutex_t print_mutex = PTHREAD_MUTEX_INITIALIZER;
+static Mutex m = {0};
 
 u32 printlog(const char* format, ...) {
-    pthread_mutex_lock(&print_mutex);
+    if (logfile->thread_safe) MutexLock(&logfile->m);
 
     static bool8 schedule_flush = FALSE;
     if (!schedule_flush) {
@@ -998,7 +1045,7 @@ u32 printlog(const char* format, ...) {
     }
 
     fileInfo info = {
-        .dst = &logfile,
+        .dst = logfile,
     };
 
     formatInfo finfo = {
@@ -1011,14 +1058,15 @@ u32 printlog(const char* format, ...) {
     vformat(finfo, &args, format);
     va_end(args);
 
-    pthread_mutex_unlock(&print_mutex);
+    if (logfile->thread_safe) MutexUnlock(&logfile->m);
     return info.idx;
 }
 
 u32 printwarn(const char* format, ...) {
-    pthread_mutex_lock(&print_mutex);
+    if (warnfile->thread_safe) MutexLock(&warnfile->m);
+
     fileInfo info = {
-        .dst = &warnfile,
+        .dst = warnfile,
     };
 
     formatInfo finfo = {
@@ -1030,13 +1078,16 @@ u32 printwarn(const char* format, ...) {
     va_start(args, format);
     vformat(finfo, &args, format);
     va_end(args);
-    pthread_mutex_unlock(&print_mutex);
+
+    if (warnfile->thread_safe) MutexUnlock(&warnfile->m);
     return info.idx;
 }
 
 u32 printerr(const char* format, ...) {
+    if (errfile->thread_safe) MutexLock(&errfile->m);
+
     fileInfo info = {
-        .dst = &errfile,
+        .dst = errfile,
     };
 
     formatInfo finfo = {
@@ -1048,7 +1099,8 @@ u32 printerr(const char* format, ...) {
     va_start(args, format);
     vformat(finfo, &args, format);
     va_end(args);
-    pthread_mutex_unlock(&print_mutex);
+
+    if (errfile->thread_safe) MutexUnlock(&errfile->m);
     return info.idx;
 }
 

@@ -164,6 +164,6 @@ void* BMPread(ArenaAllocator a, file* f, u32* outwidth, u32* outheight,
         *outchannels = channels;
     }
 
-    fileflush(&logfile);
+    fileflush(logfile);
     return data;
 }

@@ -1,9 +1,6 @@
-
 /*
-
-   Stand Alone version, Simply include this directly
-   to use.
-
+    Important!!!
+    Must compile with -I set to include
 */
 
 #ifndef SB_H
@@ -11,6 +8,7 @@
 #ifndef CUTILS_H
 #define CUTILS_H
 
+#include <pthread.h>
 #include <stdint.h>
 
 #define PAGE_SIZE (1 << 12L)
@@ -207,6 +205,18 @@ typedef struct time_spec {
 #define timecmp(t1, op, t2) (t1.s == t2.s ? t1.ns op t2.ns : t1.s op t2.s)
 
 /*
+    Lightweight Mutex
+*/
+
+typedef union Mutex {
+    u32 data[1];
+} Mutex;
+
+
+void MutexLock(Mutex* mutex);
+void MutexUnlock(Mutex* mutex);
+
+/*
     FILE Handling
 */
 
@@ -235,7 +245,11 @@ typedef struct file {
     u16 accum;
     bool8 closefd; // 0 means close, 1 means don't close
     bool8 buffered;
+
     i8 buf[PAGE_SIZE];
+
+    bool8 thread_safe;
+    Mutex m;
 } file;
 
 file fileopen(const SString filename, file_permissions p);
@@ -321,7 +335,6 @@ Format Table:
 
     %c -> char (print int as char)
 */
-// Not threadsafe
 u32 fformat(file* dst, const char* format, ...);
 
 /*
@@ -332,9 +345,9 @@ u32 fformat(file* dst, const char* format, ...);
 //  logfile  -> stdout
 //  warnfile -> stderr
 //  errfile  -> stderr
-extern file logfile;
-extern file warnfile;
-extern file errfile;
+extern file* logfile;
+extern file* warnfile;
+extern file* errfile;
 
 u32 printlog(const char* format, ...);
 u32 printwarn(const char* format, ...);
@@ -1386,11 +1399,79 @@ Task* Compile(TaskGraph* g, const char* filename, u32 cmd_size,
 
 #include <fcntl.h>
 #include <sys/stat.h>
+
 #include <unistd.h>
 
 #include <dirent.h>
+#include <ds/ds.h>
 
 #include <byteswap.h>
+
+// use platform threads in general case
+// required for stuff like printlog
+#include <pthread.h>
+
+
+/*
+    Mutex
+*/
+
+#include <limits.h>
+#include <stdatomic.h>
+#include <sys/errno.h>
+#include <sys/syscall.h>
+#include <linux/futex.h>
+
+
+//simple mutex based around Lambport's Bakery Algorithm
+//Atomics are used for checking whether to enter the mutex
+//and futex is used to sleep on wait
+
+typedef struct _Mutex {
+    atomic_int ticket;
+    u32 serving;
+} _Mutex;
+
+typedef struct _Mutex_lock {
+    atomic_int lock;
+} _Mutex_lock;
+
+static inline int futex(u32* uaddr, int op, u32 val, const time_spec* timeout, u32* uaddr2, u32 val2) {
+    return syscall(SYS_futex, uaddr, op, val, timeout, uaddr2, val2);
+}
+
+// 0 -> unlocked
+// 1 -> locked
+// 2 -> waiters
+void MutexLock(Mutex* mutex) {
+    _Mutex_lock* m = (_Mutex_lock*)mutex;
+
+    while (1) {
+        int expected = 0;
+
+        u32 count = 8;
+        bool8 success = FALSE;
+        while (count--) {
+            expected = 0;
+            success = atomic_compare_exchange_weak_explicit(&m->lock, &expected, 1, memory_order_acquire, memory_order_relaxed);
+            if (success) {
+                return;
+            }
+        }
+
+        if (expected != 2) success = atomic_compare_exchange_weak_explicit(&m->lock, &expected, 2, memory_order_acquire, memory_order_relaxed);
+        if (success) futex((u32*)&m->lock, FUTEX_WAIT_PRIVATE, 2, NULL, NULL, 0);
+    }
+}
+
+void MutexUnlock(Mutex* mutex) {
+    _Mutex_lock* m = (_Mutex_lock*)mutex;
+    //only wake if contention
+
+    int c = atomic_exchange_explicit(&m->lock, 0, memory_order_release);
+    if (c == 2) futex((u32*)&m->lock, FUTEX_WAKE_PRIVATE, 1, NULL, NULL, 0);
+}
+
 
 /*
     Endian Utilities
@@ -1875,10 +1956,14 @@ SString filepathpopdir(SString filepath) {
 
 SString filepathbasename(SString filepath) {
     SString out = filepath;
-    while (out.len && out.data[out.len - 1] != '/') { out.len--; }
 
-    out.data = &filepath.data[out.len];
-    out.len = filepath.len - out.len;
+    while (out.len && out.data[out.len - 1] != '.') { out.len--; }
+
+    if (!out.len)
+        return filepath;
+
+    out.data = filepath.data;
+    out.len = out.len - 1;
 
     return out;
 }
@@ -2336,25 +2421,24 @@ u32 fformat(file* dst, const char* format, ...) {
     return info.idx;
 }
 
-file logfile = {
+file stdout_file = {
     .handle = STDOUT_FILENO,
     .buffered = 1,
     .closefd = 1,
 };
 
-file warnfile = {
-    .handle = STDERR_FILENO,
-    .closefd = 1,
-};
+file* logfile = &stdout_file;
+file* warnfile = &stdout_file;
+file* errfile = &stdout_file;
 
-file errfile = {
-    .handle = STDERR_FILENO,
-    .closefd = 1,
-};
+void flush_log(void) { fileflush(logfile); }
 
-void flush_log(void) { fileflush(&logfile); }
+static pthread_mutex_t print_mutex = PTHREAD_MUTEX_INITIALIZER;
+static Mutex m = {0};
 
 u32 printlog(const char* format, ...) {
+    if (logfile->thread_safe) MutexLock(&logfile->m);
+
     static bool8 schedule_flush = FALSE;
     if (!schedule_flush) {
         schedule_flush = TRUE;
@@ -2362,7 +2446,7 @@ u32 printlog(const char* format, ...) {
     }
 
     fileInfo info = {
-        .dst = &logfile,
+        .dst = logfile,
     };
 
     formatInfo finfo = {
@@ -2374,12 +2458,16 @@ u32 printlog(const char* format, ...) {
     va_start(args, format);
     vformat(finfo, &args, format);
     va_end(args);
+
+    if (logfile->thread_safe) MutexUnlock(&logfile->m);
     return info.idx;
 }
 
 u32 printwarn(const char* format, ...) {
+    if (warnfile->thread_safe) MutexLock(&warnfile->m);
+
     fileInfo info = {
-        .dst = &warnfile,
+        .dst = warnfile,
     };
 
     formatInfo finfo = {
@@ -2391,12 +2479,16 @@ u32 printwarn(const char* format, ...) {
     va_start(args, format);
     vformat(finfo, &args, format);
     va_end(args);
+
+    if (warnfile->thread_safe) MutexUnlock(&warnfile->m);
     return info.idx;
 }
 
 u32 printerr(const char* format, ...) {
+    if (errfile->thread_safe) MutexLock(&errfile->m);
+
     fileInfo info = {
-        .dst = &errfile,
+        .dst = errfile,
     };
 
     formatInfo finfo = {
@@ -2408,6 +2500,8 @@ u32 printerr(const char* format, ...) {
     va_start(args, format);
     vformat(finfo, &args, format);
     va_end(args);
+
+    if (errfile->thread_safe) MutexUnlock(&errfile->m);
     return info.idx;
 }
 
@@ -2607,7 +2701,7 @@ void _AutoRebuild(const char* filename, int argc, char** argv, u32 num_flags,
     }
 
     printlog("Rebuild\n");
-    fileflush(&logfile);
+    fileflush(logfile);
     execvp(argv[0], argv);
     debugerr("Failed to Exec Rebuilt Build Script");
     panic();

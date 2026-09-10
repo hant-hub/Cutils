@@ -16,7 +16,7 @@ task_func(fout, t) { filewrite(&f, sstring("test")); }
 task_func(fend, t) { fileclose(f); }
 
 int main(int argc, char* argv[]) {
-    logfile.buffered = FALSE;
+    logfile->buffered = FALSE;
     TaskGraph g = CreateTaskGraph();
 
     // test proc

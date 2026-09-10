@@ -5,7 +5,7 @@
 
 int main() {
 
-    logfile.buffered = FALSE;
+    logfile->buffered = FALSE;
 
     Exar new_exar = InitExar(GlobalAllocator, int);
     for (u32 i = 0; i < 30; i++) { ExarInsert(&new_exar, &i); }

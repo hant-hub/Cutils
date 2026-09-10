@@ -1,14 +1,14 @@
 ## TODO List:
 
 ### Cutils Improvements
-- [ ] Update build Script
+- [X] Update build Script
+- [ ] Custom locks
+    - [X] Bakery Algorithm
+    - [ ] Compare against pure CAS
 - [ ] thread-safe printing
     - [X] locks
     - [ ] locks on files
     - [ ] enable/disable locks
-- [ ] Arena Buffer Concatenation
-    - [ ] Extend Buf
-    - [ ] Concat Bufs
 
 ### Sbuild
 - [X] Graph Data Structure

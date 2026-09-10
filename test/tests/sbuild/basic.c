@@ -4,7 +4,7 @@
 int main(int argc, char* argv[]) {
     // setdir(sstring("../.."));
 
-    logfile.buffered = FALSE;
+    logfile->buffered = FALSE;
     // printlog("src: %n\n", __FILE_NAME__);
     // AutoRebuild(argc, argv, "-I", "include");
 

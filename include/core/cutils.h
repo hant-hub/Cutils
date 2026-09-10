@@ -198,6 +198,18 @@ typedef struct time_spec {
 #define timecmp(t1, op, t2) (t1.s == t2.s ? t1.ns op t2.ns : t1.s op t2.s)
 
 /*
+    Lightweight Mutex
+*/
+
+typedef union Mutex {
+    u32 data[1];
+} Mutex;
+
+
+void MutexLock(Mutex* mutex);
+void MutexUnlock(Mutex* mutex);
+
+/*
     FILE Handling
 */
 
@@ -228,6 +240,9 @@ typedef struct file {
     bool8 buffered;
 
     i8 buf[PAGE_SIZE];
+
+    bool8 thread_safe;
+    Mutex m;
 } file;
 
 file fileopen(const SString filename, file_permissions p);
@@ -323,9 +338,9 @@ u32 fformat(file* dst, const char* format, ...);
 //  logfile  -> stdout
 //  warnfile -> stderr
 //  errfile  -> stderr
-extern file logfile;
-extern file warnfile;
-extern file errfile;
+extern file* logfile;
+extern file* warnfile;
+extern file* errfile;
 
 u32 printlog(const char* format, ...);
 u32 printwarn(const char* format, ...);

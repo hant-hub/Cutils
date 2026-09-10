@@ -6,7 +6,7 @@ DefDynQueueImpl(Queue, u32);
 
 int main() {
     // Basic Queue
-    logfile.buffered = FALSE;
+    logfile->buffered = FALSE;
     Queue q = QueueCreate(GlobalAllocator);
     printlog("Empty: %d\n", QueueEmpty(&q));
     printlog("Full: %d\n", QueueFull(&q));
