@@ -1,6 +1,10 @@
 #include <strbase/strbase.h>
 #include <string.h>
 
+DefStringMapImpl(StrMap, StrID);
+
+
+
 // hashmap
 static void HashResize(StrBase* base) {
     if (base->hashsize < base->hashcap * STRBASE_LOAD_MAX)
@@ -60,7 +64,6 @@ static void HashResize(StrBase* base) {
 }
 
 // dyn array
-
 static u32 AllocSlot(StrBase* base) {
     if (base->strsize >= base->maxslots) {
         u32 oldsize = base->maxslots;

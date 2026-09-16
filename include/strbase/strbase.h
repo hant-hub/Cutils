@@ -2,6 +2,7 @@
 #define STRBASE_H
 
 #include <core/cutils.h>
+#include <ds/ds.h>
 
 /*
     INFO: This requires Cutils to be implemented
@@ -20,9 +21,12 @@
 #endif
 
 typedef u32 StrID; // direct index into strstore
+DefStringMapDecl(StrMap, StrID);
 
 typedef struct StrBase {
     Allocator mem; // Assume Dynamic Memory
+    
+    StrMap map;
 
     // hashmap for deduplication
     u32* stridx;
@@ -33,6 +37,8 @@ typedef struct StrBase {
 
     // Stable Storage (index stability)
     SString* strstore;
+
+    i8* storage;
 
     u32 strsize;
     u32 maxslots;

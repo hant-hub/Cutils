@@ -148,7 +148,7 @@ TokenBuffer Tokenize(SString data, StrBase* b, Allocator a) {
 
             // at least 2 chars left
             if (curr + 1 < data.len) {
-                if (chars[curr] == '*' && chars[curr] == '/') {
+                if (chars[curr] == '*' && chars[curr + 1] == '/') {
                     curr += 2;
                     state = TOKENIZER_NONE;
                     break;
@@ -435,6 +435,7 @@ u32 ParseType(ParsingState* p) {
 
         ScratchArena sc = ScratchArenaGet(NULL);
         Member* members = ParseStruct(sc.arena, p);
+        (void)members;
         ScratchArenaEnd(sc);
 
         return tid;

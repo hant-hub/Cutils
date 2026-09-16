@@ -89,6 +89,7 @@
         - [ ] struct with v pointer
         - [ ] macros for get and void*
     - [ ] dyn Array
+- [ ] Swiss table?
 - [ ] Queue
     - [X] Fixed Size (small)
     - [X] Dynamic Queue
@@ -103,6 +104,10 @@
 
 ### Cutils String Handling
 - [X] Merge StrBase
+- [ ] Improve StrBase
+    - [ ] Chunked Lists for storage O(n) allocations -> O(log n)
+    - [ ] Static StrBase (equivalent functionality, but all strings not already in the cache get the same id)
+    - [ ] StrBase Clear (removes all strings and resets strbase)
 
 ### Centralization
 - [X] Improve Cutils Tooling

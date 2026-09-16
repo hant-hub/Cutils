@@ -36,6 +36,7 @@ void PPMoutput(file* f, void* pixelData, SILLformat format, u32 width,
 void PAMoutput(file* f, void* pixelData, SILLformat format, u32 width,
                u32 height) {
     u32 depth = Format_to_depth[format];
+    (void)depth;
 
     fformat(f, "P7\n");
     fformat(f, "WIDTH %d\n", width);
@@ -94,9 +95,12 @@ void* BMPread(ArenaAllocator a, file* f, u32* outwidth, u32* outheight,
     expect(state, 'M');
 
     u32 size = ReadU32(state);
+    (void)size;
     ReadU32(state);
     u32 offset = ReadU32(state);
+    (void)offset;
     u32 infosize = ReadU32(state);
+    (void)infosize;
     i32 width = ReadI32(state);
     i32 height = ReadI32(state);
     u16 planes = ReadU16(state);

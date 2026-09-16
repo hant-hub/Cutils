@@ -137,7 +137,7 @@ void _AutoRebuild(const char* filename, int argc, char** argv, u32 num_flags,
 
 TaskGraph CreateTaskGraph() {
     return (TaskGraph){
-        .tasks = InitExar(GlobalAllocator, Task),
+        .tasks = ExarInit(GlobalAllocator, Task),
         .str_data.a = GlobalAllocator,
 
         .running.tasks.a = GlobalAllocator,

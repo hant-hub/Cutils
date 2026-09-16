@@ -84,7 +84,7 @@ int main(int argc, char* argv[]) {
     {
         Task* compile =
             CompileCmd(&g, "./build/cutils.o",
-                       Spread("-c", debug_flag, "src/cutils.c", "-lm", "-Iinclude/",
+                       Spread("-c", debug_flag, "src/cutils.c", "-lm", "-Iinclude/", "-Wall",
                               optimization_levels[opt_level]));
 
         static_lib = AddTask(&g, "archive Static Lib", compile);

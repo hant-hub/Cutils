@@ -219,8 +219,6 @@ void ArenaSetPos(ArenaAllocator a, u64 pos) {
 }
 
 void ArenaClear(ArenaAllocator a) {
-    u64 size = a->cap;
-    Allocator mem = a->a;
     a->size = 0;
 }
 
@@ -470,7 +468,6 @@ u64 fileread(SString dst, file src) {
 u64 filewrite(file* dst, SString src) {
     u64 size = src.len;
     char* buffer = (char*)src.data;
-    u64 accum = 0;
 
     if (!dst->buffered) {
         return flushdata(dst->handle, src);

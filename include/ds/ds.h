@@ -811,7 +811,7 @@
 #define MAX_CHUNKS 32
 #define MIN_CHUNK_SIZE 4
 
-#define InitExar(mem, type)                                                    \
+#define ExarInit(mem, type)                                                    \
     (Exar) { .a = mem, .e_size = sizeof(type) }
 
 typedef struct Exar {

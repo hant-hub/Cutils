@@ -7,7 +7,7 @@ int main() {
 
     logfile->buffered = FALSE;
 
-    Exar new_exar = InitExar(GlobalAllocator, int);
+    Exar new_exar = ExarInit(GlobalAllocator, int);
     for (u32 i = 0; i < 30; i++) { ExarInsert(&new_exar, &i); }
 
     printlog("Test Get\n");
@@ -33,7 +33,7 @@ int main() {
 
     ExarFree(&new_exar);
 
-    Exar lex = InitExar(GlobalAllocator, i64);
+    Exar lex = ExarInit(GlobalAllocator, i64);
     for (i64 i = 0; i < 30; i++) {
         i64 val = i - 15;
         ExarInsert(&lex, &val);
