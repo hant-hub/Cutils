@@ -7,7 +7,8 @@
     X(j, int)                                                                  \
     X(no_debug, bool)                                                          \
     X(p, bool)                                                                 \
-    X(o, int)
+    X(o, int)                                                                  \
+    X(e, bool)
 
 #include "sa.h"
 
@@ -30,6 +31,7 @@ int main(int argc, char* argv[]) {
     u32 opt_level = opts.o.set && opts.o.val <= 3 ? opts.o.val + 1 : 0;
     u32 num_jobs = opts.j.set ? opts.j.val : 4;
 
+    const char* p_asm = opts.e.set ? "-S" : "";
 
     const char* debug_flag = opts.no_debug.set ? "" : "-g";
 
@@ -82,10 +84,10 @@ int main(int argc, char* argv[]) {
     // static lib
     Task* static_lib = AddDummyTask(&g);
     {
-        Task* compile =
-            CompileCmd(&g, "./build/cutils.o",
-                       Spread("-c", debug_flag, "src/cutils.c", "-lm", "-Iinclude/", "-Wall",
-                              optimization_levels[opt_level]));
+        Task* compile = CompileCmd(&g, "./build/cutils.o",
+                                   Spread("-c", debug_flag, "src/cutils.c",
+                                          "-lm", "-Iinclude/", "-Wall",
+                                          optimization_levels[opt_level], p_asm));
 
         static_lib = AddTask(&g, "archive Static Lib", compile);
         AddCmd(static_lib, "ar", "rcs", "build/cutils.a", "build/cutils.o");
@@ -157,10 +159,10 @@ int main(int argc, char* argv[]) {
             sformat((SString){src_len, (i8*)src}, "%s/%s/%s", src_prefix,
                     groups.data[i], file);
 
-            //tests are always on default optimization with debugging info on
+            // tests are always on default optimization with debugging info on
             Task* compile = CompileCmd(
                 &g, (char*)dst,
-                Spread((char*)src, "build/cutils.a", "-Iinclude/", "-g", "-lm"),
+                Spread((char*)src, "build/cutils.a", "-Iinclude/", "-Wall", "-g", "-lm", p_asm),
                 mkdir, static_lib);
 
             AddDep(tests[i], compile);

@@ -34,7 +34,7 @@ void runtest(const char* name, int verbose) {
     // it
 
     if (strcmp(name, "./tests/core/mutex") == 0) {
-        execlp(name, NULL);
+        execlp(name, name, NULL);
     } else {
         execlp("valgrind", "valgrind", "--quiet", "--leak-check=full",
                 "--error-exitcode=69", "--", name, NULL);

@@ -792,6 +792,10 @@ static ptrdiff_t format_arg(formatInfo info, va_list* args,
                             const char* format) {
     ptrdiff_t out = 0;
     switch (format[0]) {
+    case '%': {
+        info.f(format[0], info.ctx);
+        out++;
+    } break;
     case 'd': {
         i64 s = va_arg((*args), i32);
         if (s < 0) {
@@ -1029,9 +1033,6 @@ file* errfile = &stdout_file;
 
 void flush_log(void) { fileflush(logfile); }
 
-static pthread_mutex_t print_mutex = PTHREAD_MUTEX_INITIALIZER;
-static Mutex m = {0};
-
 u32 printlog(const char* format, ...) {
     if (logfile->thread_safe) MutexLock(&logfile->m);
 
@@ -1245,11 +1246,12 @@ v2i v2iMul(v2i a, v2i b) { return (v2i){a.x * b.x, a.y * b.y}; }
 v2f v2fMul(v2f a, v2f b) { return (v2f){a.x * b.x, a.y * b.y}; }
 v2d v2dMul(v2d a, v2d b) { return (v2d){a.x * b.x, a.y * b.y}; }
 
+
 u64 FNVHash64(u8* data, u64 size) {
-    u64 hash = 14695981039346656037UL;
+    u64 hash = 0xcbf29ce484222325ULL;
     for (u64 i = 0; i < size; i++) {
         hash ^= data[i];
-        hash *= 1099511628211UL;
+        hash *= 0x100000001b3ULL;
     }
     return hash;
 }
@@ -1261,4 +1263,143 @@ u32 FNVHash32(u8* data, u32 size) {
         hash *= 16777619UL;
     }
     return hash;
+}
+
+u64 OATHash64(u8* data, u64 size) {
+    u64 h = 0;
+
+    for (u32 i = 0; i < size; i++) {
+        h += data[i];
+        h += h << 10;
+        h ^= h >> 6;
+    }
+
+    h += (h << 3);
+    h ^= h >> 11;
+    h += h << 15;
+
+    return h;
+}
+
+u32 OATHash32(u8* data, u32 size) {
+    u32 h = 0;
+
+    for (u32 i = 0; i < size; i++) {
+        h += data[i];
+        h += h << 10;
+        h ^= h >> 6;
+    }
+
+    h += (h << 3);
+    h ^= h >> 11;
+    h += h << 15;
+
+    return h;
+}
+
+#define mix(a,b,c) \
+ { \
+   a -= b; a -= c; a ^= ( c >> 13 ); \
+   b -= c; b -= a; b ^= ( a << 8 ); \
+   c -= a; c -= b; c ^= ( b >> 13 ); \
+   a -= b; a -= c; a ^= ( c >> 12 ); \
+   b -= c; b -= a; b ^= ( a << 16 ); \
+   c -= a; c -= b; c ^= ( b >> 5 ); \
+   a -= b; a -= c; a ^= ( c >> 3 ); \
+   b -= c; b -= a; b ^= ( a << 10 ); \
+   c -= a; c -= b; c ^= ( b >> 15 ); \
+ }
+
+u32 JENHash32(u8 *data, u32 length) {
+   unsigned a, b;
+   u8* k = data;
+   unsigned c = 0;
+   unsigned len = length;
+
+   a = b = 0x9e3779b9;
+
+   while ( len >= 12 ) {
+      a += ( k[0] + ( (unsigned)k[1] << 8 ) 
+        + ( (unsigned)k[2] << 16 )
+        + ( (unsigned)k[3] << 24 ) );
+      b += ( k[4] + ( (unsigned)k[5] << 8 ) 
+        + ( (unsigned)k[6] << 16 )
+        + ( (unsigned)k[7] << 24 ) );
+      c += ( k[8] + ( (unsigned)k[9] << 8 ) 
+        + ( (unsigned)k[10] << 16 )
+        + ( (unsigned)k[11] << 24 ) );
+
+      mix ( a, b, c );
+
+      k += 12;
+      len -= 12;
+   }
+
+   c += length;
+
+   switch ( len ) {
+   case 11: c += ( (unsigned)k[10] << 24 );
+   case 10: c += ( (unsigned)k[9] << 16 );
+   case 9 : c += ( (unsigned)k[8] << 8 );
+   /* First byte of c reserved for length */
+   case 8 : b += ( (unsigned)k[7] << 24 );
+   case 7 : b += ( (unsigned)k[6] << 16 );
+   case 6 : b += ( (unsigned)k[5] << 8 );
+   case 5 : b += k[4];
+   case 4 : a += ( (unsigned)k[3] << 24 );
+   case 3 : a += ( (unsigned)k[2] << 16 );
+   case 2 : a += ( (unsigned)k[1] << 8 );
+   case 1 : a += k[0];
+   }
+
+   mix ( a, b, c );
+
+   return c;
+}
+
+u64 JENHash64(u8 *data, u64 length) {
+   u64 a, b;
+   u8* k = data;
+   u64 c = 0;
+   unsigned len = length;
+
+   a = b = 0x9e3779b9;
+
+   while ( len >= 12 ) {
+      a += ( k[0] + ( (u64)k[1] << 8 ) 
+        + ( (u64)k[2] << 16 )
+        + ( (u64)k[3] << 24 ) );
+      b += ( k[4] + ( (u64)k[5] << 8 ) 
+        + ( (u64)k[6] << 16 )
+        + ( (u64)k[7] << 24 ) );
+      c += ( k[8] + ( (u64)k[9] << 8 ) 
+        + ( (u64)k[10] << 16 )
+        + ( (u64)k[11] << 24 ) );
+
+      mix ( a, b, c );
+
+      k += 12;
+      len -= 12;
+   }
+
+   c += length;
+
+   switch ( len ) {
+   case 11: c += ( (u64)k[10] << 24 );
+   case 10: c += ( (u64)k[9] << 16 );
+   case 9 : c += ( (u64)k[8] << 8 );
+   /* First byte of c reserved for length */
+   case 8 : b += ( (u64)k[7] << 24 );
+   case 7 : b += ( (u64)k[6] << 16 );
+   case 6 : b += ( (u64)k[5] << 8 );
+   case 5 : b += k[4];
+   case 4 : a += ( (u64)k[3] << 24 );
+   case 3 : a += ( (u64)k[2] << 16 );
+   case 2 : a += ( (u64)k[1] << 8 );
+   case 1 : a += k[0];
+   }
+
+   mix ( a, b, c );
+
+   return c;
 }

@@ -412,4 +412,10 @@ v2d v2dMul(v2d a, v2d b);
 u64 FNVHash64(u8* data, u64 size);
 u32 FNVHash32(u8* data, u32 size);
 
+u64 OATHash64(u8* data, u64 size);
+u32 OATHash32(u8* data, u32 size);
+
+u32 JENHash32(u8 *data, u32 length);
+u64 JENHash64(u8 *data, u64 length);
+
 #endif
