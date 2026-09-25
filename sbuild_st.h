@@ -1345,9 +1345,6 @@ typedef struct TaskGraph {
 
 typedef dynArray(i8) CBuf;
 
-//Will check if the build source has changed,
-//and will also set the working directory to the
-//executable location
 #define AutoRebuild(argc, argv, ...)                                           \
     _AutoRebuild(__FILE__, argc, argv,                                         \
                  ARRAY_SIZE(((const char*[]){__VA_ARGS__})), ##__VA_ARGS__)
@@ -2681,8 +2678,6 @@ void _AutoRebuild(const char* filename, int argc, char** argv, u32 num_flags,
     char dbuf[PATH_MAX] = {0};
 
     const char* dst_name = realpath(argv[0], dbuf); 
-
-    setdirExe();
     const char* src_name = realpath(filename, sbuf);
     assert(src_name && dst_name);
 
