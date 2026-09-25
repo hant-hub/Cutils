@@ -21,6 +21,7 @@ int main(int argc, char* argv[]) {
     logfile->buffered = FALSE;
 
     AutoRebuild(argc, argv);
+    setdirExe();
 
     SA options = Parse(argc, argv);
     if (options.err)
