@@ -1941,6 +1941,8 @@ void setdirExe() {
     chdir(tmp);
 }
 
+
+
 SString filepathpopdir(SString filepath) {
     SString out = filepath;
     while (out.len && out.data[out.len - 1] != '/') { out.len--; }
@@ -2671,6 +2673,10 @@ u32 FNVHash32(u8* data, u32 size) {
 
 void _AutoRebuild(const char* filename, int argc, char** argv, u32 num_flags,
                   ...) {
+
+    u32 len = strlen(filename);
+    while (len && filename[len] != '/') len--;
+    if (len) filename = filename + len;
 
     file f1 = filestat((SString){strlen(filename), (i8*)filename});
     file f2 = filestat((SString){strlen(argv[0]), (i8*)argv[0]});

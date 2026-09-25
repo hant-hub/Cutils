@@ -1,5 +1,8 @@
 ## TODO List:
 
+### Fast HashTable
+- [X] Version with combined key + value struct
+
 ### Cutils Improvements
 - [X] Update build Script
 - [X] Custom locks

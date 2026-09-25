@@ -63,7 +63,9 @@ f64 FlipEndianD(f64 f);
     Custom Memory Allocators
 */
 
+#ifndef NULL
 #define NULL ((void*)0)
+#endif
 
 #define alloc_func_def(name) void*(name)(void* ctx, void* ptr, u64 old, u64 new)
 

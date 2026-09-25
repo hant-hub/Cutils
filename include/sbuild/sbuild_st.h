@@ -1403,7 +1403,6 @@ Task* Compile(TaskGraph* g, const char* filename, u32 cmd_size,
 #include <unistd.h>
 
 #include <dirent.h>
-#include <ds/ds.h>
 
 #include <byteswap.h>
 
@@ -1941,6 +1940,8 @@ void setdirExe() {
 
     chdir(tmp);
 }
+
+
 
 SString filepathpopdir(SString filepath) {
     SString out = filepath;
@@ -2672,6 +2673,10 @@ u32 FNVHash32(u8* data, u32 size) {
 
 void _AutoRebuild(const char* filename, int argc, char** argv, u32 num_flags,
                   ...) {
+
+    u32 len = strlen(filename);
+    while (len && filename[len] != '/') len--;
+    if (len) filename = filename + len;
 
     file f1 = filestat((SString){strlen(filename), (i8*)filename});
     file f2 = filestat((SString){strlen(argv[0]), (i8*)argv[0]});

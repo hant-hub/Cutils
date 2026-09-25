@@ -8,6 +8,7 @@
     X(no_debug, bool)                                                          \
     X(p, bool)                                                                 \
     X(o, int)                                                                  \
+    X(m, int)                                                                  \
     X(e, bool)
 
 #include "sa.h"
@@ -31,8 +32,8 @@ int main(int argc, char* argv[]) {
     u32 opt_level = opts.o.set && opts.o.val <= 3 ? opts.o.val + 1 : 0;
     u32 num_jobs = opts.j.set ? opts.j.val : 4;
 
+    const char* march = opts.m.set ? "-march=native" : "";
     const char* p_asm = opts.e.set ? "-S" : "";
-
     const char* debug_flag = opts.no_debug.set ? "" : "-g";
 
     printlog("Build Options: O=%d\n", opt_level - 1);
@@ -87,7 +88,7 @@ int main(int argc, char* argv[]) {
         Task* compile = CompileCmd(&g, "./build/cutils.o",
                                    Spread("-c", debug_flag, "src/cutils.c",
                                           "-lm", "-Iinclude/", "-Wall",
-                                          optimization_levels[opt_level], p_asm));
+                                          optimization_levels[opt_level], march));
 
         static_lib = AddTask(&g, "archive Static Lib", compile);
         AddCmd(static_lib, "ar", "rcs", "build/cutils.a", "build/cutils.o");
@@ -162,7 +163,7 @@ int main(int argc, char* argv[]) {
             // tests are always on default optimization with debugging info on
             Task* compile = CompileCmd(
                 &g, (char*)dst,
-                Spread((char*)src, "build/cutils.a", "-Iinclude/", "-Wall", "-g", "-lm", p_asm),
+                Spread((char*)src, "build/cutils.a", "-Iinclude/", "-Wall", "-g", "-lm", p_asm, march),
                 mkdir, static_lib);
 
             AddDep(tests[i], compile);
