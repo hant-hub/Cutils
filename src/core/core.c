@@ -530,6 +530,7 @@ void setdirExe() {
         debugerr("Error: Failed to find Build Binary");
         exit(-1);
     }
+
     char* cursor = tmp;
     while (cursor[0]) cursor++;
     while (cursor > tmp && cursor[0] != '/') cursor--;

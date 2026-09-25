@@ -20,7 +20,6 @@ const char* optimization_levels[] = {
 int main(int argc, char* argv[]) {
     logfile->buffered = FALSE;
 
-    setdirExe();
     AutoRebuild(argc, argv);
 
     SA options = Parse(argc, argv);

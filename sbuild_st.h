@@ -1345,6 +1345,9 @@ typedef struct TaskGraph {
 
 typedef dynArray(i8) CBuf;
 
+//Will check if the build source has changed,
+//and will also set the working directory to the
+//executable location
 #define AutoRebuild(argc, argv, ...)                                           \
     _AutoRebuild(__FILE__, argc, argv,                                         \
                  ARRAY_SIZE(((const char*[]){__VA_ARGS__})), ##__VA_ARGS__)
@@ -2674,12 +2677,20 @@ u32 FNVHash32(u8* data, u32 size) {
 void _AutoRebuild(const char* filename, int argc, char** argv, u32 num_flags,
                   ...) {
 
-    u32 len = strlen(filename);
-    while (len && filename[len] != '/') len--;
-    if (len) filename = filename + len;
+    char sbuf[PATH_MAX] = {0};
+    char dbuf[PATH_MAX] = {0};
 
-    file f1 = filestat((SString){strlen(filename), (i8*)filename});
-    file f2 = filestat((SString){strlen(argv[0]), (i8*)argv[0]});
+    const char* dst_name = realpath(argv[0], dbuf); 
+
+    setdirExe();
+    const char* src_name = realpath(filename, sbuf);
+    assert(src_name && dst_name);
+
+    debuglog("src: %n", src_name);
+    debuglog("dst: %n", dst_name);
+
+    file f1 = filestat((SString){strlen(src_name), (i8*)src_name});
+    file f2 = filestat((SString){strlen(dst_name), (i8*)dst_name});
     bool8 rebuild = timecmp(f1.stats.modified, >=, f2.stats.modified);
 
     if (!rebuild)
@@ -2691,7 +2702,7 @@ void _AutoRebuild(const char* filename, int argc, char** argv, u32 num_flags,
     va_start(args, num_flags);
 
     Task* t = AddTask(&g, "recompile");
-    AddCmd(t, "cc", filename);
+    AddCmd(t, "cc", src_name);
     for (u32 i = 0; i < num_flags; i++) {
         const char* arg = va_arg(args, const char*);
         AddCmd(t, arg);
