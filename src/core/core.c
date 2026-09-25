@@ -377,11 +377,6 @@ file filestat(const SString filename) {
 
     struct stat statbuf;
     if (stat(data, &statbuf)) {
-        // error here
-        // TODO(ELI): Once logging is working,
-        // make log error and return invalid file
-        debugerr("Failed to Stat file: %s", filename);
-
         ScratchArenaEnd(sc);
         return (file){.handle = -1};
     }
