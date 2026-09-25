@@ -42,16 +42,21 @@ int main(int argc, char* argv[]) {
     ScratchArena sc = ScratchArenaGet(NULL);
 
     Task* pre_compile = AddDummyTask(&g);
-    if (!filestat(sstring("build")).stats.size) {
-        Task* mkdir = AddTask(&g, "Make Build Dir");
-        AddCmd(mkdir, "mkdir", "build/");
-        AddDep(pre_compile, mkdir);
-    }
+    {
+        Task* top = NULL;
+        if (!filestat(sstring("build")).stats.size) {
+            Task* mkdir = AddTask(&g, "Make Build Dir");
+            AddCmd(mkdir, "mkdir", "build/");
+            top = mkdir;
+        }
 
-    if (!filestat(sstring("build/tests")).stats.size) {
-        Task* mkdir = AddTask(&g, "Make Test Dir");
-        AddCmd(mkdir, "mkdir", "build/tests");
-        AddDep(pre_compile, mkdir);
+        if (!filestat(sstring("build/tests")).stats.size) {
+            Task* mkdir = AddTask(&g, "Make Test Dir", top);
+            AddCmd(mkdir, "mkdir", "build/tests");
+            top = mkdir;
+        }
+        
+        AddDep(pre_compile, top);
     }
 
     if (opts.f.set) {
