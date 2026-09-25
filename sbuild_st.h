@@ -2681,7 +2681,8 @@ void _AutoRebuild(const char* filename, int argc, char** argv, u32 num_flags,
 
     setdirExe();
     const char* src_name = realpath(filename, sbuf);
-    assert(src_name && dst_name);
+    assert(src_name);
+    assert(dst_name);
 
     debuglog("src: %n", src_name);
     debuglog("dst: %n", dst_name);
