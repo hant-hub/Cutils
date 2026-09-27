@@ -319,7 +319,8 @@
         return NULL;                                                           \
     }                                                                          \
     void name##Del(name* map, key ky) {                                        \
-                                                                               \
+        if (!map->cap)                                                         \
+            return;                                                            \
         key tempk = ky;                                                        \
                                                                                \
         u32 hash = FNVHash32((u8*)&tempk, sizeof(tempk));                      \
