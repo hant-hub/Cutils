@@ -730,6 +730,7 @@ static void flat_imap_ins_uniq_simd_sep3(flat_imap_simd_sep3* m, u32 key, u32 va
     u8 h2 = getH2(hash);
 
     u32 probe = (h1 & (m->cap - 1)) / 16;
+
     for (u32 i = 0; i < m->cap; i++) {
         __m128i mask = _mm_set1_epi8(META_EMPTY);
         __m128i meta = _mm_load_si128((__m128i*)&m->meta[probe]);

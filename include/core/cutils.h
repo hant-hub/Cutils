@@ -23,6 +23,14 @@
 
 #define CUTILS_INLINE __inline __attribute__((always_inline))
 
+#define _QUOTE(x) #x
+#define QUOTE(x) "" _QUOTE(x) ""
+#define _CAT(x, y) x ## y
+#define CAT(x, y) _CAT(x, y)
+#define _CAT3(x, y, z) x ## y ## z
+#define CAT3(x, y, z) _CAT3(x, y, z)
+
+
 /*
     Helpful typedefs
 */
