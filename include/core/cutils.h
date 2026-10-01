@@ -206,6 +206,35 @@ typedef struct time_spec {
 } time_spec;
 
 #define timecmp(t1, op, t2) (t1.s == t2.s ? t1.ns op t2.ns : t1.s op t2.s)
+static inline time_spec time_diff(time_spec start, time_spec end) {
+    if (timecmp(start, >, end)) {
+        return (time_spec){0};
+    }
+
+    time_spec duration;
+    duration.s = end.s - start.s;
+
+    if (end.ns < start.ns) {
+        duration.s--;
+        end.ns += 1000000000;
+    }
+
+    duration.ns = end.ns - start.ns;
+    return duration;
+}
+
+static inline time_spec time_sum(time_spec start, time_spec duration) {
+    time_spec end;
+    end.s = start.s + duration.s;
+    end.ns = start.ns + duration.ns;
+
+    if (end.ns >= 1000000000) {
+        end.s++;
+        end.ns -= 1000000000;
+    }
+    return end;
+}
+
 
 /*
     Lightweight Mutex
