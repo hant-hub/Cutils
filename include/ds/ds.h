@@ -433,10 +433,10 @@
         }* keys;                                                               \
         val* vals;                                                             \
     } name;                                                                    \
-    void nameIns(name*, SString, val);                                         \
-    val* nameGet(name*, SString);                                              \
-    void nameDel(name*, SString);                                              \
-    void nameFree(name*);
+    void name##Ins(name*, SString, val);                                         \
+    val* name##Get(name*, SString);                                              \
+    void name##Del(name*, SString);                                              \
+    void name##Free(name*);
 
 #define DefStringMapImpl(name, val)                                            \
     void name##Ins(name* map, SString ky, val vl) {                            \

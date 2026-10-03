@@ -25,8 +25,6 @@ DefStringMapDecl(StrMap, StrID);
 
 typedef struct StrBase {
     Allocator mem; // Assume Dynamic Memory
-    
-    StrMap map;
 
     // hashmap for deduplication
     u32* stridx;
