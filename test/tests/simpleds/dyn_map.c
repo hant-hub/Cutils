@@ -61,6 +61,7 @@ int main() {
     simapIns(&smap, sstring("test8"), 2);
     simapIns(&smap, sstring("test9"), 2);
     simapIns(&smap, sstring("test10"), 2);
+    simapIns(&smap, sstring("static/something"), 3);
 
     debuglog("smap");
     for (u32 i = 0; i < smap.cap; i++) {
@@ -73,10 +74,43 @@ int main() {
 
     assert(*simapGet(&smap, sstring("test")) == 2);
     assert(*simapGet(&smap, sstring("test1")) == 2);
+    assert(*simapGet(&smap, sstring("static/something")) == 3);
 
     simapDel(&smap, sstring("test5"));
     assert(!simapGet(&smap, sstring("test5")));
 
     simapFree(&smap);
+
+    simap m = {
+        GlobalAllocator
+    };
+    SString strs[] = {
+        sstring("t1"),
+        sstring("t2"),
+        sstring("t3")
+    };
+
+    //test hidden validity concerns 
+    //This should work
+    {
+        ScratchArena sc = ScratchArenaGet(NULL);
+
+        for (u32 i = 0; i < ARRAY_SIZE(strs); i++) {
+            i8* data = ArenaAlloc(sc.arena, strs[i].len);
+            memcpy(data, strs[i].data, strs[i].len);
+            simapIns(&m, (SString){strs[i].len, data}, i);
+            memset(data, -1, strs[i].len);
+        }
+
+        ScratchArenaEnd(sc);
+    }
+
+    for (u32 i = 0; i < ARRAY_SIZE(strs); i++) {
+        u32* v = simapGet(&m, strs[i]);
+        assert(v);
+        assert(*v == i);
+    }
+
+    simapFree(&m);
     imapFree(&map);
 }

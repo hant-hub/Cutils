@@ -1,9 +1,6 @@
 #include <strbase/strbase.h>
 #include <string.h>
 
-DefStringMapImpl(StrMap, StrID);
-
-
 
 // hashmap
 static void HashResize(StrBase* base) {
@@ -31,7 +28,7 @@ static void HashResize(StrBase* base) {
         u32 key = oldkeys[i];
         u32 counter = 0;
 
-        SString s = base->strstore[key];
+        SString s = base->strs.data[key];
         u32 idx = FNVHash32((u8*)s.data, s.len) % base->hashcap;
 
         for (u32 i = 0; i < base->hashcap; i++) {
@@ -63,23 +60,22 @@ static void HashResize(StrBase* base) {
     Free(base->mem, oldmeta, oldsize * sizeof(u32));
 }
 
-// dyn array
-static u32 AllocSlot(StrBase* base) {
-    if (base->strsize >= base->maxslots) {
-        u32 oldsize = base->maxslots;
-        base->maxslots = base->maxslots ? base->maxslots * 2 : STRBASE_MIN_SIZE;
+static u32 AddStr(StrBase* b, SString s) {
+    b->strmem.a = b->mem;
+    b->strs.a = b->mem;
 
-        base->strstore =
-            Realloc(base->mem, base->strstore, oldsize * sizeof(SString),
-                    base->maxslots * sizeof(SString));
-
-        memset(&base->strstore[oldsize], 0,
-               (base->maxslots - oldsize) * sizeof(SString));
-    }
-
-    base->strsize++;
-    return base->strsize++;
+    SString out = {
+        .data = DynArenaAlloc(&b->strmem, s.len + 1),
+        .len = s.len
+    };
+    memcpy(out.data, s.data, s.len);
+    out.data[s.len] = 0; //null terminator
+    
+    u32 slot = b->strs.size;
+    dynPush(b->strs, out);
+    return slot;
 }
+
 
 // Will copy string into internally managed table
 // free string memory afterward
@@ -95,12 +91,13 @@ StrID StrBaseAdd(StrBase* base, SString s) {
     for (u32 i = 0; i < base->hashcap; i++) {
         if (base->meta[idx] == STRBASE_INAVLID_STR) {
             // empty
-            u32 slot = AllocSlot(base);
+            //u32 slot = AllocSlot(base);
+            u32 slot = AddStr(base, s);
 
             base->meta[idx] = counter;
             base->stridx[idx] = slot;
 
-            base->strstore[slot] = Sstrdup(base->mem, s);
+            //base->strstore[slot] = Sstrdup(base->mem, s);
 
             return slot;
         }
@@ -110,7 +107,7 @@ StrID StrBaseAdd(StrBase* base, SString s) {
             break;
         }
 
-        if (Sstrcmp(s, base->strstore[base->stridx[idx]])) {
+        if (Sstrcmp(s, base->strs.data[base->stridx[idx]])) {
             // duplicate
             base->hashsize--;
             return base->stridx[idx];
@@ -125,12 +122,13 @@ StrID StrBaseAdd(StrBase* base, SString s) {
     {
         u32 tmpcounter = base->meta[idx];
 
-        u32 slot = AllocSlot(base);
+        //u32 slot = AllocSlot(base);
+        u32 slot = AddStr(base, s);
 
         base->meta[idx] = counter;
         base->stridx[idx] = slot;
 
-        base->strstore[slot] = Sstrdup(base->mem, s);
+        //base->strstore[slot] = Sstrdup(base->mem, s);
 
         counter = tmpcounter;
         out = slot;
@@ -168,11 +166,8 @@ StrID StrBaseAdd(StrBase* base, SString s) {
 SString StrBaseGet(StrBase* base, StrID s) { return (SString){0}; }
 
 void StrBaseFree(StrBase* base) {
-    for (u32 i = 0; i < base->maxslots; i++) {
-        Free(base->mem, base->strstore[i].data, base->strstore[i].len);
-    }
-
-    Free(base->mem, base->strstore, base->maxslots * sizeof(SString));
+    dynFree(base->strs);
+    DynArenaDestroy(base->strmem);
 
     Free(base->mem, base->stridx, base->hashcap * sizeof(u32));
     Free(base->mem, base->meta, base->hashcap * sizeof(u32));

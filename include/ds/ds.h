@@ -432,13 +432,21 @@
             i32 m;                                                             \
         }* keys;                                                               \
         val* vals;                                                             \
+        DynArena strs;                                                         \
     } name;                                                                    \
-    void name##Ins(name*, SString, val);                                         \
-    val* name##Get(name*, SString);                                              \
-    void name##Del(name*, SString);                                              \
+    void name##Ins(name*, SString, val);                                       \
+    val* name##Get(name*, SString);                                            \
+    void name##Del(name*, SString);                                            \
     void name##Free(name*);
 
 #define DefStringMapImpl(name, val)                                            \
+    static SString _##name##AddStr(name* m, SString ky) {                      \
+        m->strs.a = m->a;                                                      \
+        SString out = {.data = DynArenaAlloc(&m->strs, ky.len),                \
+                       .len = ky.len};                                         \
+        memcpy(out.data, ky.data, ky.len);                                     \
+        return out;                                                            \
+    }                                                                          \
     void name##Ins(name* map, SString ky, val vl) {                            \
         if (map->cap * MAX_LOAD <= map->size + 1) {                            \
             u64 oldcap = map->cap;                                             \
@@ -464,6 +472,7 @@
                                                                                \
                 for (u64 i = 0; i < map->cap; i++) {                           \
                     if (map->keys[idx].m == -1) {                              \
+                        tempk = _##name##AddStr(map, tempk);                   \
                         map->keys[idx].k = tempk;                              \
                         map->keys[idx].m = dist;                               \
                         map->vals[idx] = tempv;                                \
@@ -500,11 +509,16 @@
         typeof(map->vals[0]) tempv = vl;                                       \
         u32 hash = FNVHash32((u8*)tempk.data, tempk.len);                      \
                                                                                \
+        bool8 added = FALSE;                                                   \
         u32 idx = hash % map->cap;                                             \
         u32 dist = 0;                                                          \
                                                                                \
         for (u64 i = 0; i < map->cap; i++) {                                   \
             if (map->keys[idx].m == -1) {                                      \
+                if (!added) {                                                  \
+                    added = TRUE;                                              \
+                    tempk = _##name##AddStr(map, tempk);                       \
+                }                                                              \
                 map->keys[idx].k = tempk;                                      \
                 map->keys[idx].m = dist;                                       \
                 map->vals[idx] = tempv;                                        \
@@ -515,7 +529,10 @@
                 typeof(map->keys[0].k) tmpkey = map->keys[idx].k;              \
                 typeof(map->vals[0]) tmpval = map->vals[idx];                  \
                 u32 tmpdist = map->keys[idx].m;                                \
-                                                                               \
+                if (!added) {                                                  \
+                    added = TRUE;                                              \
+                    tempk = _##name##AddStr(map, tempk);                       \
+                }                                                              \
                 map->keys[idx].k = tempk;                                      \
                 map->keys[idx].m = dist;                                       \
                 map->vals[idx] = tempv;                                        \
@@ -656,6 +673,7 @@
         memset(map->keys, -1, map->cap * sizeof(map->keys[0]));                \
     }                                                                          \
     void name##Free(name* map) {                                               \
+        DynArenaDestroy(map->strs);                                            \
         Free(map->a, map->keys, map->cap * sizeof(map->keys[0]));              \
         Free(map->a, map->vals, map->cap * sizeof(map->vals[0]));              \
     }

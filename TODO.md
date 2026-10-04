@@ -86,6 +86,9 @@
 
 ### SimpleDS
 - [X] Hashmap struct equality
+- [ ] fix String Map
+    - [ ] string storage
+    - [ ] test swiss/swar map
 - [ ] Rewrite To Void*
     - [ ] rework api
         - [ ] stb style

@@ -92,7 +92,6 @@ typedef struct Allocator {
 
 extern const Allocator GlobalAllocator;
 
-// dynamic arena
 typedef struct ArenaAllocator {
     Allocator a;
     u64 cap;
@@ -140,6 +139,26 @@ void StackDestroy(Allocator a, StackAllocator s);
 void* StackAlloc(StackAllocator s, u64 size);
 void StackSet(StackAllocator s, u64 pos);
 void StackReset(StackAllocator s);
+
+//Dynamic Arena
+typedef struct DynArena {
+    Allocator a;
+
+    struct MemBlock {
+        struct MemBlock* prev;
+        u64 cap;
+        u64 size;
+        u8 data[];
+    }* head;
+} DynArena;
+
+//No reset since it would require traversing and freeing
+//a linked list or would not fully empty the stack
+DynArena DynArenaCreate(Allocator a, u64 min_size);
+void* DynArenaAlloc(DynArena* d, u64 size);
+void* DynArenaAllocZero(DynArena* d, u64 size);
+void DynArenaDestroy(DynArena d);
+
 
 /*
     Sized Strings

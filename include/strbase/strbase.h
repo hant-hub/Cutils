@@ -21,7 +21,6 @@
 #endif
 
 typedef u32 StrID; // direct index into strstore
-DefStringMapDecl(StrMap, StrID);
 
 typedef struct StrBase {
     Allocator mem; // Assume Dynamic Memory
@@ -34,15 +33,11 @@ typedef struct StrBase {
     u32 hashcap;
 
     // Stable Storage (index stability)
-    SString* strstore;
-
-    i8* storage;
-
-    u32 strsize;
-    u32 maxslots;
+    dynArray(SString) strs;
+    DynArena strmem;
 } StrBase;
 
-#define GetStr(base, id) ((base)->strstore[id])
+#define GetStr(base, id) ((base)->strs.data[id])
 
 StrID StrBaseAdd(StrBase* base, SString s);
 SString StrBaseGet(StrBase* base, StrID s);

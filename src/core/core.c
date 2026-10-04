@@ -232,6 +232,63 @@ ScratchArena ScratchArenaBegin(ArenaAllocator a) {
 
 void ScratchArenaEnd(ScratchArena s) { ArenaSetPos(s.arena, s.base); }
 
+
+static struct MemBlock* MemBlockAlloc(Allocator a, u64 size) {
+    struct MemBlock* new_block = Alloc(a, sizeof(struct MemBlock) + size);
+    if (!new_block) return NULL;
+    *new_block = (struct MemBlock){0};
+    return new_block;
+}
+
+DynArena DynArenaCreate(Allocator a, u64 min_size) {
+    DynArena d = {
+        .a = a,
+        .head = MemBlockAlloc(a, min_size)
+    };
+
+    assert(d.head); //no reason to fail to create an arena
+    return d;
+}
+void* DynArenaAlloc(DynArena* d, u64 size) {
+    struct MemBlock* m = d->head;  
+    if (!m || m->size + size >= m->cap) {
+        //prepend new block
+        u64 nextsize = size * 2;
+        while (size >= nextsize) nextsize <<= 1;
+        
+        struct MemBlock* new_block = MemBlockAlloc(d->a, nextsize);
+        if (!new_block) {
+            return NULL; //out of memory error
+        }
+
+        d->head = new_block;
+        new_block->prev = m;
+        m = new_block;
+    }
+
+    void* out = &m->data[m->size];
+    m->size += size;
+    return out;
+}
+
+void* DynArenaAllocZero(DynArena* d, u64 size) {
+    void* res = DynArenaAlloc(d, size);
+    if (res) {
+        memset(res, 0, size);
+    }
+    return res;
+}
+void DynArenaDestroy(DynArena d) {
+    struct MemBlock* curr = d.head;
+    while (curr) {
+        struct MemBlock* p = curr;
+        curr = curr->prev;
+        Free(d.a, p, sizeof(struct MemBlock) + p->cap);
+    }
+    d.head = NULL;
+}
+
+
 // Should never live longer than a single
 // function call.
 
