@@ -578,7 +578,7 @@
     }                                                                          \
     void name##Del(name* map, SString ky) {                                    \
         if (!map->cap || !map->size)                                           \
-            return NULL;                                                       \
+            return;                                                            \
         typeof(map->keys[0].k) tempk = ky;                                     \
                                                                                \
         u32 hash = FNVHash32((u8*)tempk.data, tempk.len);                      \
