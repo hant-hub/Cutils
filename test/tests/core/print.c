@@ -28,4 +28,10 @@ int main() {
     debugerr("test");
 
     debuglog("%d", 0);
+
+    for (u32 i = 0; i < 256; i++) {
+        debuglog("%x", i);
+    }
+
+    debuglog("%x", 0x8000000000000000UL);
 }

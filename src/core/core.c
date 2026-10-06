@@ -972,13 +972,18 @@ static ptrdiff_t format_arg(formatInfo info, va_list* args,
         // calc number of digits
         u32 digits = 0;
         u64 hexpower = 1;
-        for (u32 i = 0; i < ARRAY_SIZE(power10plus); i++) {
-            if ((num / hexpower) == 0UL)
-                break;
-            digits++;
-            hexpower <<= 4; // multiply by 16
-        }
-        hexpower >>= 4;
+        u8 leading_bits = __builtin_clzll(num);
+        
+        digits = ((16 - leading_bits/4));
+        hexpower <<= (digits - 1) * 4;
+
+        //for (u32 i = 0; i < ARRAY_SIZE(power10plus); i++) {
+        //    if ((num / hexpower) == 0UL)
+        //        break;
+        //    digits++;
+        //    hexpower <<= 4; // multiply by 16
+        //}
+        //hexpower >>= 4;
 
         // print digits
         for (i32 i = digits - 1; i >= 0; i--) {
