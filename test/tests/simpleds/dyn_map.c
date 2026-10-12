@@ -8,9 +8,21 @@ DefHashMapImpl(imap, u32, u32);
 DefStringMapDecl(simap, u32);
 DefStringMapImpl(simap, u32);
 
+#define NAME rmap
+#define KEY SString
+#define VAL u32
+#define HASH(k) FNVHash64((u8*)k.data, k.len)
+#define EQ(k1, k2) Sstrcmp(k1, k2)
+#define ON_INS(m, k, v) k = Sstrdup(GlobalAllocator, k)
+#define ON_DEL(m, k, v) Free(GlobalAllocator, k.data, k.len)
+#define ON_CLEAR(m, k, v) Free(GlobalAllocator, k.data, k.len)
+#include <ds/maps/swiss.h>
+
+
 int main() {
     imap map = {GlobalAllocator};
     u32* test = imapGet(&map, 3);
+    assert(!test);
     imapReserve(&map, 32);
 
     for (u32 i = 1; i <= 28; i++) { imapIns(&map, 2 * i, i); }
@@ -110,6 +122,36 @@ int main() {
         assert(v);
         assert(*v == i);
     }
+
+    //test Robin map
+    rmap r = {
+        GlobalAllocator
+    };
+
+
+    rmap_ins(&r, sstring("test"), 1);
+    rmap_ins(&r, sstring("test"), 2);
+    rmap_ins(&r, sstring("test1"), 2);
+    rmap_ins(&r, sstring("test2"), 2);
+    rmap_ins(&r, sstring("test3"), 2);
+    rmap_ins(&r, sstring("test4"), 2);
+    rmap_ins(&r, sstring("test5"), 2);
+    rmap_ins(&r, sstring("test6"), 2);
+    rmap_ins(&r, sstring("test7"), 2);
+    rmap_ins(&r, sstring("test8"), 2);
+    rmap_ins(&r, sstring("test9"), 2);
+    rmap_ins(&r, sstring("test10"), 2);
+    rmap_ins(&r, sstring("static/something"), 3);
+
+    assert(*rmap_get(&r, sstring("test")) == 2);
+    assert(*rmap_get(&r, sstring("test1")) == 2);
+    assert(*rmap_get(&r, sstring("static/something")) == 3);
+
+    rmap_del(&r, sstring("test5"));
+    assert(!rmap_get(&r, sstring("test5")));
+
+    rmap_free(&r);
+
 
     simapFree(&m);
     imapFree(&map);

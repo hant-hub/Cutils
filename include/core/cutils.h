@@ -92,6 +92,28 @@ typedef struct Allocator {
 
 extern const Allocator GlobalAllocator;
 
+typedef struct MemBlock {
+    u64 size;
+    struct MemBlock* next; 
+    u8 data[];
+} MemBlock;
+
+typedef struct BlockAllocator {
+    Allocator a;
+    MemBlock* head;
+    u64 cap;
+
+    MemBlock data[];
+}* BlockAllocator;
+
+BlockAllocator BlockCreate(Allocator a, u64 size);
+
+void* BlockAlloc(BlockAllocator a, u64 size);
+void BlockFree(BlockAllocator a, void* p);
+void* BlockAllocZero(BlockAllocator a, u64 size);
+
+void BlockDestroy(BlockAllocator a);
+
 typedef struct ArenaAllocator {
     Allocator a;
     u64 cap;
@@ -144,8 +166,8 @@ void StackReset(StackAllocator s);
 typedef struct DynArena {
     Allocator a;
 
-    struct MemBlock {
-        struct MemBlock* prev;
+    struct ArenaBlock {
+        struct ArenaBlock* prev;
         u64 cap;
         u64 size;
         u8 data[];
@@ -266,6 +288,28 @@ typedef union Mutex {
 
 void MutexLock(Mutex* mutex);
 void MutexUnlock(Mutex* mutex);
+
+typedef struct Semaphore {
+    i32 data[2];
+} Semaphore;
+
+void SemSet(Semaphore* sem, i32 size);
+void SemDown(Semaphore* sem);
+void SemUp(Semaphore* sem);
+void SemAdd(Semaphore* sem, u32 num);
+
+typedef union RWLock {
+    struct {
+        Mutex m;
+        Semaphore s[2];
+        u32 data[4];
+    };
+} RWLock;
+
+void RWLockWrite(RWLock* mutex);
+void RWLockRead(RWLock* mutex);
+void RWUnlockWrite(RWLock* mutex);
+void RWUnlockRead(RWLock* mutex);
 
 /*
     FILE Handling

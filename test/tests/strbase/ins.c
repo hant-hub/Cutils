@@ -18,6 +18,13 @@ int main() {
 
     assert(s != STRBASE_INAVLID_STR);
     assert(s == s1);
+    assert(s != s2);
+    assert(s != s3);
+    assert(s != s4);
+    assert(s != s5);
+    assert(s != s6);
+    assert(s != s7);
+    assert(s != s8);
 
     printlog("Internal Table State:\n");
     for (u32 i = 0; i < data->hashcap; i++) {

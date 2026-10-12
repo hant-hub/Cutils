@@ -21,27 +21,26 @@
 // required for stuff like printlog
 #include <pthread.h>
 
-
 /*
     Mutex
 */
 
 #include <limits.h>
+#include <linux/futex.h>
 #include <stdatomic.h>
 #include <sys/errno.h>
 #include <sys/syscall.h>
-#include <linux/futex.h>
 
-
-//simple mutex based around Lambport's Bakery Algorithm
-//Atomics are used for checking whether to enter the mutex
-//and futex is used to sleep on wait
+// simple mutex based around Lambport's Bakery Algorithm
+// Atomics are used for checking whether to enter the mutex
+// and futex is used to sleep on wait
 
 typedef struct _Mutex_lock {
     atomic_int lock;
 } _Mutex_lock;
 
-static inline int futex(u32* uaddr, int op, u32 val, const time_spec* timeout, u32* uaddr2, u32 val2) {
+static inline int futex(u32* uaddr, int op, u32 val, const time_spec* timeout,
+                        u32* uaddr2, u32 val2) {
     return syscall(SYS_futex, uaddr, op, val, timeout, uaddr2, val2);
 }
 
@@ -53,22 +52,117 @@ void MutexLock(Mutex* mutex) {
 
     while (1) {
         int expected = 0;
-        bool8 success = atomic_compare_exchange_strong_explicit(&m->lock, &expected, 1, memory_order_acquire, memory_order_relaxed);
+        bool8 success = atomic_compare_exchange_strong_explicit( &m->lock, &expected, 1, memory_order_acquire, memory_order_relaxed);
         if (success) {
             return;
         }
 
-        if (expected != 2) success = atomic_compare_exchange_strong_explicit(&m->lock, &expected, 2, memory_order_acquire, memory_order_relaxed);
-        if (success) futex((u32*)&m->lock, FUTEX_WAIT_PRIVATE, 2, NULL, NULL, 0);
+        if (expected != 2)
+            success = atomic_compare_exchange_strong_explicit( &m->lock, &expected, 2, memory_order_acquire, memory_order_relaxed);
+        if (success)
+            futex((u32*)&m->lock, FUTEX_WAIT_PRIVATE, 2, NULL, NULL, 0);
     }
 }
 
 void MutexUnlock(Mutex* mutex) {
     _Mutex_lock* m = (_Mutex_lock*)mutex;
-    //only wake if contention
+    // only wake if contention
 
     int c = atomic_exchange_explicit(&m->lock, 0, memory_order_release);
-    if (c == 2) futex((u32*)&m->lock, FUTEX_WAKE_PRIVATE, 1, NULL, NULL, 0);
+    if (c == 2)
+        futex((u32*)&m->lock, FUTEX_WAKE_PRIVATE, 1, NULL, NULL, 0);
+}
+
+typedef struct _Semaphore {
+    atomic_int v;
+    atomic_int waiting;
+} _Semaphore;
+
+void SemSet(Semaphore* sem, i32 size) {
+    _Semaphore* s = (_Semaphore*)sem;
+    atomic_store(&s->v, size);
+    printlog("Sem: %d\n", atomic_load(&s->v));
+}
+
+void SemDown(Semaphore* sem) {
+    _Semaphore* s = (_Semaphore*)sem;
+
+    while (1) {
+        while (atomic_load(&s->v) < 1) {
+            atomic_fetch_add(&s->waiting, 1);
+            futex((u32*)&s->v, FUTEX_WAIT_PRIVATE, 0, NULL, NULL, 0);
+            atomic_fetch_add(&s->waiting, -1);
+        }
+
+        if (atomic_fetch_add(&s->v, -1) >= 1) {
+            return;
+        }
+        atomic_fetch_add(&s->v, 1);
+    }
+}
+
+void SemUp(Semaphore* sem) {
+    _Semaphore* s = (_Semaphore*)sem;
+    atomic_fetch_add(&s->v, 1);
+    if (atomic_load(&s->waiting)) {
+        futex((u32*)&s->v, FUTEX_WAKE_PRIVATE, 1, NULL, NULL, 0);
+    }
+}
+
+void SemAdd(Semaphore* sem, u32 num) {
+    _Semaphore* s = (_Semaphore*)sem;
+    atomic_fetch_add(&s->v, num);
+    if (atomic_load(&s->waiting)) {
+        futex((u32*)&s->v, FUTEX_WAKE_PRIVATE, num, NULL, NULL, 0);
+    }
+}
+
+typedef struct _RWLock {
+    Mutex m;
+
+    Semaphore write;
+    Semaphore read;
+
+    atomic_int num_pending;
+    atomic_int num_departing; //works for nproc < 127
+} _RWLock;
+
+const u32 max_readers = 1 << 30;
+
+void RWLockWrite(RWLock* mutex) {
+    _RWLock* m = (_RWLock*)mutex;
+    MutexLock(&m->m);
+
+    i32 r = atomic_fetch_add(&m->num_pending, -max_readers);
+    if (r && (atomic_fetch_add(&m->num_departing, r) + r)) {
+        SemDown(&m->write);
+    }
+
+}
+
+void RWLockRead(RWLock* mutex) {
+    _RWLock* m = (_RWLock*)mutex;
+    if (atomic_fetch_add(&m->num_pending, 1) + 1 < 0) {
+        SemDown(&m->read);
+    }
+}
+
+void RWUnlockWrite(RWLock* mutex) {
+    _RWLock* m = (_RWLock*)mutex;
+    
+    i32 r = atomic_fetch_add(&m->num_pending, max_readers) + max_readers;
+    SemAdd(&m->read, r);
+
+    MutexUnlock(&m->m);
+}
+
+void RWUnlockRead(RWLock* mutex) {
+    _RWLock* m = (_RWLock*)mutex;
+    if (atomic_fetch_add(&m->num_pending, -1) - 1 < 0) {
+        if (atomic_fetch_add(&m->num_departing, -1) == 1) {
+            SemUp(&m->write);
+        }
+    }
 }
 
 
@@ -86,7 +180,6 @@ f64 FlipEndianD(f64 f) { return bswap_64(f); }
 /*
     Memory Allocators
 */
-
 static alloc_func_def(globalAllocator) {
 
     if (!new) {
@@ -106,6 +199,121 @@ static alloc_func_def(globalAllocator) {
 const Allocator GlobalAllocator = {
     .a = globalAllocator,
 };
+
+typedef enum Block_status { BLOCK_FREE, BLOCK_USED } Block_status;
+
+// block allocator
+BlockAllocator BlockCreate(Allocator a, u64 size) {
+    u64 newsize = (size / sizeof(MemBlock)) + 1;
+    BlockAllocator b =
+        Alloc(a, sizeof(BlockAllocator) + sizeof(MemBlock) * newsize);
+    b->a = a;
+    b->cap = newsize;
+    b->head = &b->data[0];
+    b->data[0].next = NULL;
+    b->data[0].size = newsize * sizeof(MemBlock) - sizeof(u64);
+    return b;
+}
+
+void* BlockAlloc(BlockAllocator a, u64 size) {
+    size += sizeof(MemBlock) - (size % sizeof(MemBlock));
+
+    // first fit
+    MemBlock* prev = NULL;
+    MemBlock* curr = a->head;
+    while (curr && curr->size < size) {
+        prev = curr;
+        curr = curr->next;
+    }
+
+    // no space
+    if (!curr)
+        return NULL;
+
+    u32 rem_size = curr->size - size;
+    if (rem_size < sizeof(MemBlock)) {
+        // block size is 'close enough'
+        if (prev) {
+            prev->next = curr->next;
+        } else {
+            a->head = curr->next;
+        }
+
+        return &curr->next;
+    }
+
+    // split block
+    u32 mov = sizeof(u64) + size;
+    MemBlock* new_block = (MemBlock*)(((u8*)curr) + mov);
+
+    new_block->size = (rem_size - sizeof(u64));
+    new_block->next = curr->next;
+
+    if (prev) {
+        prev->next = new_block;
+    } else {
+        a->head = new_block;
+    }
+
+    curr->size = size;
+    return &curr->next;
+}
+
+void* BlockAllocZero(BlockAllocator a, u64 size) {
+    void* p = BlockAlloc(a, size);
+    memset(p, 0, size);
+    return p;
+}
+
+void BlockFree(BlockAllocator a, void* p) {
+    MemBlock* block = (MemBlock*)(p - offsetof(MemBlock, next));
+
+    // do coalescence
+    MemBlock* before = a->head;
+    while (before->next && before->next <= block) { before = before->next; }
+
+    MemBlock* after = NULL;
+    if (before->next > block) {
+        after = before->next;
+    }
+
+    if (before > block) {
+        after = before;
+        before = NULL;
+    }
+
+    // check if before is contiguous
+    u8* b = (u8*)before;
+    if (before && ((u8*)block) == b + before->size + sizeof(u64)) {
+        // combine
+        before->size += block->size + sizeof(u64);
+        block = before;
+    } else if (before) {
+        block->next = before->next;
+        before->next = block;
+    }
+
+    // check if after is contiguous
+    b = (u8*)block;
+    if ((u8*)after == (b + block->size + sizeof(u64))) {
+        // combine
+        block->next = after->next;
+        block->size += after->size + sizeof(u64);
+
+    } else {
+        block->next = after;
+    }
+
+    if (after == a->head) {
+        a->head = block;
+    }
+
+    return;
+}
+
+void BlockDestroy(BlockAllocator a) {
+    Free(a->a, a, sizeof(BlockAllocator) + sizeof(MemBlock) * a->cap);
+}
 
 // Stack Allocator
 StackAllocator StackCreate(Allocator a, u64 size) {
@@ -218,9 +426,7 @@ void ArenaSetPos(ArenaAllocator a, u64 pos) {
     ArenaPop(a, diff);
 }
 
-void ArenaClear(ArenaAllocator a) {
-    a->size = 0;
-}
+void ArenaClear(ArenaAllocator a) { a->size = 0; }
 
 void ArenaDestroy(ArenaAllocator s) {
     Free(s->a, s, s->cap + sizeof(struct ArenaAllocator));
@@ -232,33 +438,30 @@ ScratchArena ScratchArenaBegin(ArenaAllocator a) {
 
 void ScratchArenaEnd(ScratchArena s) { ArenaSetPos(s.arena, s.base); }
 
-
-static struct MemBlock* MemBlockAlloc(Allocator a, u64 size) {
-    struct MemBlock* new_block = Alloc(a, sizeof(struct MemBlock) + size);
-    if (!new_block) return NULL;
-    *new_block = (struct MemBlock){0};
+static struct ArenaBlock* MemBlockAlloc(Allocator a, u64 size) {
+    struct ArenaBlock* new_block = Alloc(a, sizeof(struct ArenaBlock) + size);
+    if (!new_block)
+        return NULL;
+    *new_block = (struct ArenaBlock){0};
     return new_block;
 }
 
 DynArena DynArenaCreate(Allocator a, u64 min_size) {
-    DynArena d = {
-        .a = a,
-        .head = MemBlockAlloc(a, min_size)
-    };
+    DynArena d = {.a = a, .head = MemBlockAlloc(a, min_size)};
 
-    assert(d.head); //no reason to fail to create an arena
+    assert(d.head); // no reason to fail to create an arena
     return d;
 }
 void* DynArenaAlloc(DynArena* d, u64 size) {
-    struct MemBlock* m = d->head;  
+    struct ArenaBlock* m = d->head;
     if (!m || m->size + size >= m->cap) {
-        //prepend new block
+        // prepend new block
         u64 nextsize = size * 2;
         while (size >= nextsize) nextsize <<= 1;
-        
-        struct MemBlock* new_block = MemBlockAlloc(d->a, nextsize);
+
+        struct ArenaBlock* new_block = MemBlockAlloc(d->a, nextsize);
         if (!new_block) {
-            return NULL; //out of memory error
+            return NULL; // out of memory error
         }
 
         d->head = new_block;
@@ -279,15 +482,14 @@ void* DynArenaAllocZero(DynArena* d, u64 size) {
     return res;
 }
 void DynArenaDestroy(DynArena d) {
-    struct MemBlock* curr = d.head;
+    struct ArenaBlock* curr = d.head;
     while (curr) {
-        struct MemBlock* p = curr;
+        struct ArenaBlock* p = curr;
         curr = curr->prev;
-        Free(d.a, p, sizeof(struct MemBlock) + p->cap);
+        Free(d.a, p, sizeof(struct ArenaBlock) + p->cap);
     }
     d.head = NULL;
 }
-
 
 // Should never live longer than a single
 // function call.
@@ -973,17 +1175,17 @@ static ptrdiff_t format_arg(formatInfo info, va_list* args,
         u32 digits = 0;
         u64 hexpower = 1;
         u8 leading_bits = __builtin_clzll(num);
-        
-        digits = ((16 - leading_bits/4));
+
+        digits = ((16 - leading_bits / 4));
         hexpower <<= (digits - 1) * 4;
 
-        //for (u32 i = 0; i < ARRAY_SIZE(power10plus); i++) {
-        //    if ((num / hexpower) == 0UL)
-        //        break;
-        //    digits++;
-        //    hexpower <<= 4; // multiply by 16
-        //}
-        //hexpower >>= 4;
+        // for (u32 i = 0; i < ARRAY_SIZE(power10plus); i++) {
+        //     if ((num / hexpower) == 0UL)
+        //         break;
+        //     digits++;
+        //     hexpower <<= 4; // multiply by 16
+        // }
+        // hexpower >>= 4;
 
         // print digits
         for (i32 i = digits - 1; i >= 0; i--) {
@@ -1092,7 +1294,8 @@ file* errfile = &stdout_file;
 void flush_log(void) { fileflush(logfile); }
 
 u32 printlog(const char* format, ...) {
-    if (logfile->thread_safe) MutexLock(&logfile->m);
+    if (logfile->thread_safe)
+        MutexLock(&logfile->m);
 
     static bool8 schedule_flush = FALSE;
     if (!schedule_flush) {
@@ -1114,12 +1317,14 @@ u32 printlog(const char* format, ...) {
     vformat(finfo, &args, format);
     va_end(args);
 
-    if (logfile->thread_safe) MutexUnlock(&logfile->m);
+    if (logfile->thread_safe)
+        MutexUnlock(&logfile->m);
     return info.idx;
 }
 
 u32 printwarn(const char* format, ...) {
-    if (warnfile->thread_safe) MutexLock(&warnfile->m);
+    if (warnfile->thread_safe)
+        MutexLock(&warnfile->m);
 
     fileInfo info = {
         .dst = warnfile,
@@ -1135,12 +1340,14 @@ u32 printwarn(const char* format, ...) {
     vformat(finfo, &args, format);
     va_end(args);
 
-    if (warnfile->thread_safe) MutexUnlock(&warnfile->m);
+    if (warnfile->thread_safe)
+        MutexUnlock(&warnfile->m);
     return info.idx;
 }
 
 u32 printerr(const char* format, ...) {
-    if (errfile->thread_safe) MutexLock(&errfile->m);
+    if (errfile->thread_safe)
+        MutexLock(&errfile->m);
 
     fileInfo info = {
         .dst = errfile,
@@ -1156,7 +1363,8 @@ u32 printerr(const char* format, ...) {
     vformat(finfo, &args, format);
     va_end(args);
 
-    if (errfile->thread_safe) MutexUnlock(&errfile->m);
+    if (errfile->thread_safe)
+        MutexUnlock(&errfile->m);
     return info.idx;
 }
 
@@ -1304,7 +1512,6 @@ v2i v2iMul(v2i a, v2i b) { return (v2i){a.x * b.x, a.y * b.y}; }
 v2f v2fMul(v2f a, v2f b) { return (v2f){a.x * b.x, a.y * b.y}; }
 v2d v2dMul(v2d a, v2d b) { return (v2d){a.x * b.x, a.y * b.y}; }
 
-
 u64 FNVHash64(u8* data, u64 size) {
     u64 hash = 0xcbf29ce484222325ULL;
     for (u64 i = 0; i < size; i++) {
@@ -1355,109 +1562,141 @@ u32 OATHash32(u8* data, u32 size) {
     return h;
 }
 
-#define mix(a,b,c) \
- { \
-   a -= b; a -= c; a ^= ( c >> 13 ); \
-   b -= c; b -= a; b ^= ( a << 8 ); \
-   c -= a; c -= b; c ^= ( b >> 13 ); \
-   a -= b; a -= c; a ^= ( c >> 12 ); \
-   b -= c; b -= a; b ^= ( a << 16 ); \
-   c -= a; c -= b; c ^= ( b >> 5 ); \
-   a -= b; a -= c; a ^= ( c >> 3 ); \
-   b -= c; b -= a; b ^= ( a << 10 ); \
-   c -= a; c -= b; c ^= ( b >> 15 ); \
- }
+#define mix(a, b, c)                                                           \
+    {                                                                          \
+        a -= b;                                                                \
+        a -= c;                                                                \
+        a ^= (c >> 13);                                                        \
+        b -= c;                                                                \
+        b -= a;                                                                \
+        b ^= (a << 8);                                                         \
+        c -= a;                                                                \
+        c -= b;                                                                \
+        c ^= (b >> 13);                                                        \
+        a -= b;                                                                \
+        a -= c;                                                                \
+        a ^= (c >> 12);                                                        \
+        b -= c;                                                                \
+        b -= a;                                                                \
+        b ^= (a << 16);                                                        \
+        c -= a;                                                                \
+        c -= b;                                                                \
+        c ^= (b >> 5);                                                         \
+        a -= b;                                                                \
+        a -= c;                                                                \
+        a ^= (c >> 3);                                                         \
+        b -= c;                                                                \
+        b -= a;                                                                \
+        b ^= (a << 10);                                                        \
+        c -= a;                                                                \
+        c -= b;                                                                \
+        c ^= (b >> 15);                                                        \
+    }
 
-u32 JENHash32(u8 *data, u32 length) {
-   unsigned a, b;
-   u8* k = data;
-   unsigned c = 0;
-   unsigned len = length;
+u32 JENHash32(u8* data, u32 length) {
+    unsigned a, b;
+    u8* k = data;
+    unsigned c = 0;
+    unsigned len = length;
 
-   a = b = 0x9e3779b9;
+    a = b = 0x9e3779b9;
 
-   while ( len >= 12 ) {
-      a += ( k[0] + ( (unsigned)k[1] << 8 ) 
-        + ( (unsigned)k[2] << 16 )
-        + ( (unsigned)k[3] << 24 ) );
-      b += ( k[4] + ( (unsigned)k[5] << 8 ) 
-        + ( (unsigned)k[6] << 16 )
-        + ( (unsigned)k[7] << 24 ) );
-      c += ( k[8] + ( (unsigned)k[9] << 8 ) 
-        + ( (unsigned)k[10] << 16 )
-        + ( (unsigned)k[11] << 24 ) );
+    while (len >= 12) {
+        a += (k[0] + ((unsigned)k[1] << 8) + ((unsigned)k[2] << 16) +
+              ((unsigned)k[3] << 24));
+        b += (k[4] + ((unsigned)k[5] << 8) + ((unsigned)k[6] << 16) +
+              ((unsigned)k[7] << 24));
+        c += (k[8] + ((unsigned)k[9] << 8) + ((unsigned)k[10] << 16) +
+              ((unsigned)k[11] << 24));
 
-      mix ( a, b, c );
+        mix(a, b, c);
 
-      k += 12;
-      len -= 12;
-   }
+        k += 12;
+        len -= 12;
+    }
 
-   c += length;
+    c += length;
 
-   switch ( len ) {
-   case 11: c += ( (unsigned)k[10] << 24 );
-   case 10: c += ( (unsigned)k[9] << 16 );
-   case 9 : c += ( (unsigned)k[8] << 8 );
-   /* First byte of c reserved for length */
-   case 8 : b += ( (unsigned)k[7] << 24 );
-   case 7 : b += ( (unsigned)k[6] << 16 );
-   case 6 : b += ( (unsigned)k[5] << 8 );
-   case 5 : b += k[4];
-   case 4 : a += ( (unsigned)k[3] << 24 );
-   case 3 : a += ( (unsigned)k[2] << 16 );
-   case 2 : a += ( (unsigned)k[1] << 8 );
-   case 1 : a += k[0];
-   }
+    switch (len) {
+    case 11:
+        c += ((unsigned)k[10] << 24);
+    case 10:
+        c += ((unsigned)k[9] << 16);
+    case 9:
+        c += ((unsigned)k[8] << 8);
+    /* First byte of c reserved for length */
+    case 8:
+        b += ((unsigned)k[7] << 24);
+    case 7:
+        b += ((unsigned)k[6] << 16);
+    case 6:
+        b += ((unsigned)k[5] << 8);
+    case 5:
+        b += k[4];
+    case 4:
+        a += ((unsigned)k[3] << 24);
+    case 3:
+        a += ((unsigned)k[2] << 16);
+    case 2:
+        a += ((unsigned)k[1] << 8);
+    case 1:
+        a += k[0];
+    }
 
-   mix ( a, b, c );
+    mix(a, b, c);
 
-   return c;
+    return c;
 }
 
-u64 JENHash64(u8 *data, u64 length) {
-   u64 a, b;
-   u8* k = data;
-   u64 c = 0;
-   unsigned len = length;
+u64 JENHash64(u8* data, u64 length) {
+    u64 a, b;
+    u8* k = data;
+    u64 c = 0;
+    unsigned len = length;
 
-   a = b = 0x9e3779b9;
+    a = b = 0x9e3779b9;
 
-   while ( len >= 12 ) {
-      a += ( k[0] + ( (u64)k[1] << 8 ) 
-        + ( (u64)k[2] << 16 )
-        + ( (u64)k[3] << 24 ) );
-      b += ( k[4] + ( (u64)k[5] << 8 ) 
-        + ( (u64)k[6] << 16 )
-        + ( (u64)k[7] << 24 ) );
-      c += ( k[8] + ( (u64)k[9] << 8 ) 
-        + ( (u64)k[10] << 16 )
-        + ( (u64)k[11] << 24 ) );
+    while (len >= 12) {
+        a += (k[0] + ((u64)k[1] << 8) + ((u64)k[2] << 16) + ((u64)k[3] << 24));
+        b += (k[4] + ((u64)k[5] << 8) + ((u64)k[6] << 16) + ((u64)k[7] << 24));
+        c +=
+            (k[8] + ((u64)k[9] << 8) + ((u64)k[10] << 16) + ((u64)k[11] << 24));
 
-      mix ( a, b, c );
+        mix(a, b, c);
 
-      k += 12;
-      len -= 12;
-   }
+        k += 12;
+        len -= 12;
+    }
 
-   c += length;
+    c += length;
 
-   switch ( len ) {
-   case 11: c += ( (u64)k[10] << 24 );
-   case 10: c += ( (u64)k[9] << 16 );
-   case 9 : c += ( (u64)k[8] << 8 );
-   /* First byte of c reserved for length */
-   case 8 : b += ( (u64)k[7] << 24 );
-   case 7 : b += ( (u64)k[6] << 16 );
-   case 6 : b += ( (u64)k[5] << 8 );
-   case 5 : b += k[4];
-   case 4 : a += ( (u64)k[3] << 24 );
-   case 3 : a += ( (u64)k[2] << 16 );
-   case 2 : a += ( (u64)k[1] << 8 );
-   case 1 : a += k[0];
-   }
+    switch (len) {
+    case 11:
+        c += ((u64)k[10] << 24);
+    case 10:
+        c += ((u64)k[9] << 16);
+    case 9:
+        c += ((u64)k[8] << 8);
+    /* First byte of c reserved for length */
+    case 8:
+        b += ((u64)k[7] << 24);
+    case 7:
+        b += ((u64)k[6] << 16);
+    case 6:
+        b += ((u64)k[5] << 8);
+    case 5:
+        b += k[4];
+    case 4:
+        a += ((u64)k[3] << 24);
+    case 3:
+        a += ((u64)k[2] << 16);
+    case 2:
+        a += ((u64)k[1] << 8);
+    case 1:
+        a += k[0];
+    }
 
-   mix ( a, b, c );
+    mix(a, b, c);
 
-   return c;
+    return c;
 }
