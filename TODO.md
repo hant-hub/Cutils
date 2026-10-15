@@ -86,17 +86,10 @@
 
 ### SimpleDS
 - [X] Hashmap struct equality
-- [ ] fix String Map
+- [X] fix String Map
     - [X] string storage
-    - [ ] rewrite
-    - [ ] test swiss/swar map
-- [ ] Rewrite To Void*
-    - [ ] rework api
-        - [ ] stb style
-        - [ ] struct with v pointer
-        - [ ] macros for get and void*
-    - [ ] dyn Array
-- [ ] Swiss table?
+    - [X] rewrite
+    - [X] test swiss/swar map
 - [ ] Queue
     - [X] Fixed Size (small)
     - [X] Dynamic Queue
