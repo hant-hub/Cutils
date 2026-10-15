@@ -163,7 +163,32 @@ StrID StrBaseAdd(StrBase* base, SString s) {
 }
 
 // Returns Zero on miss (this should never happen)
-SString StrBaseGet(StrBase* base, StrID s) { return (SString){0}; }
+StrID StrBaseGet(StrBase* base, SString s) {
+    u32 idx = FNVHash32((u8*)s.data, s.len) % base->hashcap;
+    u32 counter = 0;
+
+    for (u32 i = 0; i < base->hashcap; i++) {
+        if (base->meta[idx] == STRBASE_INAVLID_STR) {
+            // empty
+            return STRBASE_INAVLID_STR;
+        }
+
+        if (base->meta[idx] < counter) {
+            // steal
+            return STRBASE_INAVLID_STR;
+        }
+
+        if (Sstrcmp(s, base->strs.data[base->stridx[idx]])) {
+            // duplicate
+            return base->stridx[idx];
+        }
+
+        idx = (idx + 1) % base->hashcap;
+        counter++;
+    }
+
+    panic();
+}
 
 void StrBaseFree(StrBase* base) {
     dynFree(base->strs);

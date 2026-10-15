@@ -40,7 +40,7 @@ typedef struct StrBase {
 #define GetStr(base, id) ((base)->strs.data[id])
 
 StrID StrBaseAdd(StrBase* base, SString s);
-SString StrBaseGet(StrBase* base, StrID s);
+StrID StrBaseGet(StrBase* base, SString s);
 void StrBaseFree(StrBase* base);
 
 #endif
