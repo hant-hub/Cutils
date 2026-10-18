@@ -81,7 +81,7 @@ typedef struct _Semaphore {
 void SemSet(Semaphore* sem, i32 size) {
     _Semaphore* s = (_Semaphore*)sem;
     atomic_store(&s->v, size);
-    printlog("Sem: %d\n", atomic_load(&s->v));
+    //printlog("Sem: %d\n", atomic_load(&s->v));
 }
 
 void SemDown(Semaphore* sem) {
@@ -686,7 +686,6 @@ static u64 flushdata(u64 handle, SString src) {
 }
 
 void fileclose(file file) {
-    printf("buf: %d, acc: %d\n", file.buffered, file.accum);
     if (file.buffered && file.accum) {
         flushdata(file.handle, (SString){.len = file.accum, .data = file.buf});
     }
