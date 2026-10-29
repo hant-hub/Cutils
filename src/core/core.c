@@ -597,7 +597,7 @@ bool8 mkdirRec(const SString dirname) {
 
     char* buf = ArenaAllocZero(sc.arena, dirname.len + 1);
     memcpy(buf, dirname.data, dirname.len);
-    printlog("mkdir: %n\n", buf);
+    //printlog("mkdir: %n\n", buf);
 
     int res = mkdir(buf, 0777);
     //if (res) {

@@ -101,7 +101,7 @@ int main() {
 
     //mkdir rec
 
-    bool8 res = mkdirRec(sstring("/tmp/mkdir/rec/test"));
+    bool8 res = mkdirRec(sstring("/tmp"));
     assert(!res);
 
 }
