@@ -585,8 +585,11 @@ bool8 mkdirRec(const SString dirname) {
     SString popped = filepathpopdir(dirname);
     if (popped.len != 0) {
 
-        bool8 failure = mkdirRec(popped);
-        if (failure) return failure;
+        file f = filestat(popped);
+        if (!f.stats.size) {
+            bool8 failure = mkdirRec(popped);
+            if (failure) return failure;
+        }
     }
 
     ScratchArena sc = ScratchArenaGet(NULL);
