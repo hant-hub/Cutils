@@ -582,14 +582,15 @@ char* SStringGetCstr(SString s, ArenaAllocator a) {
 //This is currently a recursive function, so don't
 //call it in a hot loop.
 bool8 mkdirRec(const SString dirname) {
+    file f = filestat(dirname);
+    if (f.stats.size) {
+        return 0;
+    }
+
     SString popped = filepathpopdir(dirname);
     if (popped.len != 0) {
-
-        file f = filestat(popped);
-        if (!f.stats.size) {
-            bool8 failure = mkdirRec(popped);
-            if (failure) return failure;
-        }
+        bool8 failure = mkdirRec(popped);
+        if (failure) return failure;
     }
 
     ScratchArena sc = ScratchArenaGet(NULL);
