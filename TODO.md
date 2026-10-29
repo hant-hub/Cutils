@@ -13,6 +13,11 @@
     - [X] locks
     - [X] locks on files
     - [X] enable/disable locks
+- [X] File handling
+    - [X] file local name
+- [X] recursive mkdir
+
+    
 
 ### Sbuild
 - [X] Graph Data Structure

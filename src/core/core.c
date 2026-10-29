@@ -575,6 +575,36 @@ char* SStringGetCstr(SString s, ArenaAllocator a) {
     Platform Dependent
 */
 
+
+//Recursive mkdir, don't try to create infinite dir
+//chain, that is stupid.
+//
+//This is currently a recursive function, so don't
+//call it in a hot loop.
+bool8 mkdirRec(const SString dirname) {
+    SString popped = filepathpopdir(dirname);
+    if (popped.len != 0) {
+
+        bool8 failure = mkdirRec(popped);
+        if (failure) return failure;
+    }
+
+    ScratchArena sc = ScratchArenaGet(NULL);
+
+    char* buf = ArenaAllocZero(sc.arena, dirname.len + 1);
+    memcpy(buf, dirname.data, dirname.len);
+    printlog("mkdir: %n\n", buf);
+
+    int res = mkdir(buf, 0777);
+    //if (res) {
+    //    printlog("Error: %n\n", strerror(errno));
+    //}
+
+    ScratchArenaEnd(sc);
+
+    return res;
+}
+
 file fileopen(const SString filename, file_permissions p) {
 
     int oflags = O_RDONLY;
@@ -799,7 +829,23 @@ SString filepathpopdir(SString filepath) {
         out.len--;
 
     if (out.len <= 0)
+        return (SString){0};
+
+    return out;
+}
+
+
+SString filepathstripdir(SString filepath) {
+    SString out = filepath;
+
+    while (out.len && out.data[out.len - 1] != '/') { out.len--; }
+
+    if (!out.len)
         return filepath;
+
+    out.len++;
+    out.data = &filepath.data[out.len - 1];
+    out.len = filepath.len - (out.len - 1);
 
     return out;
 }

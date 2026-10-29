@@ -347,6 +347,8 @@ typedef struct file {
     Mutex m;
 } file;
 
+bool8 mkdirRec(const SString dirname);
+
 file fileopen(const SString filename, file_permissions p);
 void fileclose(file file);
 
@@ -366,6 +368,9 @@ void setdirExe();
 
 SString filepathpopdir(SString filepath);
 SString filepathbasename(SString filepath);
+
+SString filepathstripdir(SString filepath);
+
 SString filepathext(SString filepath);
 u32 filepathdepth(SString filepath);
 

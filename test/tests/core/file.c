@@ -3,6 +3,7 @@
 #include <stdio.h>
 
 int main() {
+    logfile->buffered = FALSE;
     setdirExe();
     // file stat
     file meta = filestat(sstring("."));
@@ -54,9 +55,10 @@ int main() {
     SString pop = sstring("a/b");
 
     assert(Sstrcmp(filepathpopdir(filepath), pop));
-    assert(Sstrcmp(filepathpopdir(sstring("a")), sstring("a")));
+    assert(Sstrcmp(filepathpopdir(sstring("a")), sstring("")));
 
     assert(Sstrcmp(filepathbasename(filepath), sstring("a/b/c")));
+    assert(Sstrcmp(filepathstripdir(filepath), sstring("c.lol")));
 
     assert(Sstrcmp(filepathext(filepath), sstring(".lol")));
     assert(Sstrcmp(filepathext(sstring("somefile")), sstring("")));
@@ -95,4 +97,11 @@ int main() {
     debuglog("Recursive Directory Search: .");
     DirNextRec(&dt);
     while ((s = DirNextRec(&dt), dt != T_END)) { debuglog("Directory: %s", s); }
+
+
+    //mkdir rec
+
+    bool8 res = mkdirRec(sstring("mkdir/rec/test"));
+    assert(!res);
+
 }
