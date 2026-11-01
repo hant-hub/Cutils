@@ -238,6 +238,12 @@ SString Sstrtok(SString str, const char delim);
 #define isSpace(c) (c == ' ' || (c >= '\t' && c <= '\r'))
 
 /*
+    String Parsing
+*/
+
+u32 Strtofloat(SString str, float* out);
+
+/*
     TIME Helpers
 */
 
@@ -436,6 +442,7 @@ Format Table:
     %c -> char (print int as char)
 */
 u32 fformat(file* dst, const char* format, ...);
+
 
 /*
     Custom Logging
