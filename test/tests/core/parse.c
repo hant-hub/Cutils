@@ -42,5 +42,31 @@ int main() {
     assert(d == 2);
     assert(f == .5);
 
+    u32 i;
+    d = StrtoU32(sstring("0"), &i);
+    assert(d == 1);
+    assert(i == 0);
+
+    d = StrtoU32(sstring("1"), &i);
+    assert(d == 1);
+    assert(i == 1);
+
+    d = StrtoU32(sstring("10"), &i);
+    assert(d == 2);
+    assert(i == 10);
+
+    d = StrtoU32(sstring("100"), &i);
+    assert(d == 3);
+    assert(i == 100);
+
+    d = StrtoU32(sstring("240"), &i);
+    assert(d == 3);
+    assert(i == 240);
+
+    d = StrtoU32(sstring("240L"), &i);
+    assert(d == 3);
+    assert(i == 240);
+
     printlog("Success!\n");
+
 }

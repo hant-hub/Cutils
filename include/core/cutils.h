@@ -242,6 +242,7 @@ SString Sstrtok(SString str, const char delim);
 */
 
 u32 Strtofloat(SString str, float* out);
+u32 StrtoU32(SString str, u32* out);
 
 /*
     TIME Helpers

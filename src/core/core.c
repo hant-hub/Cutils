@@ -572,7 +572,6 @@ char* SStringGetCstr(SString s, ArenaAllocator a) {
 
 u32 Strtofloat(SString str, float* out) {
     u32 curr = 0; 
-
     u32 whole = 0;
 
     //integer part
@@ -600,6 +599,21 @@ u32 Strtofloat(SString str, float* out) {
     }
 
     *out += frac;
+    return curr;
+}
+
+u32 StrtoU32(SString str, u32* out) {
+    u32 curr = 0; 
+    u32 whole = 0;
+
+    //integer part
+    while (curr < str.len && isNum(str.data[curr])) {
+        whole *= 10;
+        whole += str.data[curr] - '0';
+        curr++;
+    }
+
+    *out = whole;
     return curr;
 }
 
