@@ -1,6 +1,8 @@
 #include <cgen/cgen.h>
 #include <core/cutils.h>
 
+#include "../src/cgen/cgen.c"
+
 int main() {
 
     ScratchArena sc = ScratchArenaGet(NULL);

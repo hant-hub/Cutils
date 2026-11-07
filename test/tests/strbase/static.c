@@ -23,4 +23,5 @@ int main() {
     i = StrBaseGet(data, sstring("invalid"));
     assert(i == -1);
 
+    StrBaseFree(data);
 }
