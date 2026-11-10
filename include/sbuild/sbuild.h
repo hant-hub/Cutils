@@ -374,17 +374,17 @@ static void GatherTasks(ArenaAllocator a, Task* t, TaskQueue* queue) {
         if (t->pre.size == 0) {
             TaskQueuePush(queue, t);
         }
+        // populate dependents
+        for (u32 i = 0; i < t->pre.size; i++) {
+            Task* dep = t->pre.data[i];
+            GatherTasks(
+                    a, dep,
+                    queue); // important Gather Tasks initializes and clears data
+                            // So it must run before we start writing to dep's post
+            dynPush(dep->post, t);
+        }
     }
 
-    // populate dependents
-    for (u32 i = 0; i < t->pre.size; i++) {
-        Task* dep = t->pre.data[i];
-        GatherTasks(
-            a, dep,
-            queue); // important Gather Tasks initializes and clears data
-                    // So it must run before we start writing to dep's post
-        dynPush(dep->post, t);
-    }
 }
 
 bool8 Exec(Task* t, u32 max_processes) {

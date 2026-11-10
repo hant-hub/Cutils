@@ -2777,7 +2777,7 @@ void AddDep(Task* t, Task* d) {
     // and d->cmds.size == 0
 
     // close transitives from dummy tasks
-    for (u32 i = 0; i < d->pre.size; i++) { dynPush(t->pre, d->pre.data[i]); }
+    for (u32 i = 0; i < d->pre.size; i++) { AddDep(t, d->pre.data[i]); }
 }
 
 Task* _AddTask(TaskGraph* g, const char* name, u32 num_dep, ...) {
@@ -2900,9 +2900,10 @@ static void RunTask(Task* t, TaskQueue* q) {
         // process exit if no cmd is to be run
         for (u32 i = 0; i < t->post.size; i++) {
             Task* n = t->post.data[i];
-            n->blockers--;
+            if (n->blockers) n->blockers--;
 
-            if (n->blockers == 0 && (n->func || n->cmds.size)) {
+            if (n->blockers == 0 && n->visited && (n->func || n->cmds.size)) {
+                n->visited = FALSE;
                 TaskQueuePush(q, n);
             }
         }
@@ -2911,13 +2912,17 @@ static void RunTask(Task* t, TaskQueue* q) {
 
     pid_t id = fork();
 
-    if (id) {
+    if (id != 0) {
+        if (id == -1) {
+            printerr("Failed to Create Process: %n\n", strerror(errno));
+            return;
+        }
         // parent
-        // printlog("PID: %d\n", id);
         dynPush(g->running.processes, id);
         dynPush(g->running.tasks, t);
         return;
     }
+
 
     // child
     ScratchArena a = ScratchArenaGet(NULL);
@@ -2955,16 +2960,16 @@ static void GatherTasks(ArenaAllocator a, Task* t, TaskQueue* queue) {
         if (t->pre.size == 0) {
             TaskQueuePush(queue, t);
         }
-    }
 
-    // populate dependents
-    for (u32 i = 0; i < t->pre.size; i++) {
-        Task* dep = t->pre.data[i];
-        GatherTasks(
-            a, dep,
-            queue); // important Gather Tasks initializes and clears data
-                    // So it must run before we start writing to dep's post
-        dynPush(dep->post, t);
+        // populate dependents
+        for (u32 i = 0; i < t->pre.size; i++) {
+            Task* dep = t->pre.data[i];
+            GatherTasks(
+                    a, dep,
+                    queue); // important Gather Tasks initializes and clears data
+                            // So it must run before we start writing to dep's post
+            dynPush(dep->post, t);
+        }
     }
 }
 
@@ -2986,8 +2991,13 @@ bool8 Exec(Task* t, u32 max_processes) {
         if (g->running.processes.size >= max_processes ||
             TaskQueueEmpty(&queue)) {
             // wait
-            int res;
+            int res = 0;
             pid_t id = wait(&res);
+
+            if (id == -1) {
+                printerr("Wait failed\n");
+                panic();
+            }
 
             u32 match = -1;
             for (u32 i = 0; i < g->running.processes.size; i++) {
@@ -2997,12 +3007,9 @@ bool8 Exec(Task* t, u32 max_processes) {
                 }
             }
 
-            if (!WIFEXITED(res) || WEXITSTATUS(res) != 0 || match == -1) {
-                printerr("\e[38;2;255;0;0m[ERR]: Task %s Failed\e[0m\n",
-                         g->running.tasks.data[match]->name);
-                printerr(
-                    "\e[38;2;255;255;0m[WARN]: Cancelling Task Exec: %s\e[0m\n",
-                    t->name);
+            if (!WIFEXITED(res) || WEXITSTATUS(res) != 0 || WIFSIGNALED(res) || match == -1) {
+                printerr("\e[38;2;255;0;0m[ERR]: Task %s Failed\e[0m\n", g->running.tasks.data[match]->name);
+                printerr( "\e[38;2;255;255;0m[WARN]: Cancelling Task Exec: %s\e[0m\n", t->name);
                 dynDel(g->running.processes, match);
                 dynDel(g->running.tasks, match);
                 failed = TRUE;
@@ -3013,9 +3020,10 @@ bool8 Exec(Task* t, u32 max_processes) {
 
             for (u32 i = 0; i < fin->post.size; i++) {
                 Task* n = fin->post.data[i];
-                n->blockers--;
+                if (n->blockers) n->blockers--;
 
-                if (n->blockers == 0 && (n->func || n->cmds.size)) {
+                if (n->blockers == 0 && n->visited && (n->func || n->cmds.size)) {
+                    n->visited = FALSE;
                     TaskQueuePush(&queue, n);
                 }
             }
@@ -3036,6 +3044,10 @@ bool8 Exec(Task* t, u32 max_processes) {
         // wait
         int res;
         pid_t id = wait(&res);
+        if (id == -1) {
+            printerr("Wait failed\n");
+            panic();
+        }
 
         u32 match = -1;
         for (u32 i = 0; i < g->running.processes.size; i++) {
