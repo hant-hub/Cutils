@@ -571,8 +571,15 @@ char* SStringGetCstr(SString s, ArenaAllocator a) {
 }
 
 u32 Strtofloat(SString str, float* out) {
+    i8 sign = 1;
     u32 curr = 0; 
     u32 whole = 0;
+
+    //sign
+    if (str.data[curr] == '-') {
+        sign = -1;
+        curr++;
+    }
 
     //integer part
     while (curr < str.len && isNum(str.data[curr])) {
@@ -599,6 +606,7 @@ u32 Strtofloat(SString str, float* out) {
     }
 
     *out += frac;
+    *out *= (float)sign;
     return curr;
 }
 
@@ -614,6 +622,29 @@ u32 StrtoU32(SString str, u32* out) {
     }
 
     *out = whole;
+    return curr;
+}
+
+i32 StrtoI32(SString str, i32* out) {
+    i8 sign = 1;
+    u32 curr = 0; 
+    u32 whole = 0;
+
+    //sign
+    if (str.data[curr] == '-') {
+        sign = -1;
+        curr++;
+    }
+
+    //integer part
+    while (curr < str.len && isNum(str.data[curr])) {
+        whole *= 10;
+        whole += str.data[curr] - '0';
+        curr++;
+    }
+
+    *out = whole;
+    *out *= (i32)sign;
     return curr;
 }
 

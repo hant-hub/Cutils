@@ -42,30 +42,67 @@ int main() {
     assert(d == 2);
     assert(f == .5);
 
-    u32 i;
-    d = StrtoU32(sstring("0"), &i);
+    //handle negative
+    d = Strtofloat(sstring("-1.0"), &f);
+    assert(d == 4);
+    assert(f == -1.0);
+
+    //Integer
+
+    u32 u;
+    d = StrtoU32(sstring("0"), &u);
+    assert(d == 1);
+    assert(u == 0);
+
+    d = StrtoU32(sstring("1"), &u);
+    assert(d == 1);
+    assert(u == 1);
+
+    d = StrtoU32(sstring("10"), &u);
+    assert(d == 2);
+    assert(u == 10);
+
+    d = StrtoU32(sstring("100"), &u);
+    assert(d == 3);
+    assert(u == 100);
+
+    d = StrtoU32(sstring("240"), &u);
+    assert(d == 3);
+    assert(u == 240);
+
+    d = StrtoU32(sstring("240L"), &u);
+    assert(d == 3);
+    assert(u == 240);
+
+
+    i32 i;
+    d = StrtoI32(sstring("0"), &i);
     assert(d == 1);
     assert(i == 0);
 
-    d = StrtoU32(sstring("1"), &i);
+    d = StrtoI32(sstring("1"), &i);
     assert(d == 1);
     assert(i == 1);
 
-    d = StrtoU32(sstring("10"), &i);
+    d = StrtoI32(sstring("10"), &i);
     assert(d == 2);
     assert(i == 10);
 
-    d = StrtoU32(sstring("100"), &i);
+    d = StrtoI32(sstring("100"), &i);
     assert(d == 3);
     assert(i == 100);
 
-    d = StrtoU32(sstring("240"), &i);
+    d = StrtoI32(sstring("240"), &i);
     assert(d == 3);
     assert(i == 240);
 
-    d = StrtoU32(sstring("240L"), &i);
+    d = StrtoI32(sstring("240L"), &i);
     assert(d == 3);
     assert(i == 240);
+
+    d = StrtoI32(sstring("-1"), &i);
+    assert(d == 2);
+    assert(i == -1);
 
     printlog("Success!\n");
 
