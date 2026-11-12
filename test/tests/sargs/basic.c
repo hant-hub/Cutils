@@ -22,6 +22,7 @@ int main() {
     logfile->buffered = FALSE;
     {
         char* argv[] = {
+            "",
             "1",
             "2",
             "test",
@@ -53,6 +54,7 @@ int main() {
 
     {
         char* argv[] = {
+            "",
             "1",
             "2",
             "test",
@@ -69,6 +71,7 @@ int main() {
 
     {
         char* argv[] = {
+            "",
             "1",
             "2",
             "test",
@@ -85,6 +88,7 @@ int main() {
 
     {
         char* argv[] = {
+            "",
             "1",
             "2",
             "test",
@@ -101,6 +105,7 @@ int main() {
     }
     {
         char* argv[] = {
+            "",
             "1",
             "2",
             "test",
@@ -119,6 +124,7 @@ int main() {
 
     {
         char* argv[] = {
+            "",
             "--help",
         };
 
@@ -130,6 +136,7 @@ int main() {
 
     {
         char* argv[] = {
+            "",
             "-h",
         };
 

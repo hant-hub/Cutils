@@ -82,12 +82,12 @@ static const SString helpmsg = sstring(
 
 SA ParseArgs(int argc, char* argv[]) {
     SA args = {};
-    u32 curr = 0;
+    u32 curr = 1; //skip prog name
 
     //check help
     SString str_h = sstring("-h"); 
     SString str_help = sstring("--help"); 
-    for (u32 i = 0; i < argc; i++) { 
+    for (u32 i = 1; i < argc; i++) { 
         char* c = argv[i]; 
         if (strncmp(c, (char*)str_h.data, str_h.len) == 0) { 
             printlog("%s\n", helpmsg);
