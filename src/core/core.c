@@ -576,7 +576,7 @@ u32 Strtofloat(SString str, float* out) {
     u32 whole = 0;
 
     //sign
-    if (str.data[curr] == '-') {
+    if (str.data[curr] == '-' && isNum(str.data[curr + 1])) {
         sign = -1;
         curr++;
     }
@@ -631,7 +631,7 @@ i32 StrtoI32(SString str, i32* out) {
     u32 whole = 0;
 
     //sign
-    if (str.data[curr] == '-') {
+    if (str.data[curr] == '-' && isNum(str.data[curr + 1])) {
         sign = -1;
         curr++;
     }
