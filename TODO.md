@@ -16,6 +16,7 @@
 - [X] File handling
     - [X] file local name
 - [X] recursive mkdir
+- [ ] Add width + precision specifiers to format
 
     
 

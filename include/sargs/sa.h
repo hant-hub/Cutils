@@ -3,7 +3,9 @@
 #include <core/cutils.h>
 #include <string.h>
 
+#ifdef SA_STAND_ALONE
 #include <../src/core/core.c>
+#endif
 
 #ifndef PROG_NAME
 #define PROG_NAME "prog_name"
@@ -89,12 +91,19 @@ SA ParseArgs(int argc, char* argv[]) {
     SString str_help = sstring("--help"); 
     for (u32 i = 1; i < argc; i++) { 
         char* c = argv[i]; 
-        if (strncmp(c, (char*)str_h.data, str_h.len) == 0) { 
+        if (c[0] != '-') continue; 
+        u32 c_tmp = 0; 
+        while (c[c_tmp] && c[c_tmp] != '=') c_tmp++; 
+        SString arg = { 
+            .data = (i8*)c, 
+            .len = c_tmp, 
+        }; 
+        if (Sstrcmp(arg, str_h)) { 
             printlog("%s\n", helpmsg);
             args.err = "User Displayed Help Info"; 
             return args; 
         } 
-        if (strncmp(c, (char*)str_help.data, str_help.len) == 0) {
+        if (Sstrcmp(arg, str_help)) { 
             printlog("%s\n", helpmsg);
             args.err = "User Displayed Help Info"; 
             return args;
@@ -143,7 +152,14 @@ SA ParseArgs(int argc, char* argv[]) {
         SString str_##lname = sstring("--" #lname); \
         for (u32 i = 0; i < argc; i++) { \
             char* c = argv[i]; \
-            if (strncmp(c, (char*)str_##sname.data, str_##sname.len) == 0) { \
+            if (c[0] != '-') continue; \
+            u32 c_tmp = 0; \
+            while (c[c_tmp] && c[c_tmp] != '=') c_tmp++; \
+            SString arg = { \
+                .data = (i8*)c, \
+                .len = c_tmp, \
+            }; \
+            if (Sstrcmp(arg, str_##sname)) { \
                 args.flags.sname.p = TRUE; \
                 c += str_##sname.len; \
                 if (c[0] == '=') { \
@@ -167,7 +183,7 @@ SA ParseArgs(int argc, char* argv[]) {
                 } \
                 break; \
             } \
-            if (strncmp(c, (char*)str_##lname.data, str_##lname.len) == 0) { \
+            if (Sstrcmp(arg, str_##lname)) { \
                 args.flags.sname.p = TRUE; \
                 c += str_##lname.len; \
                 if (c[0] == '=') { \
