@@ -7,6 +7,10 @@
 #include <../src/core/core.c>
 #endif
 
+#ifndef PROG_DESC
+#define PROG_DESC ""
+#endif
+
 #ifndef PROG_NAME
 #define PROG_NAME "prog_name"
 #endif
@@ -63,7 +67,8 @@ static int StrBool(SString str, bool8* out) {
 #define FLAG(sname, lname, type, usage) "\t" "-"_QUOTE(sname) ", " "--" _QUOTE(lname)": " _QUOTE(type) "\t\t" usage "\n"
 
 static const SString helpmsg = sstring(
-    PROG_NAME  "  [ARGS] [OPTIONAL ARGS]\n"
+    PROG_NAME  "  [ARGS] [OPTIONAL ARGS]\n\n"
+    PROG_DESC "\n"
     "ARGS:\n"
     REQS
     "OPTIONAL ARGS:\n"

@@ -1,5 +1,7 @@
 #include <sargs/sa_pre.h>
 
+#define PROG_DESC "This is a test description"
+
 #define REQS                 \
     ARG(a1, int, "a1 usage") \
     ARG(a2, int, "a2 usage")
