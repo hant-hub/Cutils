@@ -147,4 +147,16 @@ int main() {
         assert(v.err);
         assert(strcmp(v.err, "User Displayed Help Info") == 0);
     }
+
+    {
+        char* argv[] = {
+            "",
+            "1",
+            "-a4=2",
+            "2",
+        };
+
+        SA v = ParseArgs(ARRAY_SIZE(argv), argv);
+        assert(!v.err);
+    }
 }

@@ -119,6 +119,7 @@ SA ParseArgs(int argc, char* argv[]) {
 
     #define ARG(name, type, usage) \
         do { \
+            while (curr < argc && argv[curr][0] == '-') curr++; \
             if (curr >= argc) { \
                 args.err = usage; \
                 return args; \
