@@ -91,12 +91,13 @@ int main(int argc, char* argv[]) {
     Task* static_lib = AddDummyTask(&g);
     {
         Task* compile = CompileCmd(&g, "./build/cutils.o",
-                                   Spread("-c", debug_flag, "src/cutils.c",
+                                   Spread("-c", debug_flag, "./src/cutils.c",
                                           "-lm", "-Iinclude/", "-Wall",
                                           optimization_levels[opt_level], march));
 
         static_lib = AddTask(&g, "archive Static Lib", compile);
         AddCmd(static_lib, "ar", "rcs", "build/cutils.a", "build/cutils.o");
+        //AddCmd(static_lib, "echo", "test");
     }
 
     // cp resources

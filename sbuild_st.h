@@ -2897,6 +2897,7 @@ static void RunTask(Task* t, TaskQueue* q) {
     }
 
     if (!t->cmds.size) {
+        printlog("hit\n");
         // process exit if no cmd is to be run
         for (u32 i = 0; i < t->post.size; i++) {
             Task* n = t->post.data[i];
