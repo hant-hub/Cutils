@@ -1,11 +1,11 @@
 { pkgs ? import <nixpkgs> {} }:
 
-pkgs.clangStdenv.mkDerivation {
+pkgs.stdenv.mkDerivation {
     name = "cutils"; 
     src = ./.;
 
+    buildInputs = [ pkgs.glibc ];
     nativeBuildInputs = [ pkgs.breakpointHook pkgs.gdb ];
-    buildInputs = [ pkgs.liburing pkgs.clang ];
 
     installPhase = ''
         cd /tmp

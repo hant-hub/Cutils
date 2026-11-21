@@ -2813,6 +2813,8 @@ void _AddArg(Task* t, u32 num_args, ...) {
     va_start(args, num_args);
     for (u32 i = 0; i < num_args; i++) {
         const char* arg = va_arg(args, const char*);
+        if (!arg) continue;
+        if (strlen(arg) == 0) continue;
         u32 id = AddStr(g, (SString){strlen(arg), (i8*)arg});
         dynPush(t->args, id);
     }
@@ -2829,6 +2831,8 @@ void _AddCmd(Task* t, u32 num_args, ...) {
     va_start(args, num_args);
     for (u32 i = 0; i < num_args; i++) {
         const char* arg = va_arg(args, const char*);
+        if (!arg) continue;
+        if (strlen(arg) == 0) continue;
         u32 id = AddStr(g, (SString){strlen(arg), (i8*)arg});
         dynPush(t->cmds, id);
     }
@@ -2897,7 +2901,6 @@ static void RunTask(Task* t, TaskQueue* q) {
     }
 
     if (!t->cmds.size) {
-        printlog("hit\n");
         // process exit if no cmd is to be run
         for (u32 i = 0; i < t->post.size; i++) {
             Task* n = t->post.data[i];
@@ -2939,9 +2942,12 @@ static void RunTask(Task* t, TaskQueue* q) {
         exit(1);
     }
 
+    printf("Cmd: ");
     for (u32 i = 0; i < t->cmds.size; i++) {
         args[i] = &g->str_data.data[t->cmds.data[i]];
+        printf("%s ", args[i]);
     }
+    printf("\n");
 
     execvp(args[0], args);
     panic();
@@ -3155,7 +3161,7 @@ Task* Compile(TaskGraph* g, const char* filename, u32 cmd_size,
               const char** cmd, u32 num_arg, ...) {
     // compilation
     Task* compile = AddTask(g, filename, _c_intern.first);
-    AddCmd(compile, "cc", "-o", filename);
+    AddCmd(compile, "cc");
     AddProc(compile, add_entry);
     AddArg(compile, filename);
 
@@ -3171,6 +3177,8 @@ Task* Compile(TaskGraph* g, const char* filename, u32 cmd_size,
         AddCmd(compile, cmd[i]);
         AddArg(compile, cmd[i]);
     }
+
+    AddCmd(compile, "-o", filename);
 
     return compile;
 }

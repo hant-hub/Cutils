@@ -232,6 +232,8 @@ void _AddArg(Task* t, u32 num_args, ...) {
     va_start(args, num_args);
     for (u32 i = 0; i < num_args; i++) {
         const char* arg = va_arg(args, const char*);
+        if (!arg) continue;
+        if (strlen(arg) == 0) continue;
         u32 id = AddStr(g, (SString){strlen(arg), (i8*)arg});
         dynPush(t->args, id);
     }
@@ -248,6 +250,8 @@ void _AddCmd(Task* t, u32 num_args, ...) {
     va_start(args, num_args);
     for (u32 i = 0; i < num_args; i++) {
         const char* arg = va_arg(args, const char*);
+        if (!arg) continue;
+        if (strlen(arg) == 0) continue;
         u32 id = AddStr(g, (SString){strlen(arg), (i8*)arg});
         dynPush(t->cmds, id);
     }

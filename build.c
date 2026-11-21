@@ -91,7 +91,7 @@ int main(int argc, char* argv[]) {
     Task* static_lib = AddDummyTask(&g);
     {
         Task* compile = CompileCmd(&g, "./build/cutils.o",
-                                   Spread("-c", debug_flag, "./src/cutils.c",
+                                   Spread(debug_flag, "-c", "./src/cutils.c",
                                           "-lm", "-Iinclude/", "-Wall",
                                           optimization_levels[opt_level], march));
 
