@@ -1,6 +1,6 @@
 { pkgs ? import <nixpkgs> {} }:
 
-pkgs.stdenv.mkDerivation {
+pkgs.stdenv.mkDerivation (finalAttrs: {
     name = "cutils"; 
     src = ./.;
 
@@ -19,5 +19,5 @@ pkgs.stdenv.mkDerivation {
         cp build/cutils.a $out/lib/
         cp -r include/* $out/include/
     '';
-}
+})
 
