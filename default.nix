@@ -15,7 +15,9 @@ pkgs.stdenv.mkDerivation {
         mkdir -p build/
         ./sb
         mkdir -p $out/lib
+        mkdir -p $out/include
         cp build/cutils.a $out/lib/
+        cp -r include/* $out/include/
     '';
 }
 
