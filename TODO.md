@@ -96,24 +96,18 @@
     - [X] string storage
     - [X] rewrite
     - [X] test swiss/swar map
-- [ ] Queue
+- [X] Queue
     - [X] Fixed Size (small)
     - [X] Dynamic Queue
-    - [ ] Large Size (using pages)
-    - [ ] Dynamic (idk pick a data structure)
-- [ ] Circular Buffer
-    - [ ] Fixed Size (small)
-    - [ ] Fixed Size (large)
+    - [X] Dynamic (idk pick a data structure)
 - [ ] Sparse Set
 - [ ] Bin Tree
 - [ ] Trie?
 
 ### Cutils String Handling
 - [X] Merge StrBase
-- [ ] Improve StrBase
-    - [ ] Chunked Lists for storage O(n) allocations -> O(log n)
-    - [ ] Static StrBase (equivalent functionality, but all strings not already in the cache get the same id)
-    - [ ] StrBase Clear (removes all strings and resets strbase)
+- [X] Improve StrBase
+    - [X] Chunked Lists for storage O(n) allocations -> O(log n)
 
 ### Centralization
 - [X] Improve Cutils Tooling

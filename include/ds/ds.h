@@ -68,7 +68,7 @@
 #define dynIns(array, idx, val)                                                \
     do {                                                                       \
         dynResize(array, array.size + 1);                                      \
-        for (i64 i = array.size - 1; i >= idx; i--) {                          \
+        for (i64 i = array.size - 2; i >= idx; i--) {                          \
             array.data[i + 1] = array.data[i];                                 \
         }                                                                      \
         array.data[idx] = val;                                                 \
